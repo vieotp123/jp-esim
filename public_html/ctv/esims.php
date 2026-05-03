@@ -67,7 +67,7 @@ ctv_layout_header('eSIM của CTV', $user);
       <?php foreach ($rows as $r): ?>
       <tr>
         <td>
-          <?php $qr = (string)($r['qr_code_url'] ?? ''); if ($qr !== ''): ?>
+          <?php $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : ''; if ($qr !== ''): ?>
             <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" style="height:48px;width:48px;border-radius:6px;border:1px solid #2a2a2a"></a>
           <?php else: ?><span class="muted">—</span><?php endif; ?>
         </td>

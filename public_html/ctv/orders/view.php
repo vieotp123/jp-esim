@@ -116,9 +116,10 @@ function _bytes_to_gb($b): string {
       <p class="muted">Đơn đang xử lý.</p>
     <?php endif; ?>
   <?php else: foreach ($esims as $e):
-    $qr = (string)($e['qr_code_url'] ?? '');
+    $iccidStr = (string)($e['iccid'] ?? '');
+    $qr = $iccidStr !== '' ? ('/ctv/qr.php?id=' . urlencode($iccidStr)) : '';
     $lpa = (string)($e['ac'] ?? '');
-    $iosUrl = $lpa !== '' ? 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' . rawurlencode($lpa) : '';
+    $iosUrl = $iccidStr !== '' ? ('/ctv/install.php?id=' . urlencode($iccidStr)) : '';
   ?>
   <div class="esim-card">
     <div class="row">
@@ -139,9 +140,7 @@ function _bytes_to_gb($b): string {
           <b>SMDP</b><div><?= htmlspecialchars((string)($e['smdp_status'] ?? '—')) ?></div>
           <b>eSIM status</b><div><?= htmlspecialchars((string)($e['esim_status'] ?? '—')) ?></div>
           <b>APN</b><div><span class="kbd"><?= htmlspecialchars((string)($e['apn'] ?? '')) ?></span></div>
-          <?php if ($lpa !== ''): ?>
-            <b>LPA</b><div><span class="lpa"><?= htmlspecialchars($lpa) ?></span></div>
-          <?php endif; ?>
+
         </div>
         <div class="install-row">
           <?php if ($iosUrl !== ''): ?>
