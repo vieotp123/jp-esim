@@ -113,6 +113,16 @@ final class CtvFulfillmentService {
             $pdo->prepare('UPDATE ctv_orders SET iccid=?, updated_at=NOW() WHERE ctv_order_id=?')
                 ->execute([$first, $ctvOrderId]);
         }
+        // Best-effort: notify the customer email, never fail the sync if mail breaks.
+        if ($count > 0) {
+            try {
+                (new CtvMailService)->sendForOrderIfNeeded($ctvOrderId);
+            } catch (Throwable $mailE) {
+                if (function_exists('app_log')) {
+                    app_log('CtvMail hook fail '.$ctvOrderId.': '.$mailE->getMessage(), 'WARN');
+                }
+            }
+        }
         return ['status'=>'ready', 'count'=>$count, 'message'=>'synced'];
     }
 
