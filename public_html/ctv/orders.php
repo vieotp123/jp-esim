@@ -31,7 +31,7 @@ ctv_layout_header('Đơn eSIM', $user);
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
-        <td><span class="kbd"><?= htmlspecialchars($r['orderId']) ?></span></td>
+        <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars($r['orderId']) ?>" class="kbd" style="text-decoration:none"><?= htmlspecialchars($r['orderId']) ?></a></td>
         <td><?= htmlspecialchars($r['carrier'].' '.$r['planName']) ?></td>
         <td><?= (int)$r['quantity'] ?></td>
         <td><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></td>

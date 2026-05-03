@@ -48,7 +48,7 @@ ctv_layout_header('eSIM của CTV', $user);
     <tbody>
       <?php foreach ($pending as $p): ?>
       <tr>
-        <td><?= htmlspecialchars((string)$p['ctv_order_id']) ?></td>
+        <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a></td>
         <td><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></td>
         <td><span class="kbd"><?= htmlspecialchars((string)$p['provider_order_no']) ?></span></td>
         <td><?= htmlspecialchars((string)$p['updated_at']) ?></td>
@@ -72,7 +72,7 @@ ctv_layout_header('eSIM của CTV', $user);
           <?php else: ?><span class="muted">—</span><?php endif; ?>
         </td>
         <td><span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>"><?= htmlspecialchars((string)$r['iccid']) ?></span></td>
-        <td><?= htmlspecialchars((string)$r['ctv_order_id']) ?></td>
+        <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></td>
         <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></td>
         <td><?= htmlspecialchars((string)($r['expired_time'] ?? '')) ?></td>
         <td><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></td>
