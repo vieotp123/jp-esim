@@ -5,17 +5,31 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 
 $kind = (string)($_GET['kind'] ?? 'api');
+$kindAllowed = ['api','provider','wallet'];
+if (!in_array($kind, $kindAllowed, true)) $kind = 'api';
+$ctvFilter = max(0, (int)($_GET['ctv_id'] ?? 0));
+$qs = function(array $extra) use ($kind, $ctvFilter): string {
+    $params = array_filter(array_merge(['kind'=>$kind, 'ctv_id'=>$ctvFilter ?: null], $extra), fn($v) => $v !== null && $v !== '');
+    return '?' . http_build_query($params);
+};
 admin_layout_header('Logs CTV', $admin);
 ?>
 <div class="card">
   <h2>Logs</h2>
   <p>
-    <a class="btn <?= $kind==='api'?'':'secondary' ?>" href="?kind=api">API logs</a>
-    <a class="btn <?= $kind==='provider'?'':'secondary' ?>" href="?kind=provider">Provider logs</a>
-    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="?kind=wallet">Wallet</a>
+    <a class="btn <?= $kind==='api'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'api'])) ?>">API logs</a>
+    <a class="btn <?= $kind==='provider'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'provider'])) ?>">Provider logs</a>
+    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'wallet'])) ?>">Wallet</a>
+    <?php if ($ctvFilter): ?>
+      <span class="tag">Lọc CTV #<?= (int)$ctvFilter ?></span>
+      <a class="btn secondary" href="?kind=<?= htmlspecialchars($kind) ?>">Xóa lọc</a>
+    <?php endif; ?>
   </p>
   <?php if ($kind === 'provider'): ?>
-    <?php $rows = db()->query('SELECT * FROM ctv_provider_logs ORDER BY id DESC LIMIT 100')->fetchAll(); ?>
+    <?php
+      $sql = 'SELECT * FROM ctv_provider_logs' . ($ctvFilter ? ' WHERE ctv_id=?' : '') . ' ORDER BY id DESC LIMIT 100';
+      $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
+    ?>
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>Status</th><th>OK</th><th>Lỗi</th><th>Request</th><th>Response</th></tr></thead>
       <tbody>
@@ -35,7 +49,12 @@ admin_layout_header('Logs CTV', $admin);
       </tbody>
     </table>
   <?php elseif ($kind === 'wallet'): ?>
-    <?php $rows = db()->query('SELECT t.*, u.email FROM ctv_wallet_transactions t LEFT JOIN ctv_users u ON u.id=t.ctv_id ORDER BY t.id DESC LIMIT 200')->fetchAll(); ?>
+    <?php
+      $sql = 'SELECT t.*, u.email FROM ctv_wallet_transactions t LEFT JOIN ctv_users u ON u.id=t.ctv_id'
+           . ($ctvFilter ? ' WHERE t.ctv_id=?' : '')
+           . ' ORDER BY t.id DESC LIMIT 200';
+      $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
+    ?>
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>Reason</th><th>Số tiền</th><th>Số dư sau</th><th>Ref</th><th>Note</th><th>Admin</th></tr></thead>
       <tbody>
@@ -54,7 +73,12 @@ admin_layout_header('Logs CTV', $admin);
       </tbody>
     </table>
   <?php else: ?>
-    <?php $rows = db()->query('SELECT l.*, u.email FROM ctv_api_logs l LEFT JOIN ctv_users u ON u.id=l.ctv_id ORDER BY l.id DESC LIMIT 200')->fetchAll(); ?>
+    <?php
+      $sql = 'SELECT l.*, u.email FROM ctv_api_logs l LEFT JOIN ctv_users u ON u.id=l.ctv_id'
+           . ($ctvFilter ? ' WHERE l.ctv_id=?' : '')
+           . ' ORDER BY l.id DESC LIMIT 200';
+      $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
+    ?>
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Method</th><th>Status</th><th>Duration</th><th>Request</th><th>Response</th></tr></thead>
       <tbody>

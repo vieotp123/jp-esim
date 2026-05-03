@@ -6,7 +6,7 @@ final class CtvWalletService {
      * Atomically debit a CTV's balance. Throws if insufficient funds.
      * Returns the new balance.
      */
-    public function debit(int $ctvId, int $amount, string $reason, ?string $refType = null, ?string $refId = null, ?string $note = null): int {
+    public function debit(int $ctvId, int $amount, string $reason, ?string $refType = null, ?string $refId = null, ?string $note = null, ?string $adminUser = null): int {
         if ($amount <= 0) throw new InvalidArgumentException('Số tiền không hợp lệ');
         $pdo = db();
         $pdo->beginTransaction();
@@ -19,8 +19,8 @@ final class CtvWalletService {
             if ($bal < $amount) throw new RuntimeException('Số dư không đủ');
             $newBal = $bal - $amount;
             $pdo->prepare('UPDATE ctv_users SET balance=? WHERE id=?')->execute([$newBal, $ctvId]);
-            $pdo->prepare('INSERT INTO ctv_wallet_transactions(ctv_id,amount,balance_after,reason,ref_type,ref_id,note) VALUES(?,?,?,?,?,?,?)')
-                ->execute([$ctvId, -$amount, $newBal, $reason, $refType, $refId, $note]);
+            $pdo->prepare('INSERT INTO ctv_wallet_transactions(ctv_id,amount,balance_after,reason,ref_type,ref_id,note,admin_user) VALUES(?,?,?,?,?,?,?,?)')
+                ->execute([$ctvId, -$amount, $newBal, $reason, $refType, $refId, $note, $adminUser]);
             $pdo->commit();
             return $newBal;
         } catch (Throwable $e) {
