@@ -20,19 +20,11 @@ final class OrderService {
         do { $id = 'N'.rand_alnum(7); $st=db()->prepare('SELECT 1 FROM `order` WHERE order_id=?'); $st->execute([$id]); } while ($st->fetchColumn());
         return $id;
     }
+    /**
+     * Kept for backward compatibility. Delegates to RetailFulfillmentService.
+     * Existing callers (cron, admin tools) keep working unchanged.
+     */
     public function markPaidAndBuy(string $orderId): void {
-        $pdo = db();
-        $stmt=$pdo->prepare('SELECT order_id, pack_code, status, muasim FROM `order` WHERE order_id=? LIMIT 1'); $stmt->execute([$orderId]); $o=$stmt->fetch();
-        if (!$o || (int)$o['status'] !== 0) return;
-        $pdo->prepare('UPDATE `order` SET status=2, paid_at=NOW(), updated_at=NOW() WHERE order_id=? AND status=0')->execute([$orderId]);
-        $res = (new EsimAccessClient())->createOrder((string)$o['pack_code'], $orderId);
-        if (!empty($res['success'])) {
-            $pdo->prepare('UPDATE `order` SET muasim=1, orderNo=?, transactionId=?, updated_at=NOW() WHERE order_id=?')->execute([$res['obj']['orderNo'] ?? null, $res['obj']['transactionId'] ?? $orderId, $orderId]);
-            try {
-                (new EsimService())->getByOrder($orderId); // nếu eSIMAccess đã sẵn sàng thì lưu info + gửi email ngay, không cần cron
-            } catch (Throwable $e) {
-                app_log('Post-buy esim/email attempt '.$orderId.' '.$e->getMessage(), 'INFO');
-            }
-        } else app_log('Buy eSIM failed '.$orderId.' '.json_encode($res, JSON_UNESCAPED_UNICODE), 'ERROR');
+        (new RetailFulfillmentService())->fulfillPaidOrder($orderId);
     }
 }

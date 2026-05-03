@@ -140,4 +140,12 @@ final class TopupService {
         do { $tid='T'; for($i=0;$i<7;$i++) $tid.=$alphabet[random_int(0, strlen($alphabet)-1)]; $q=$pdo->prepare('SELECT 1 FROM topup_order WHERE tid=?'); $q->execute([$tid]); } while($q->fetch());
         return $tid;
     }
+
+    /**
+     * Backward-compat alias used by bank webhook before refactor.
+     * Delegates to RetailFulfillmentService::fulfillPaidTopup.
+     */
+    public function markPaidAndTopup(string $tid): void {
+        (new RetailFulfillmentService())->fulfillPaidTopup($tid);
+    }
 }
