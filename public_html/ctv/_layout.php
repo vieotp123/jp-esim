@@ -1,6 +1,37 @@
 <?php
 declare(strict_types=1);
 
+
+if (!function_exists('ctv_flash_set')) {
+    function ctv_flash_set(string $type, string $msg): void {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_name('jp_esim_ctv');
+            @session_start();
+        }
+        $_SESSION['_ctv_flash'][] = ['type'=>$type, 'msg'=>$msg];
+    }
+}
+if (!function_exists('ctv_flash_get')) {
+    function ctv_flash_get(): array {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_name('jp_esim_ctv');
+            @session_start();
+        }
+        $f = $_SESSION['_ctv_flash'] ?? [];
+        unset($_SESSION['_ctv_flash']);
+        return is_array($f) ? $f : [];
+    }
+}
+if (!function_exists('ctv_flash_render')) {
+    function ctv_flash_render(): void {
+        foreach (ctv_flash_get() as $f) {
+            $t = (string)($f['type'] ?? 'ok');
+            $cls = in_array($t, ['ok','warn','error'], true) ? $t : 'ok';
+            echo '<div class="flash '.htmlspecialchars($cls).'">'.htmlspecialchars((string)($f['msg'] ?? '')).'</div>';
+        }
+    }
+}
+
 if (!function_exists('ctv_nav_active')) {
     function ctv_nav_active(string $href): string {
         $cur = (string)($_SERVER['SCRIPT_NAME'] ?? '');

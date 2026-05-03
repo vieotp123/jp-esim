@@ -23,3 +23,4 @@ vendor/
 *.ppk
 id_rsa*
 .DS_Store
+state/

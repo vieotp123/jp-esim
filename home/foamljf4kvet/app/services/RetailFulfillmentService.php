@@ -79,6 +79,11 @@ final class RetailFulfillmentService {
     }
 
     public function fulfillPaidTopup(string $tid): array {
+        if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+            $this->enqueueAdmin(AdminFailedOrderQueue::KIND_TOPUP_ORDER, $tid, 'TOPUP_LOCKED=1: nạp dung lượng đang khoá', null);
+            app_log('RetailFulfill topup blocked by TOPUP_LOCKED ' . $tid, 'WARN');
+            return ['success' => false, 'reason' => 'topup_locked'];
+        }
         $pdo = db();
         $st = $pdo->prepare('SELECT t.tid, t.iccid, t.status, t.topup_status, t.plan_id, p.topup_packcode FROM topup_order t LEFT JOIN plan p ON p.id=t.plan_id WHERE t.tid=? LIMIT 1');
         $st->execute([$tid]);

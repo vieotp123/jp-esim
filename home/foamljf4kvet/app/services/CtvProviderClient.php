@@ -36,6 +36,9 @@ final class CtvProviderClient {
     }
 
     public function topup(int $ctvId, string $refId, string $iccid, string $packCode, string $transactionId): array {
+        if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+            throw new RuntimeException('Topup tạm khoá: tính năng nạp dung lượng đang bảo trì.');
+        }
         $endpoint = 'topup';
         $start = microtime(true);
         $reqRedacted = self::redactJson(['transactionId' => $transactionId, 'packageCode' => $packCode, 'iccid' => self::maskIccid($iccid)]);

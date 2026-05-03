@@ -6,6 +6,14 @@ require_once __DIR__ . '/_layout.php';
 $user = CtvAuth::requireUser();
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
+// On-demand sync: try to populate QR/ICCID for any recent successful CTV order that
+// is still missing them. Bounded + best-effort; failures don't block the page.
+try {
+    (new CtvFulfillmentService())->syncPendingForCtv((int)$user['id'], 20);
+} catch (Throwable $e) {
+    app_log('ctv esims page sync failed: ' . $e->getMessage(), 'WARN');
+}
+
 $page = max(1, (int)($_GET['page'] ?? 1));
 $q = trim((string)($_GET['q'] ?? ''));
 $perPage = 50;
@@ -15,18 +23,54 @@ $st = db()->prepare('SELECT * FROM ctv_esims '.$where.' ORDER BY id DESC LIMIT '
 $st->execute($params);
 $rows = $st->fetchAll();
 
+// Also surface any successful CTV orders still waiting for QR (provider preparing).
+$pStmt = db()->prepare('SELECT ctv_order_id, plan_name, carrier, provider_order_no, updated_at FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT 20');
+$pStmt->execute([(int)$user['id']]);
+$pending = $pStmt->fetchAll();
+
 ctv_layout_header('eSIM của CTV', $user);
 ?>
 <div class="card">
-  <h2>Danh sách eSIM</h2><form method="get" class="row"><div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>"></div><div class="field"><label>&nbsp;</label><button class="btn">Lọc</button> <a class="btn secondary" href="/ctv/export.php?kind=esims">Export eSIM</a></div></form>
+  <h2>Danh sách eSIM</h2>
+  <form method="get" class="row">
+    <div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>"></div>
+    <div class="field"><label>&nbsp;</label>
+      <button class="btn">Lọc</button>
+      <a class="btn secondary" href="/ctv/esims.php">Refresh QR</a>
+      <a class="btn secondary" href="/ctv/export.php?kind=esims">Export eSIM</a>
+    </div>
+  </form>
+
+  <?php if ($pending): ?>
+  <div class="muted" style="margin:8px 0">Đang chờ nhà cung cấp phát hành QR (<?= count($pending) ?> đơn). Tự refresh sẽ poll lại.</div>
+  <table>
+    <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Mã đơn NCC</th><th>Cập nhật</th></tr></thead>
+    <tbody>
+      <?php foreach ($pending as $p): ?>
+      <tr>
+        <td><?= htmlspecialchars((string)$p['ctv_order_id']) ?></td>
+        <td><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></td>
+        <td><span class="kbd"><?= htmlspecialchars((string)$p['provider_order_no']) ?></span></td>
+        <td><?= htmlspecialchars((string)$p['updated_at']) ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php endif; ?>
+
   <?php if (!$rows): ?>
     <p class="muted">Chưa có eSIM nào. eSIM sẽ được lưu sau khi đơn thành công và đồng bộ từ nhà cung cấp.</p>
   <?php else: ?>
   <table>
-    <thead><tr><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
+    <thead><tr><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
+        <td>
+          <?php $qr = (string)($r['qr_code_url'] ?? ''); if ($qr !== ''): ?>
+            <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" style="height:48px;width:48px;border-radius:6px;border:1px solid #2a2a2a"></a>
+          <?php else: ?><span class="muted">—</span><?php endif; ?>
+        </td>
         <td><span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>"><?= htmlspecialchars((string)$r['iccid']) ?></span></td>
         <td><?= htmlspecialchars((string)$r['ctv_order_id']) ?></td>
         <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></td>

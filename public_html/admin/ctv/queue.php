@@ -35,8 +35,8 @@ try {
             $flash = ['ok', 'Đã mở lại #' . $id];
         } elseif ($action === 'retry') {
             // Retry provider. Tôn trọng test-mode + TEST-DEMO ref để tránh gọi API thật ngoài ý muốn.
-            $refId = (string)$row['ref_id'];
-            $kind  = (string)$row['kind'];
+            $refId = (string)($row['ref_id'] ?? '');
+            $kind  = (string)($row['kind'] ?? '');
             $isTestDemo = str_starts_with($refId, 'TEST-DEMO-');
             $providerTest = LegacyProviderClient::isTestMode();
             if (!$isTestDemo && !$providerTest) {
@@ -167,7 +167,7 @@ admin_layout_header('Failed Order Queue', $admin);
     <?php foreach ($rows as $r):
       $st = (string)$r['status'];
       $stCls = $st==='open' ? 'warn' : ($st==='resolved' ? 'ok' : 'info');
-      $k = (string)$r['kind'];
+      $k = (string)($r['kind'] ?? '');
       [$kLabel, $kCls] = $kindLabel[$k] ?? [$k, 'info'];
       $err = (string)($r['error_summary'] ?? '');
       $errShort = mb_strimwidth($err, 0, 220, '…');
@@ -175,7 +175,7 @@ admin_layout_header('Failed Order Queue', $admin);
       <tr>
         <td><span class="kbd">#<?= (int)$r['id'] ?></span></td>
         <td><span class="tag <?= $kCls ?>"><?= htmlspecialchars($kLabel) ?></span></td>
-        <td><span class="kbd"><?= htmlspecialchars((string)$r['ref_id']) ?></span></td>
+        <td><span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></td>
         <td style="max-width:380px">
           <div><?= htmlspecialchars($errShort) ?></div>
           <?php if (!empty($r['payload_redacted'])): ?>

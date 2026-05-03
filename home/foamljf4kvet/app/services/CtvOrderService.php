@@ -51,6 +51,11 @@ final class CtvOrderService {
         $pdo->prepare('UPDATE ctv_orders SET status=2, provider_order_no=?, provider_transaction_id=?, updated_at=NOW() WHERE ctv_order_id=?')
             ->execute([$orderNo, $tranId, $orderId]);
 
+        // Best-effort: try to fetch eSIM list (QR/ICCID) right away.
+        // Provider may still be preparing; cron / on-demand poll will retry.
+        try { (new CtvFulfillmentService())->syncOrderEsims($orderId); }
+        catch (Throwable $e) { app_log('CtvFulfillmentService initial sync failed '.$orderId.' '.$e->getMessage(), 'WARN'); }
+
         return $this->status($ctvId, $orderId);
     }
 

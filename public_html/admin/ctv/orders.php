@@ -13,7 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $flash = ['err', 'Mã đơn không hợp lệ'];
     } else {
         try {
-            if ($action === 'mark_resolved') {
+            if ($action === 'sync_esim') {
+                $r = (new CtvFulfillmentService())->syncOrderEsims($orderId);
+                $flash = [$r['status']==='ready'?'ok':'err', 'Sync '.$orderId.': '.$r['status'].' - '.($r['message'] ?? '')];
+            } elseif ($action === 'mark_resolved') {
                 db()->prepare('UPDATE ctv_orders SET needs_admin=0 WHERE ctv_order_id=?')->execute([$orderId]);
                 $flash = ['ok', 'Đã đánh dấu đã xử lý ' . $orderId];
             } elseif ($action === 'retry') {
@@ -95,6 +98,14 @@ admin_layout_header('Đơn CTV', $admin);
             <input type="hidden" name="action" value="retry">
             <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">
             <button class="btn" type="submit">Retry</button>
+          </form>
+          <?php endif; ?>
+          <?php if ($st===2 && empty($r['iccid'])): ?>
+          <form method="post" class="inline">
+            <?php admin_csrf_field(); ?>
+            <input type="hidden" name="action" value="sync_esim">
+            <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">
+            <button class="btn secondary" type="submit" title="Lấy QR/ICCID từ nhà cung cấp">Sync eSIM</button>
           </form>
           <?php endif; ?>
           <?php if ((int)$r['needs_admin']===1): ?>
