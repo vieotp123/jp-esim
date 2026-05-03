@@ -11,16 +11,16 @@ $assetVer = time();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#050607">
-  <meta name="description" content="Mua eSIM Nhật Bản Docomo 4G/au 5G, nhận QR tự động sau thanh toán VietQR. Hỗ trợ nạp thêm data, phát WiFi và kích hoạt nhanh iOS/Android.">
-  <meta name="keywords" content="eSIM Nhật Bản, eSIM Japan, Docomo eSIM, au 5G eSIM, mua eSIM Nhật, nạp data eSIM">
+  <meta name="description" content="JP eSIM Nhật Bản Docomo 4G/au 5G, nhận QR tự động sau thanh toán VietQR. Hỗ trợ nạp thêm data, phát WiFi và kích hoạt nhanh iOS/Android.">
+  <meta name="keywords" content="eSIM Nhật Bản, eSIM Japan, Docomo eSIM, au 5G eSIM, jp-esim Nhật, nạp data eSIM">
   <meta name="robots" content="index,follow,max-image-preview:large">
-  <link rel="canonical" href="https://muaesim.vn/">
+  <link rel="canonical" href="https://jp-esim.vip/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="muaesim.vn">
+  <meta property="og:site_name" content="jp-esim.vip">
   <meta property="og:title" content="eSIM Nhật Bản - Internet Nhật Bản">
-  <meta property="og:description" content="Mua eSIM Nhật Bản, thanh toán VietQR và nhận QR eSIM tự động. Hỗ trợ nạp data, phát WiFi, kích hoạt nhanh iOS/Android.">
-  <meta property="og:url" content="https://muaesim.vn/">
-  <meta property="og:image" content="https://muaesim.vn/assets/images/banner.webp">
+  <meta property="og:description" content="JP eSIM Nhật Bản, thanh toán VietQR và nhận QR eSIM tự động. Hỗ trợ nạp data, phát WiFi, kích hoạt nhanh iOS/Android.">
+  <meta property="og:url" content="https://jp-esim.vip/">
+  <meta property="og:image" content="https://jp-esim.vip/assets/images/banner.webp">
   <meta name="twitter:card" content="summary_large_image">
   <title>eSIM Nhật Bản Docomo 4G / au 5G - Nhận QR tự động</title>
   <link rel="stylesheet" href="/assets/app.css?v=<?= $assetVer ?>">
@@ -28,7 +28,7 @@ $assetVer = time();
   <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=<?= $siteKey ?>" defer></script><?php endif; ?>
   <script src="/assets/app.js?v=<?= $assetVer ?>" defer></script>
 
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"muaesim.vn","url":"https://muaesim.vn/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","paymentAccepted":"BankTransfer"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","paymentAccepted":"BankTransfer"}</script>
 </head>
 <body>
 <div id="app" class="app-shell">
@@ -40,7 +40,7 @@ $assetVer = time();
   <main>
     <section class="view active" id="view-buy">
       <div class="hero-card">
-        <div><span class="badge">Không cần SIM vật lý</span><h2>Mua eSIM Nhật trong 1 phút</h2><p>Chọn gói, thanh toán VietQR và nhận QR eSIM ngay trên màn hình.</p></div>
+        <div><span class="badge">Không cần SIM vật lý</span><h2>JP eSIM Nhật trong 1 phút</h2><p>Chọn gói, thanh toán VietQR và nhận QR eSIM ngay trên màn hình.</p></div>
       </div>
       <div class="ad-carousel" id="adCarousel" aria-label="Ưu điểm dịch vụ">
         <div class="ad-track">
@@ -84,8 +84,8 @@ $assetVer = time();
     <section class="view" id="view-support">
       <div class="hero-card small"><h2>Hỗ trợ</h2><p>Chat với trợ lý để tư vấn gói, kiểm tra đơn hoặc nạp data.</p></div>
       <div class="support-links">
-        <a href="https://m.me/muaesim" target="_blank" rel="noopener">Messenger</a>
-        <a href="https://fb.com/muaesim" target="_blank" rel="noopener">Facebook Page</a>
+        <a href="https://m.me/jp-esim" target="_blank" rel="noopener">Messenger</a>
+        <a href="https://fb.com/jp-esim" target="_blank" rel="noopener">Facebook Page</a>
       </div>
       <div class="chat-box" id="chatBox"></div>
       <div class="chat-input-wrap"><div class="chat-input"><input id="supportInput" placeholder="Nhập tin nhắn..." autocomplete="off"><button id="sendSupportBtn" aria-label="Gửi tin nhắn">Gửi</button></div></div>
@@ -93,7 +93,7 @@ $assetVer = time();
   </main>
 
   <nav class="tabbar">
-    <button class="tab active" data-view="buy"><span class="tab-ico" data-i="sim"></span><span>Mua eSIM</span></button>
+    <button class="tab active" data-view="buy"><span class="tab-ico" data-i="sim"></span><span>JP eSIM</span></button>
     <button class="tab" data-view="topup"><span class="tab-ico" data-i="wifi"></span><span>Nạp data</span></button>
     <button class="tab" data-view="support"><span class="tab-ico" data-i="chat"></span><span>Hỗ trợ</span></button>
   </nav>

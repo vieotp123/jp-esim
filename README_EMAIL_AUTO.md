@@ -6,7 +6,7 @@ Bản này bỏ phụ thuộc cron để gửi email eSIM.
 
 Email sẽ được gửi tự động khi một trong các API/service này thấy eSIM đã sẵn sàng:
 
-1. `OrderService::markPaidAndBuy()` sau khi webhook ngân hàng mua eSIM thành công sẽ thử query eSIM một lần. Nếu eSIMAccess đã trả QR thì hệ thống lưu `esimlist` và gửi email ngay.
+1. `OrderService::markPaidAndBuy()` sau khi webhook ngân hàng jp-esim thành công sẽ thử query eSIM một lần. Nếu eSIMAccess đã trả QR thì hệ thống lưu `esimlist` và gửi email ngay.
 2. `GET /api/esim.php?orderId=Nxxxxxxx` khi frontend poll lấy QR eSIM. Khi API lấy được QR hoặc thấy QR đã có sẵn trong DB, hệ thống gọi `MailService::sendOrderIfNeeded()`.
 3. `GET /api/payment.php?id=Nxxxxxxx&type=order` nếu đơn đã có `getinfosim=1` nhưng `emailsent=0`, hệ thống sẽ thử gửi email lại.
 
@@ -19,7 +19,7 @@ Như vậy không cần chạy file cron retry chỉ để gửi email nữa.
 - Subject: `Thông tin eSIM – Đơn hàng {ORDER_ID}`
 - Inline QR image qua Mailgun `inline[]` và `cid:`
 - CSS inline, card, chip, nút đánh giá giống template cũ
-- Review URL: `https://muaesim.vn/review.php?c={ratinghash}`
+- Review URL: `https://jp-esim.vip/review.php?c={ratinghash}`
 
 ## Config cần có trong `.env` hoặc `db_config.php`
 

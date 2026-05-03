@@ -97,7 +97,7 @@ function renderResumeCard(){
   $$('.resume-card').forEach(x=>x.remove());
   const arr=orderHistory();
   if(!arr.length)return;
-  const rows=arr.map(x=>`<div class="recent-order-row"><button class="recent-main" data-resume-id="${esc(x.id)}" data-resume-type="${esc(x.type)}"><b>${esc(x.id)}</b><span>${x.type==='topup'?'Nạp data':'Mua eSIM'}</span></button><button class="recent-del" data-remove-order="${esc(x.id)}">${icon('copy')}</button></div>`).join('');
+  const rows=arr.map(x=>`<div class="recent-order-row"><button class="recent-main" data-resume-id="${esc(x.id)}" data-resume-type="${esc(x.type)}"><b>${esc(x.id)}</b><span>${x.type==='topup'?'Nạp data':'JP eSIM'}</span></button><button class="recent-del" data-remove-order="${esc(x.id)}">${icon('copy')}</button></div>`).join('');
   const html=`<div class="resume-card info-card"><div class="recent-head"><b>Đơn gần đây</b><span class="muted">Tối đa 5 đơn</span></div>${rows}</div>`;
   const target=$('#view-buy .hero-card');
   target?.insertAdjacentHTML('afterend',html);

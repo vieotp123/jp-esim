@@ -1,4 +1,4 @@
--- Production schema hardening for muaesim.vn
+-- Production schema hardening for jp-esim.vip
 -- Run once. MySQL 8+ supports ADD COLUMN/INDEX IF NOT EXISTS.
 
 CREATE TABLE IF NOT EXISTS support_sessions (

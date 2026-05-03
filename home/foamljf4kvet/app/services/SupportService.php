@@ -6,7 +6,7 @@ final class SupportService {
             return $this->handleMessageSafe($userKey, $message, $channel, $context);
         } catch (Throwable $e) {
             app_log('SupportService failed: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine(), 'ERROR');
-            return ['reply'=>'Dạ hệ thống chat đang bận một chút. Anh/chị nhắn Messenger: https://m.me/muaesim hoặc Facebook: https://fb.com/muaesim để được hỗ trợ ngay ạ.','actions'=>[]];
+            return ['reply'=>'Dạ hệ thống chat đang bận một chút. Anh/chị nhắn Messenger: https://m.me/jp-esim hoặc Facebook: https://fb.com/jp-esim để được hỗ trợ ngay ạ.','actions'=>[]];
         }
     }
     private function handleMessageSafe(string $userKey, string $message, string $channel='web', array $context=[]): array {
