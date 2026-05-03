@@ -42,6 +42,13 @@ $assetVer = time();
       <div class="hero-card">
         <div><span class="badge">Không cần SIM vật lý</span><h2>JP eSIM Nhật trong 1 phút</h2><p>Chọn gói, thanh toán VietQR và nhận QR eSIM ngay trên màn hình.</p></div>
       </div>
+            <div class="trust-strip" aria-label="Trust signals">
+        <span class="ts-item ts-gold"><span class="ts-dot"></span>Made for Japan travel</span>
+        <span class="ts-item"><span class="carrier-chip docomo">Docomo 4G</span></span>
+        <span class="ts-item"><span class="carrier-chip au">au 5G</span></span>
+        <span class="ts-item"><span class="ts-dot"></span>VietQR · BIDV</span>
+        <span class="ts-item"><span class="ts-dot"></span>Hỗ trợ 24/7 VN/JP</span>
+      </div>
       <div class="ad-carousel" id="adCarousel" aria-label="Ưu điểm dịch vụ">
         <div class="ad-track">
           <div class="ad-slide active"><b>Không cần SIM vật lý</b><span>Quét QR là dùng được, không cần tháo lắp SIM.</span></div>
