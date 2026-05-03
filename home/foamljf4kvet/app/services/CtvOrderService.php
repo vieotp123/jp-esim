@@ -4,7 +4,7 @@ declare(strict_types=1);
 final class CtvOrderService {
     public function createEsim(array $ctv, int $planId, int $quantity = 1, string $source = 'panel', ?string $clientRef = null, ?string $email = null, ?string $notes = null): array {
         $ctvId = (int)$ctv['id'];
-        $quantity = max(1, min($quantity, 100));
+        if ($quantity < 1 || $quantity > 100) throw new InvalidArgumentException('Số lượng phải từ 1-100');
         $plan = (new PlanService())->findActive($planId);
         if (!$plan || empty($plan['pack_code'])) throw new InvalidArgumentException('Gói không tồn tại hoặc ngừng bán');
         $pricing = (new CtvPricingService())->priceFor($ctv, $plan);

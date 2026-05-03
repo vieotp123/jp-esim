@@ -9,7 +9,7 @@ final class CtvApiKeyService {
     public function generate(int $ctvId, string $name): array {
         $name = trim($name);
         if ($name === '') $name = 'API Key';
-        if (strlen($name) > 64) $name = substr($name, 0, 64);
+        if (mb_strlen($name) > 64) $name = mb_substr($name, 0, 64);
         $prefix = strtolower(substr(bin2hex(random_bytes(4)), 0, 8));
         $secret = bin2hex(random_bytes(24));
         $token = 'ctvK_' . $prefix . '_' . $secret;
@@ -40,10 +40,12 @@ final class CtvApiKeyService {
      */
     public function authenticate(string $token): ?array {
         if ($token === '' || strlen($token) > 200) return null;
+        if (!preg_match('/^ctvK_[a-f0-9]{8}_[a-f0-9]{48}$/', $token)) return null;
         $hash = self::hashKey($token);
         try {
-            $st = db()->prepare('SELECT k.id AS key_id, k.ctv_id, u.* FROM ctv_api_keys k JOIN ctv_users u ON u.id=k.ctv_id WHERE k.key_hash=? AND k.status=1 AND u.status=1 AND u.email_verified=1 LIMIT 1');
-            $st->execute([$hash]);
+            $st = db()->prepare('SELECT k.id AS key_id, k.ctv_id, u.* FROM ctv_api_keys k JOIN ctv_users u ON u.id=k.ctv_id WHERE k.key_hash=? AND k.key_prefix=? AND k.status=1 AND u.status=1 AND u.email_verified=1 LIMIT 1');
+            $prefix = explode('_', $token)[1] ?? '';
+            $st->execute([$hash, $prefix]);
             $row = $st->fetch();
         } catch (Throwable $e) { return null; }
         if (!$row) return null;
