@@ -134,9 +134,10 @@ final class CtvFulfillmentService {
         return $out;
     }
 
-    public function syncPendingGlobal(int $limit = 50, int $maxAgeMinutes = 60): array {
-        // Only retry orders younger than maxAgeMinutes to avoid hammering long-stuck ones forever.
-        $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE status=2 AND (iccid IS NULL OR iccid=\'\') AND updated_at >= (NOW() - INTERVAL ? MINUTE) ORDER BY id ASC LIMIT '.(int)$limit);
+    public function syncPendingGlobal(int $limit = 50, int $maxAgeMinutes = 1440): array {
+        // Only retry orders younger than maxAgeMinutes (default 24h) to avoid hammering long-stuck
+        // ones forever. Require provider_order_no — without it there's nothing to query.
+        $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE status=2 AND (iccid IS NULL OR iccid=\'\') AND provider_order_no IS NOT NULL AND provider_order_no<>\'\' AND updated_at >= (NOW() - INTERVAL ? MINUTE) ORDER BY id ASC LIMIT '.(int)$limit);
         $st->execute([$maxAgeMinutes]);
         $ids = $st->fetchAll(PDO::FETCH_COLUMN);
         $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0];
