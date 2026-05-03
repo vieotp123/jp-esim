@@ -81,8 +81,34 @@ function safeStartPayCountdown(createdAt){
 }
 
 function toast(m){const t=$('#toast'); if(!t)return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600)}
-async function api(url, opts={}){const r=await fetch(url,{cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts}); const j=await r.json().catch(()=>null); if(!r.ok||!j?.ok) throw new Error(j?.message||'Lỗi kết nối'); return j.data}
-async function captcha(action){ if(!window.RECAPTCHA_SITE || !window.grecaptcha) return ''; return new Promise(res=>grecaptcha.ready(()=>grecaptcha.execute(window.RECAPTCHA_SITE,{action}).then(res).catch(()=>res('')))) }
+async function api(url, opts={}){const r=await fetch(url,{cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})},...opts}); const j=await r.json().catch(()=>null); if(!r.ok||!j?.ok) throw new Error(j?.code==='CAPTCHA_FAILED'?'Xác minh không thành công, vui lòng thử lại':(j?.message||'Lỗi kết nối')); return j.data}
+let recaptchaWidgetId = null;
+async function waitForRecaptcha(){
+  const start = Date.now();
+  while(!window.grecaptcha && Date.now() - start < 10000){
+    await new Promise(resolve => setTimeout(resolve, 150));
+  }
+  if(!window.grecaptcha) throw new Error('Khong tai duoc reCAPTCHA. Vui long tat adblock/VPN hoac thu lai.');
+}
+async function captcha(action){
+  if(!window.RECAPTCHA_SITE) return '';
+  await waitForRecaptcha();
+  return new Promise((resolve, reject) => grecaptcha.ready(() => {
+    try{
+      if(recaptchaWidgetId === null){
+        let box = document.getElementById('recaptchaInvisible');
+        if(!box){ box = document.createElement('div'); box.id = 'recaptchaInvisible'; document.body.appendChild(box); }
+        recaptchaWidgetId = grecaptcha.render(box, {sitekey: window.RECAPTCHA_SITE, size: 'invisible', badge: 'bottomright', callback: token => window.__recaptchaResolve(token), 'error-callback': () => window.__recaptchaReject(), 'expired-callback': () => window.__recaptchaReject()});
+      }
+      grecaptcha.reset(recaptchaWidgetId);
+      window.__recaptchaResolve = token => resolve(token || '');
+      window.__recaptchaReject = () => reject(new Error('Xac minh khong thanh cong, vui long thu lai'));
+      grecaptcha.execute(recaptchaWidgetId);
+    }catch(e){ reject(new Error('Xac minh khong thanh cong, vui long thu lai')); }
+  }));
+}
+window.__recaptchaResolve = token => token;
+window.__recaptchaReject = () => {};
 function openSheet(html){$('#sheetContent').innerHTML=html; $('#sheet').classList.add('open'); $('#sheet').setAttribute('aria-hidden','false')}
 function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheet').setAttribute('aria-hidden','true') }
 document.addEventListener('click',e=>{ if(e.target.classList.contains('sheet-backdrop')) closeSheet(); if(e.target.matches('[data-copy]')){navigator.clipboard?.writeText(e.target.dataset.copy); toast('Đã copy')} if(e.target.matches('[data-close]')) closeSheet(); if(e.target.matches('[data-resume]')) resumeLast(); const rb=e.target.closest('[data-resume-id]'); if(rb){const flow={id:rb.dataset.resumeId,type:rb.dataset.resumeType,t:Date.now()}; localStorage.setItem('jp_last_flow',JSON.stringify(flow)); resumeLast(flow);} const ro=e.target.closest('[data-remove-order]'); if(ro){clearHistoryId(ro.dataset.removeOrder);} });

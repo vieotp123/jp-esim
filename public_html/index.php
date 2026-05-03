@@ -25,7 +25,7 @@ $assetVer = time();
   <title>eSIM Nhật Bản Docomo 4G / au 5G - Nhận QR tự động</title>
   <link rel="stylesheet" href="/assets/app.css?v=<?= $assetVer ?>">
   <script>window.RECAPTCHA_SITE = "<?= $siteKey ?>";</script>
-  <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=<?= $siteKey ?>" defer></script><?php endif; ?>
+  <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=explicit" defer></script><?php endif; ?>
   <script src="/assets/app.js?v=<?= $assetVer ?>" defer></script>
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","paymentAccepted":"BankTransfer"}</script>

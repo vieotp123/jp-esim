@@ -21,21 +21,32 @@ function verify_recaptcha(string $token, string $action): bool {
     $secret = (string)app_config('RECAPTCHA_SECRET', app_config('RC_SEC', ''));
     if ($secret === '') return (bool)app_config('APP_DEBUG', false);
     if ($token === '') return false;
+    $payload = ['secret' => $secret, 'response' => $token];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP)) { $payload['remoteip'] = $ip; }
     $ch = curl_init('https://www.google.com/recaptcha/api/siteverify');
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_POSTFIELDS => http_build_query(['secret'=>$secret, 'response'=>$token]),
+        CURLOPT_POSTFIELDS => http_build_query($payload),
     ]);
-    $raw = curl_exec($ch); curl_close($ch);
+    $raw = curl_exec($ch);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
     $res = $raw ? json_decode($raw, true) : null;
-    if (!is_array($res) || empty($res['success'])) return false;
-    if (($res['action'] ?? '') !== $action) return false;
-    if ((float)($res['score'] ?? 0) < 0.5) return false;
+    if (!is_array($res) || empty($res['success'])) {
+        $codes = is_array($res['error-codes'] ?? null) ? implode(',', $res['error-codes']) : 'invalid-response';
+        app_log('recaptcha fail action='.$action.' codes='.$codes.($curlErr ? ' curl='.$curlErr : ''), 'WARN');
+        return false;
+    }
     $host = explode(':', $_SERVER['HTTP_HOST'] ?? '')[0];
     $rh = (string)($res['hostname'] ?? '');
-    return $rh === '' || $host === '' || strcasecmp($rh, $host) === 0;
+    if ($rh !== '' && $host !== '' && strcasecmp($rh, $host) !== 0) {
+        app_log('recaptcha hostname mismatch action='.$action.' host='.$host.' response_host='.$rh, 'WARN');
+        return false;
+    }
+    return true;
 }
 function valid_email(string $email): bool { return (bool)filter_var($email, FILTER_VALIDATE_EMAIL) && strlen($email) <= 190; }
 function rate_limit(string $key, int $limit, int $seconds): bool {
