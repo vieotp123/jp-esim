@@ -31,8 +31,8 @@ ctv_layout_header('Đăng nhập CTV', null);
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <form method="post" autocomplete="off">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
-    <div class="field"><label>Email</label><input type="email" name="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
-    <div class="field"><label>Mật khẩu</label><input type="password" name="password" required></div>
+    <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" name="password" autocomplete="current-password" required></div>
     <button class="btn" type="submit">Đăng nhập</button>
     <p class="muted" style="margin-top:14px;">Chưa có tài khoản? <a href="/ctv/register.php">Đăng ký</a></p>
   </form>

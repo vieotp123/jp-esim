@@ -13,23 +13,23 @@ $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=?'); $st->exec
 $st = $pdo->prepare("SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=? AND status=2"); $st->execute([(int)$user['id']]); $okOrders = (int)$st->fetchColumn();
 $st = $pdo->prepare("SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=? AND status=3"); $st->execute([(int)$user['id']]); $failOrders = (int)$st->fetchColumn();
 $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_topup_orders WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalTopups = (int)$st->fetchColumn();
+$st = $pdo->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalEsims = (int)$st->fetchColumn();
 $tx = $wallet->transactions((int)$user['id'], 10);
 
 ctv_layout_header('Tổng quan', $user);
 ctv_flash_render();
 ?>
-<div class="row">
+<div class="grid">
   <div class="card">
     <h2>Số dư ví</h2>
-    <div style="font-size:28px;font-weight:700;"><?= htmlspecialchars(format_vnd($bal)) ?></div>
+    <div class="metric"><?= htmlspecialchars(format_vnd($bal)) ?></div>
     <p class="muted">Liên hệ admin để nạp số dư hoặc điều chỉnh chiết khấu.</p>
   </div>
   <div class="card">
     <h2>Đơn eSIM</h2>
     <p>Tổng: <strong><?= $totalOrders ?></strong> · Thành công: <strong><?= $okOrders ?></strong> · Thất bại: <strong style="color:#dc2626"><?= $failOrders ?></strong></p>
-    <p>Đơn nạp data: <strong><?= $totalTopups ?></strong></p>
-    <a class="btn" href="/ctv/create-esim.php">Tạo eSIM mới</a>
-    <a class="btn secondary" href="/ctv/topup-esim.php">Nạp data</a>
+    <p>Đơn nạp data: <strong><?= $totalTopups ?></strong></p><p>eSIM đã lưu: <strong><?= $totalEsims ?></strong></p>
+    <div class="actions"><a class="btn" href="/ctv/create-esim.php">Tạo eSIM mới</a><a class="btn secondary" href="/ctv/topup-esim.php">Nạp data</a><a class="btn secondary" href="/ctv/export.php">Xuất CSV</a></div>
   </div>
   <div class="card">
     <h2>Tài khoản</h2>

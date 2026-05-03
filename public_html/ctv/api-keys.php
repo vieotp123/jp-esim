@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             if ($action === 'generate') {
                 $name = trim((string)($_POST['name'] ?? ''));
+                if ($name === '' || mb_strlen($name) > 60) throw new InvalidArgumentException('Tên key phải từ 1-60 ký tự.');
                 $newToken = $svc->generate((int)$user['id'], $name);
                 ctv_flash_set('warn', 'Lưu lại token này ngay – nó chỉ hiển thị một lần.');
             } elseif ($action === 'revoke') {
@@ -41,7 +42,7 @@ ctv_flash_render();
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($newToken): ?>
     <div class="flash warn">
-      Token mới (chỉ hiển thị một lần): <span class="kbd"><?= htmlspecialchars($newToken['token']) ?></span>
+      Token mới (chỉ hiển thị một lần): <span class="kbd" id="new-token"><?= htmlspecialchars($newToken['token']) ?></span> <button class="btn secondary" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('new-token').textContent)">Copy</button>
     </div>
   <?php endif; ?>
   <form method="post">
@@ -73,7 +74,7 @@ ctv_flash_render();
         <td><?= htmlspecialchars((string)($k['last_used_at'] ?? '')) ?></td>
         <td>
           <?php if ((int)$k['status'] === 1): ?>
-          <form method="post" style="display:inline" onsubmit="return confirm('Thu hồi key này?')">
+          <form method="post" style="display:inline" onsubmit="return confirm('Thu hồi key <?= htmlspecialchars((string)$k['name']) ?>?')">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
             <input type="hidden" name="action" value="revoke">
             <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">

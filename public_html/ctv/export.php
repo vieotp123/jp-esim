@@ -7,9 +7,12 @@ $user = CtvAuth::requireUser();
 
 $kind = (string)($_GET['kind'] ?? '');
 if ($kind === 'orders' || $kind === 'topups' || $kind === 'wallet' || $kind === 'esims') {
+    if (!CtvAuth::checkCsrf($_GET['_csrf'] ?? null)) { http_response_code(400); echo 'Invalid export token'; exit; }
+    header('Cache-Control: no-store');
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="ctv_' . $kind . '_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");
     if ($kind === 'orders') {
         fputcsv($out, ['ctv_order_id','plan','retail','discount','ctv_price','quantity','total','status','provider_order_no','iccid','created_at']);
         $st = db()->prepare('SELECT ctv_order_id,carrier,plan_name,retail_price,discount,ctv_price,quantity,total_charge,status,provider_order_no,iccid,created_at FROM ctv_orders WHERE ctv_id=? ORDER BY id DESC LIMIT 5000');
@@ -38,16 +41,17 @@ if ($kind === 'orders' || $kind === 'topups' || $kind === 'wallet' || $kind === 
 }
 
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
+$csrf = CtvAuth::csrfToken();
 ctv_layout_header('Xuất CSV', $user);
 ?>
 <div class="card">
   <h2>Xuất dữ liệu CSV</h2>
   <p class="muted">Tải xuống tối đa 5,000 dòng gần nhất cho mỗi loại.</p>
   <p>
-    <a class="btn" href="?kind=orders">Đơn eSIM</a>
-    <a class="btn" href="?kind=topups">Đơn nạp data</a>
-    <a class="btn" href="?kind=esims">eSIM</a>
-    <a class="btn secondary" href="?kind=wallet">Lịch sử ví</a>
+    <a class="btn" href="?kind=orders&_csrf=<?= urlencode($csrf) ?>">Đơn eSIM</a>
+    <a class="btn" href="?kind=topups&_csrf=<?= urlencode($csrf) ?>">Đơn nạp data</a>
+    <a class="btn" href="?kind=esims&_csrf=<?= urlencode($csrf) ?>">eSIM</a>
+    <a class="btn secondary" href="?kind=wallet&_csrf=<?= urlencode($csrf) ?>">Lịch sử ví</a>
   </p>
 </div>
 <?php ctv_layout_footer();

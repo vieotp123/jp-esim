@@ -38,8 +38,8 @@ ctv_layout_header('Đăng ký CTV', null);
   <?php if ($ok): ?><div class="flash ok"><?= htmlspecialchars($ok) ?></div><?php endif; ?>
   <form method="post" autocomplete="off">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
-    <div class="field"><label>Email</label><input type="email" name="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
-    <div class="field"><label>Mật khẩu (tối thiểu 8 ký tự)</label><input type="password" name="password" minlength="8" required></div>
+    <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
+    <div class="field"><label>Mật khẩu (tối thiểu 8 ký tự)</label><input type="password" name="password" autocomplete="new-password" minlength="8" required></div>
     <div class="field"><label>Tên hiển thị (tùy chọn)</label><input type="text" name="display_name" value="<?= htmlspecialchars((string)($_POST['display_name'] ?? '')) ?>"></div>
     <div class="field"><label>Số điện thoại (tùy chọn)</label><input type="text" name="phone" value="<?= htmlspecialchars((string)($_POST['phone'] ?? '')) ?>"></div>
     <button class="btn" type="submit">Đăng ký</button>

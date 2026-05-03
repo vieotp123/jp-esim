@@ -7,15 +7,17 @@ $user = CtvAuth::requireUser();
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
 $status = (string)($_GET['status'] ?? '');
+$q = trim((string)($_GET['q'] ?? ''));
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 50;
 $rows = (new CtvOrderService())->listForCtv((int)$user['id'], $perPage, ($page - 1) * $perPage, $status ?: null);
+if ($q !== '') { $rows = array_values(array_filter($rows, fn($r) => stripos((string)$r['orderId'], $q) !== false || stripos((string)$r['providerOrderNo'], $q) !== false || stripos((string)$r['carrier'].' '.(string)$r['planName'], $q) !== false)); }
 
 ctv_layout_header('Đơn eSIM', $user);
 ?>
 <div class="card">
   <h2>Đơn eSIM của bạn</h2>
-  <p>
+  <form method="get" class="row"><div class="field"><label>Tìm đơn/gói/provider</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="CTV order id, gói, provider..."></div><div class="field"><label>Trạng thái</label><select name="status"><option value="">Tất cả</option><option value="success" <?= $status==='success'?'selected':'' ?>>Thành công</option><option value="processing" <?= $status==='processing'?'selected':'' ?>>Đang xử lý</option><option value="failed" <?= $status==='failed'?'selected':'' ?>>Thất bại</option></select></div><div class="field"><label>&nbsp;</label><button class="btn">Lọc</button></div></form><p>
     <a href="?status=" class="tag">Tất cả</a>
     <a href="?status=success" class="tag ok">Thành công</a>
     <a href="?status=processing" class="tag warn">Đang xử lý</a>
