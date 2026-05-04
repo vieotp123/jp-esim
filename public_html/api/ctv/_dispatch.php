@@ -37,9 +37,9 @@ function ctv_log_api_call(?array $ctv, ?int $apiKeyId, string $endpoint, string 
 
 function ctv_api_authenticate(): array {
     $token = ctv_api_key_from_request();
-    if ($token === '') ctv_api_response_error('UNAUTHORIZED', 'API key required', 401);
+    if ($token === '') ctv_api_response_error('UNAUTHORIZED', 'Cần API key', 401);
     $row = (new CtvApiKeyService())->authenticate($token);
-    if (!$row) ctv_api_response_error('UNAUTHORIZED', 'API key khong hop le', 401);
+    if (!$row) ctv_api_response_error('UNAUTHORIZED', 'API key không hợp lệ', 401);
     return $row;
 }
 
@@ -47,7 +47,7 @@ function ctv_api_rate_limit(array $ctv, int $apiKeyId, string $endpoint): void {
     $limit = (int)app_config('CTV_API_RATE_LIMIT_PER_MINUTE', 60);
     $rl = new RateLimiter();
     if (!$rl->check('ctv_api:' . $apiKeyId, $limit, 60)) {
-        ctv_api_response_error('RATE_LIMITED', 'Too many requests', 429);
+        ctv_api_response_error('RATE_LIMITED', 'Quá nhiều yêu cầu, vui lòng thử lại sau', 429);
     }
 }
 function ctv_api_dispatch(string $endpoint): void {
@@ -63,7 +63,7 @@ function ctv_api_dispatch(string $endpoint): void {
         ctv_api_response_ok($resp);
     } catch (InvalidArgumentException $e) {
         ctv_log_api_call($ctv, $apiKeyId, $endpoint, $_SERVER['REQUEST_METHOD'] ?? 'GET', $_REQUEST, 400, $e->getMessage(), $start);
-        $status = stripos($e->getMessage(), 'Method not allowed') !== false ? 405 : 400;
+        $status = stripos($e->getMessage(), 'Phương thức không hợp lệ') !== false ? 405 : 400;
         ctv_api_response_error($status === 405 ? 'METHOD_NOT_ALLOWED' : 'VALIDATION_ERROR', $e->getMessage(), $status);
     } catch (RuntimeException $e) {
         ctv_log_api_call($ctv, $apiKeyId, $endpoint, $_SERVER['REQUEST_METHOD'] ?? 'GET', $_REQUEST, 422, $e->getMessage(), $start);
@@ -71,7 +71,7 @@ function ctv_api_dispatch(string $endpoint): void {
     } catch (Throwable $e) {
         app_log('ctv api ['.$endpoint.'] '.$e->getMessage().' '.$e->getFile().':'.$e->getLine(), 'ERROR');
         ctv_log_api_call($ctv, $apiKeyId, $endpoint, $_SERVER['REQUEST_METHOD'] ?? 'GET', $_REQUEST, 500, $e->getMessage(), $start);
-        ctv_api_response_error('SERVER_ERROR', app_debug() ? $e->getMessage() : 'Loi he thong', 500);
+        ctv_api_response_error('SERVER_ERROR', app_debug() ? $e->getMessage() : 'Lỗi hệ thống', 500);
     }
 }
 
@@ -79,19 +79,19 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
     $body = is_array($body) ? $body : [];
     switch ($endpoint) {
         case 'products':
-            if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $type = ($body['type'] ?? 'esim') === 'topup' ? 'topup' : 'esim';
             return (new CtvPricingService())->listFor($ctv, $type, $body['telecom'] ?? null);
         case 'quote':
-            if ($method !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $plan = (new PlanService())->findActive((int)($body['planId'] ?? 0));
             if (!$plan) throw new InvalidArgumentException('Gói không tồn tại');
             $qty = (int)($body['quantity'] ?? 1);
-            if ($qty < 1 || $qty > 100) throw new InvalidArgumentException('Quantity must be between 1 and 100');
+            if ($qty < 1 || $qty > 100) throw new InvalidArgumentException('Số lượng phải từ 1 đến 100');
             $pricing = (new CtvPricingService())->priceFor($ctv, $plan);
             return ['planId' => (int)$plan['id'], 'quantity' => $qty, 'pricing' => $pricing, 'totalCharge' => $pricing['ctvPrice'] * $qty];
         case 'orders.create':
-            if ($method !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             return (new CtvOrderService())->createEsim(
                 $ctv,
                 (int)($body['planId'] ?? 0),
@@ -102,13 +102,13 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
                 isset($body['notes']) ? (string)$body['notes'] : null
             );
         case 'orders.list':
-            if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             return ['orders' => (new CtvOrderService())->listForCtv((int)$ctv['id'], (int)($body['limit'] ?? 50), (int)($body['offset'] ?? 0), $body['status'] ?? null)];
         case 'orders.get':
-            if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             return (new CtvOrderService())->status((int)$ctv['id'], (string)($body['id'] ?? ''));
         case 'topup.create':
-            if ($method !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             return (new CtvTopupService())->create(
                 $ctv,
                 (string)($body['iccid'] ?? ''),
@@ -117,7 +117,7 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
                 isset($body['clientRef']) ? (string)$body['clientRef'] : null
             );
         case 'esims.list':
-            if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $limit = max(1, min((int)($body['limit'] ?? 50), 200));
             $offset = max(0, (int)($body['offset'] ?? 0));
             $st = db()->prepare('SELECT iccid,ctv_order_id,carrier,package_name,total_volume,total_duration,duration_unit,expired_time,esim_status,smdp_status,email_sent_at,created_at FROM ctv_esims WHERE ctv_id=? ORDER BY id DESC LIMIT '.(int)$limit.' OFFSET '.(int)$offset);
@@ -131,7 +131,7 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
             unset($r);
             return ['esims' => $rows];
         case 'wallet':
-            if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             return ['balance' => (new CtvWalletService())->balance((int)$ctv['id'])];
         case 'notifications':
             $svc = new CtvNotificationService();
@@ -141,9 +141,9 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
                     'notifications' => $svc->list((int)$ctv['id'], (int)($body['limit'] ?? 20), (int)($body['offset'] ?? 0)),
                 ];
             }
-            throw new InvalidArgumentException('Method not allowed');
+            throw new InvalidArgumentException('Phương thức không hợp lệ');
         case 'notifications.read':
-            if ($method !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($method !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $svc = new CtvNotificationService();
             $nid = (int)($body['id'] ?? 0);
             if ($nid > 0) {

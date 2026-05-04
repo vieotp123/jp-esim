@@ -18,17 +18,17 @@ function _ctv_qr_err(int $code, string $msg): never {
     exit;
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') _ctv_qr_err(405, 'Method not allowed');
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') _ctv_qr_err(405, 'Phương thức không hợp lệ');
 
 // Auth — reuse helpers from _dispatch.
 require_once __DIR__ . '/_dispatch.php';
 $token = ctv_api_key_from_request();
-if ($token === '') _ctv_qr_err(401, 'API key required');
+if ($token === '') _ctv_qr_err(401, 'Cần API key');
 $ctv = (new CtvApiKeyService())->authenticate($token);
-if (!$ctv) _ctv_qr_err(401, 'API key khong hop le');
+if (!$ctv) _ctv_qr_err(401, 'API key không hợp lệ');
 
 $iccid = preg_replace('/[^0-9]/', '', (string)($_GET['iccid'] ?? '')) ?? '';
-if ($iccid === '' || !preg_match('/^\d{10,25}$/', $iccid)) _ctv_qr_err(400, 'iccid invalid');
+if ($iccid === '' || !preg_match('/^\d{10,25}$/', $iccid)) _ctv_qr_err(400, 'ICCID không hợp lệ');
 
 try {
     $st = db()->prepare('SELECT ac FROM ctv_esims WHERE iccid = ? AND ctv_id = ? LIMIT 1');
@@ -36,15 +36,15 @@ try {
     $ac = (string)($st->fetchColumn() ?: '');
 } catch (Throwable $e) {
     if (function_exists('app_log')) app_log('api esim_qr db err: '.$e->getMessage(), 'ERROR');
-    _ctv_qr_err(500, 'server error');
+    _ctv_qr_err(500, 'Lỗi hệ thống');
 }
 
-if ($ac === '' || stripos($ac, 'LPA:') !== 0) _ctv_qr_err(404, 'not found');
+if ($ac === '' || stripos($ac, 'LPA:') !== 0) _ctv_qr_err(404, 'Không tìm thấy');
 
 try { $png = QrService::pngBytes($ac, 8, 2, 'M'); }
 catch (Throwable $e) {
     if (function_exists('app_log')) app_log('api esim_qr render err: '.$e->getMessage(), 'ERROR');
-    _ctv_qr_err(500, 'qr error');
+    _ctv_qr_err(500, 'Lỗi tạo mã QR');
 }
 
 header('Content-Type: image/png');
