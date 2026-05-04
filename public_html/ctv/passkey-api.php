@@ -21,6 +21,12 @@ if (!in_array($action, $publicActions, true)) {
 
 try {
     $svc = new PasskeyService();
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rl = new RateLimiter();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$rl->check('ctv_passkey_api:' . $ip . ':' . $action, 30, 60)) {
+        throw new RuntimeException('Quá nhiều yêu cầu. Vui lòng thử lại sau.');
+    }
 
     switch ($action) {
         case 'register_begin':
@@ -49,8 +55,6 @@ try {
 
         case 'authenticate_begin':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
-            $rl = new RateLimiter();
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
             if (!$rl->check('passkey_auth:' . $ip, 20, 60)) {
                 throw new RuntimeException('Quá nhiều yêu cầu. Vui lòng thử lại sau.');
             }
@@ -60,8 +64,6 @@ try {
 
         case 'authenticate_finish':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
-            $rl = new RateLimiter();
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
             if (!$rl->check('passkey_auth:' . $ip, 20, 60)) {
                 throw new RuntimeException('Quá nhiều yêu cầu. Vui lòng thử lại sau.');
             }
@@ -92,6 +94,17 @@ try {
             if ($passkeyId <= 0) throw new InvalidArgumentException('ID không hợp lệ');
             $ok = $svc->revokeCredential('ctv', (int)$user['id'], $passkeyId);
             if (!$ok) throw new RuntimeException('Không thể xoá passkey');
+            echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'rename':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
+            $body = json_decode((string)file_get_contents('php://input'), true) ?: [];
+            $passkeyId = (int)($body['id'] ?? 0);
+            $name = trim((string)($body['name'] ?? ''));
+            if ($passkeyId <= 0) throw new InvalidArgumentException('ID không hợp lệ');
+            $ok = $svc->renameCredential('ctv', (int)$user['id'], $passkeyId, $name);
+            if (!$ok) throw new RuntimeException('Không thể đổi tên passkey');
             echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
             exit;
 

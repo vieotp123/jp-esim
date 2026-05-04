@@ -27,6 +27,7 @@ function admin_ctv_require(): array {
     if (!hash_equals($expectedUser, (string)$u) || !hash_equals($expectedPass, (string)$p)) { header('WWW-Authenticate: Basic realm="jp-esim admin"'); http_response_code(401); echo 'Yêu cầu xác thực.'; exit; }
     admin_session_start();
     if (empty($_SESSION['admin_authenticated'])) { session_regenerate_id(true); $_SESSION['admin_authenticated'] = 1; }
+    admin_require_passkey_if_enabled($expectedUser);
     return ['user' => $expectedUser];
 }
 function admin_passkey_required(): bool {
@@ -42,12 +43,26 @@ function admin_passkey_verified(): bool {
     }
     return true;
 }
-function admin_require_passkey_if_enabled(): void {
+function admin_require_passkey_if_enabled(?string $adminUser = null): void {
     if (!admin_passkey_required()) return;
     if (admin_passkey_verified()) return;
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $exempt = ['/admin/ctv/passkey-api.php', '/admin/ctv/passkey-verify.php'];
-    if (in_array($script, $exempt, true)) return;
+    if (in_array($script, ['/admin/ctv/passkey-api.php', '/admin/ctv/passkey-verify.php'], true)) return;
+
+    $adminUser = $adminUser ?? (string)app_config('ADMIN_USER', 'admin');
+    try {
+        $hasPasskey = (new PasskeyService())->hasPasskey('admin', crc32($adminUser));
+    } catch (Throwable $e) {
+        app_log('admin passkey readiness check failed: ' . $e->getMessage(), 'ERROR');
+        return;
+    }
+
+    if (!$hasPasskey) {
+        if ($script === '/admin/ctv/passkey-setup.php') return;
+        header('Location: /admin/ctv/passkey-setup.php?passkey_required=1');
+        exit;
+    }
+
     header('Location: /admin/ctv/passkey-verify.php');
     exit;
 }

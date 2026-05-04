@@ -15,10 +15,7 @@ $adminId = crc32($adminUser);
 $hasPasskey = (new PasskeyService())->hasPasskey('admin', $adminId);
 
 if (!$hasPasskey) {
-    admin_session_start();
-    $_SESSION['admin_passkey_verified'] = 1;
-    $_SESSION['admin_passkey_verified_at'] = time();
-    header('Location: /admin/ctv/dashboard-admin.php');
+    header('Location: /admin/ctv/passkey-setup.php?passkey_required=1');
     exit;
 }
 

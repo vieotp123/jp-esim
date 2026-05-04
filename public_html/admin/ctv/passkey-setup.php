@@ -15,6 +15,9 @@ admin_layout_header('Passkey', $admin);
 <div class="card" style="max-width:720px">
   <h2>Passkey / Khoá bảo mật</h2>
   <p class="muted" style="margin-bottom:16px">Passkey cho phép xác thực hai lớp bằng Face ID, Touch ID hoặc Windows Hello. Tối đa 5 passkey mỗi tài khoản.</p>
+  <?php if (isset($_GET['passkey_required']) && !$passkeys): ?>
+  <div class="flash warn">ADMIN_REQUIRE_PASSKEY đang bật. Vui lòng thêm passkey đầu tiên để kích hoạt xác thực passkey cho khu vực quản trị.</div>
+  <?php endif; ?>
 
   <div id="passkeyNotSupported" style="display:none">
     <div class="flash warn">Trình duyệt không hỗ trợ Passkey. Vui lòng dùng Safari, Chrome hoặc Edge phiên bản mới.</div>

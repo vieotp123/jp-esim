@@ -14,6 +14,28 @@ try {
     $svc = new PasskeyService();
     $adminUser = $admin['user'];
     $adminId = crc32($adminUser);
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rl = new RateLimiter();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$rl->check('admin_passkey_api:' . $ip . ':' . $action, 30, 60)) {
+        throw new RuntimeException('Quá nhiều yêu cầu. Vui lòng thử lại sau.');
+    }
+
+    if (admin_passkey_required() && !admin_passkey_verified()) {
+        $hasPasskey = $svc->hasPasskey('admin', $adminId);
+        $bootstrapActions = ['register_begin', 'register_finish', 'list'];
+        $verifyActions = ['authenticate_begin', 'authenticate_finish'];
+        if ($hasPasskey && !in_array($action, $verifyActions, true)) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'Vui lòng xác thực passkey trước'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        if (!$hasPasskey && !in_array($action, $bootstrapActions, true)) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'Vui lòng thêm passkey đầu tiên'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
 
     switch ($action) {
         case 'register_begin':
@@ -75,6 +97,18 @@ try {
             $ok = $svc->revokeCredential('admin', $adminId, $passkeyId);
             if (!$ok) throw new RuntimeException('Không thể xoá passkey');
             AuditLog::log($adminUser, 'admin_passkey_revoke', 'admin', (string)$adminId, ['passkeyId' => $passkeyId]);
+            echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'rename':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
+            $body = json_decode((string)file_get_contents('php://input'), true) ?: [];
+            $passkeyId = (int)($body['id'] ?? 0);
+            $name = trim((string)($body['name'] ?? ''));
+            if ($passkeyId <= 0) throw new InvalidArgumentException('ID không hợp lệ');
+            $ok = $svc->renameCredential('admin', $adminId, $passkeyId, $name);
+            if (!$ok) throw new RuntimeException('Không thể đổi tên passkey');
+            AuditLog::log($adminUser, 'admin_passkey_rename', 'admin', (string)$adminId, ['passkeyId' => $passkeyId]);
             echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
             exit;
 

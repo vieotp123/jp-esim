@@ -1,7 +1,22 @@
 <?php
 declare(strict_types=1);
 
-require_once '/home/levanrin2404/esimtravel/vendor/autoload.php';
+$autoload = null;
+$dir = __DIR__;
+for ($i = 0; $i < 8; $i++) {
+    $candidate = $dir . '/vendor/autoload.php';
+    if (is_file($candidate)) {
+        $autoload = $candidate;
+        break;
+    }
+    $parent = dirname($dir);
+    if ($parent === $dir) break;
+    $dir = $parent;
+}
+if ($autoload === null) {
+    throw new RuntimeException('Composer autoload not found for PasskeyService');
+}
+require_once $autoload;
 
 use lbuchs\WebAuthn\WebAuthn;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
@@ -92,7 +107,6 @@ final class PasskeyService
 
         return [
             'id' => (int)$this->pdo->lastInsertId(),
-            'credentialId' => $credentialIdB64,
             'deviceName' => $deviceName,
         ];
     }
@@ -164,17 +178,29 @@ final class PasskeyService
         return [
             'userId' => $userId,
             'userType' => $userType,
-            'credentialId' => $credentialIdB64,
         ];
     }
 
     public function listCredentials(string $userType, int $userId): array
     {
         $st = $this->pdo->prepare(
-            'SELECT id, credential_id, device_name, created_at, last_used_at FROM user_passkeys WHERE user_type = ? AND user_id = ? ORDER BY id ASC'
+            'SELECT id, device_name, created_at, last_used_at FROM user_passkeys WHERE user_type = ? AND user_id = ? ORDER BY id ASC'
         );
         $st->execute([$userType, $userId]);
         return $st->fetchAll();
+    }
+
+    public function renameCredential(string $userType, int $userId, int $passkeyId, string $deviceName): bool
+    {
+        $deviceName = trim($deviceName);
+        $nameLength = function_exists('mb_strlen') ? mb_strlen($deviceName) : strlen($deviceName);
+        if ($deviceName === '' || $nameLength > 128) {
+            throw new InvalidArgumentException('Tên passkey không hợp lệ');
+        }
+
+        $st = $this->pdo->prepare('UPDATE user_passkeys SET device_name = ? WHERE id = ? AND user_type = ? AND user_id = ?');
+        $st->execute([$deviceName, $passkeyId, $userType, $userId]);
+        return $st->rowCount() > 0;
     }
 
     public function revokeCredential(string $userType, int $userId, int $passkeyId): bool
