@@ -88,6 +88,17 @@ function ctv_export_ctv_url(string $path): string {
     return ctv_export_base_url() . $path;
 }
 
+function ctv_export_activation_url(?string $lpa, string $os): string {
+    $lpa = trim((string)$lpa);
+    if ($lpa === '' || stripos($lpa, 'LPA:') !== 0) return '';
+    $host = $os === 'android' ? 'https://esimsetup.android.com/esim_qrcode_provisioning' : 'https://esimsetup.apple.com/esim_qrcode_provisioning';
+    return $host . '?carddata=' . rawurlencode($lpa);
+}
+
+function ctv_export_qr_url(string $iccid): string {
+    return $iccid !== '' ? ctv_export_ctv_url('/ctv/qr.php?id=' . rawurlencode($iccid)) : '';
+}
+
 function ctv_export_esim_headers($out): void {
     fputcsv($out, [
         'iccid',
@@ -95,12 +106,7 @@ function ctv_export_esim_headers($out): void {
         'days',
         'activation_ios_url',
         'activation_android_url',
-        'carrier',
-        'status',
-        'created_at',
-        'activated_at',
-        'expired_at',
-        'order_id',
+        'qr_url',
     ]);
 }
 
@@ -114,21 +120,16 @@ function ctv_export_esim_row($out, array $r): void {
         $iccid,
         $data,
         $days,
-        $iccid !== '' ? ctv_export_ctv_url('/ctv/install.php?id=' . rawurlencode($iccid)) : '',
-        $iccid !== '' ? ctv_export_ctv_url('/ctv/qr.php?id=' . rawurlencode($iccid)) : '',
-        $r['carrier'] ?? '',
-        ctv_export_status_label($r['status'] ?? ''),
-        $r['created_at'] ?? '',
-        $r['activated_at'] ?? '',
-        $r['expired_at'] ?? '',
-        $r['order_id'] ?? '',
+        ctv_export_activation_url($r['ac'] ?? '', 'ios'),
+        ctv_export_activation_url($r['ac'] ?? '', 'android'),
+        ctv_export_qr_url($iccid),
     ]);
 }
 
 function ctv_export_esim_select_sql(): string {
     return 'SELECT e.ctv_order_id AS order_id, '
         . 'e.iccid AS iccid, e.carrier AS carrier, o.plan_name AS plan, p.day AS plan_days, '
-        . 'e.total_volume AS total_volume, e.total_duration AS total_duration, '
+        . 'e.total_volume AS total_volume, e.total_duration AS total_duration, e.ac AS ac, '
         . 'COALESCE(NULLIF(e.esim_status, \'\'), NULLIF(e.smdp_status, \'\'), o.status) AS status, '
         . 'e.created_at AS created_at, '
         . ctv_export_col('ctv_esims', 'e', ['activated_at', 'activatedAt'], 'activated_at') . ', '
@@ -195,13 +196,13 @@ if ($kind === 'orders' || $kind === 'topups' || $kind === 'wallet' || $kind === 
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
     if ($kind === 'orders') {
-        fputcsv($out, ['ctv_order_id','iccid','data','days','activation_ios_url','activation_android_url','carrier','quantity','ctv_price','total','status','created_at']);
-        $st = db()->prepare('SELECT o.ctv_order_id,o.carrier,o.plan_name,o.ctv_price,o.quantity,o.total_charge,o.status,o.iccid,o.created_at,p.day AS plan_days FROM ctv_orders o LEFT JOIN plan p ON p.id=o.plan_id WHERE o.ctv_id=?' . str_replace('created_at', 'o.created_at', $dateWhere) . ' ORDER BY o.id DESC LIMIT 10000');
+        fputcsv($out, ['ctv_order_id','iccid','data','days','activation_ios_url','activation_android_url','qr_url','carrier','quantity','ctv_price','total','status','created_at']);
+        $st = db()->prepare('SELECT o.ctv_order_id,o.carrier,o.plan_name,o.ctv_price,o.quantity,o.total_charge,o.status,COALESCE(NULLIF(e.iccid, \'\'), o.iccid) AS iccid,e.ac AS ac,o.created_at,p.day AS plan_days FROM ctv_orders o LEFT JOIN plan p ON p.id=o.plan_id LEFT JOIN ctv_esims e ON e.ctv_order_id=o.ctv_order_id AND e.ctv_id=o.ctv_id AND e.id=(SELECT MIN(e2.id) FROM ctv_esims e2 WHERE e2.ctv_order_id=o.ctv_order_id AND e2.ctv_id=o.ctv_id) WHERE o.ctv_id=?' . str_replace('created_at', 'o.created_at', $dateWhere) . ' ORDER BY o.id DESC LIMIT 10000');
         $st->execute($dateParams);
         $statusMap = [0 => 'pending', 1 => 'processing', 2 => 'success', 3 => 'failed'];
         foreach ($st->fetchAll() as $r) {
             $iccid = preg_replace('/[^0-9]/', '', (string)($r['iccid'] ?? '')) ?? '';
-            fputcsv($out, [$r['ctv_order_id'], $iccid, ctv_export_plan_data_label($r['plan_name'] ?? ''), ctv_export_days_label($r['plan_days'] ?? ''), $iccid !== '' ? ctv_export_ctv_url('/ctv/install.php?id=' . rawurlencode($iccid)) : '', $iccid !== '' ? ctv_export_ctv_url('/ctv/qr.php?id=' . rawurlencode($iccid)) : '', $r['carrier'], $r['quantity'], $r['ctv_price'], $r['total_charge'], $statusMap[(int)$r['status']] ?? '', $r['created_at']]);
+            fputcsv($out, [$r['ctv_order_id'], $iccid, ctv_export_plan_data_label($r['plan_name'] ?? ''), ctv_export_days_label($r['plan_days'] ?? ''), ctv_export_activation_url($r['ac'] ?? '', 'ios'), ctv_export_activation_url($r['ac'] ?? '', 'android'), ctv_export_qr_url($iccid), $r['carrier'], $r['quantity'], $r['ctv_price'], $r['total_charge'], $statusMap[(int)$r['status']] ?? '', $r['created_at']]);
         }
     } elseif ($kind === 'topups') {
         fputcsv($out, ['ctv_topup_id','iccid','data','days','carrier','ctv_price','total','status','created_at']);

@@ -32,7 +32,7 @@ final class CtvTopupService {
     }
 
     public function create(array $ctv, string $iccid, int $planId, string $source = 'panel', ?string $clientRef = null): array {
-        if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+        if ((string)app_config('TOPUP_LOCKED', '0') === '1' && !CtvProviderClient::isTestMode()) {
             throw new RuntimeException('Chức năng nạp data đang tạm khoá. Vui lòng thử lại sau.');
         }
 

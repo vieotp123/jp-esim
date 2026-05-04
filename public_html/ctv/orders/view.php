@@ -45,8 +45,8 @@ $esims = $esStmt->fetchAll();
 $statusMap = [0=>['Chờ xử lý','warn'], 1=>['Đang xử lý','warn'], 2=>['Thành công','ok'], 3=>['Thất bại','err']];
 [$statusLabel, $statusCls] = $statusMap[(int)$order['status']] ?? ['Không rõ', ''];
 
-// Topup eligibility — code-locked while TOPUP_LOCKED=1
-$topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
+// Topup eligibility: test mode may reopen the CTV UI without allowing real provider calls.
+$topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1') && !CtvProviderClient::isTestMode();
 $csrf = CtvAuth::csrfToken();
 
 ctv_layout_header('Đơn ' . $orderId, $user);
@@ -67,6 +67,12 @@ function ctv_order_plan_data(string $plan): string {
         return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
     }
     return 'Data';
+}
+function ctv_order_activation_url(string $lpa, string $os): string {
+    $lpa = trim($lpa);
+    if ($lpa === '' || stripos($lpa, 'LPA:') !== 0) return '';
+    $host = $os === 'android' ? 'https://esimsetup.android.com/esim_qrcode_provisioning' : 'https://esimsetup.apple.com/esim_qrcode_provisioning';
+    return $host . '?carddata=' . rawurlencode($lpa);
 }
 $planStmt = db()->prepare('SELECT day FROM plan WHERE id=? LIMIT 1');
 $planStmt->execute([(int)$order['plan_id']]);
@@ -179,7 +185,8 @@ if ($isPartial): ?>
     $iccidStr = (string)($e['iccid'] ?? '');
     $qr = $iccidStr !== '' ? ('/ctv/qr.php?id=' . urlencode($iccidStr)) : '';
     $lpa = (string)($e['ac'] ?? '');
-    $iosUrl = $iccidStr !== '' ? ('/ctv/install.php?id=' . urlencode($iccidStr)) : '';
+    $iosUrl = ctv_order_activation_url($lpa, 'ios');
+    $androidUrl = ctv_order_activation_url($lpa, 'android');
   ?>
   <div class="esim-card">
     <div class="row">
@@ -212,6 +219,9 @@ if ($isPartial): ?>
         <div class="install-row">
           <?php if ($iosUrl !== ''): ?>
             <a class="btn" href="<?= htmlspecialchars($iosUrl) ?>" target="_blank" rel="noopener">Cài trên iPhone (iOS 17.4+)</a>
+          <?php endif; ?>
+          <?php if ($androidUrl !== ''): ?>
+            <a class="btn secondary" href="<?= htmlspecialchars($androidUrl) ?>" target="_blank" rel="noopener">Cài trên Android</a>
           <?php endif; ?>
           <?php if ($qr !== ''): ?>
             <a class="btn secondary" href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener">Mở QR full-size</a>

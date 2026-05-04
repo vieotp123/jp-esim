@@ -32,6 +32,13 @@ function ctv_api_volume_label($bytes): string {
     return rtrim(rtrim(number_format($bytes / 1073741824, 2, '.', ''), '0'), '.') . ' GB';
 }
 
+function ctv_api_activation_url(?string $lpa, string $os): string {
+    $lpa = trim((string)$lpa);
+    if ($lpa === '' || stripos($lpa, 'LPA:') !== 0) return '';
+    $host = $os === 'android' ? 'https://esimsetup.android.com/esim_qrcode_provisioning' : 'https://esimsetup.apple.com/esim_qrcode_provisioning';
+    return $host . '?carddata=' . rawurlencode($lpa);
+}
+
 function ctv_log_api_call(?array $ctv, ?int $apiKeyId, string $endpoint, string $method, mixed $reqBody, int $status, mixed $respBody, float $start): void {
     try {
         $ip = $_SERVER['REMOTE_ADDR'] ?? null;
@@ -130,16 +137,17 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
             if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $limit = max(1, min((int)($body['limit'] ?? 50), 200));
             $offset = max(0, (int)($body['offset'] ?? 0));
-            $st = db()->prepare('SELECT iccid,ctv_order_id,carrier,total_volume,total_duration,duration_unit,expired_time,esim_status,smdp_status,email_sent_at,created_at FROM ctv_esims WHERE ctv_id=? ORDER BY id DESC LIMIT '.(int)$limit.' OFFSET '.(int)$offset);
+            $st = db()->prepare('SELECT iccid,ctv_order_id,carrier,total_volume,total_duration,duration_unit,expired_time,esim_status,smdp_status,email_sent_at,created_at,ac FROM ctv_esims WHERE ctv_id=? ORDER BY id DESC LIMIT '.(int)$limit.' OFFSET '.(int)$offset);
             $st->execute([(int)$ctv['id']]);
             $rows = $st->fetchAll();
             foreach ($rows as &$r) {
                 $iccid = (string)($r['iccid'] ?? '');
                 $r['data'] = ctv_api_volume_label($r['total_volume'] ?? null);
                 $r['days'] = (int)($r['total_duration'] ?? 0);
-                $r['activationIosUrl'] = $iccid !== '' ? '/ctv/install.php?id=' . rawurlencode($iccid) : '';
-                $r['activationAndroidUrl'] = $iccid !== '' ? '/ctv/qr.php?id=' . rawurlencode($iccid) : '';
-                $r['qrUrl'] = $r['activationAndroidUrl'];
+                $r['activationIosUrl'] = ctv_api_activation_url($r['ac'] ?? '', 'ios');
+                $r['activationAndroidUrl'] = ctv_api_activation_url($r['ac'] ?? '', 'android');
+                $r['qrUrl'] = $iccid !== '' ? '/api/ctv/esim_qr.php?iccid=' . rawurlencode($iccid) : '';
+                unset($r['ac']);
             }
             unset($r);
             return ['esims' => $rows];

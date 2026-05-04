@@ -46,7 +46,7 @@ $warn = null;
 $result = null;
 $lookup = null;
 $svc = new CtvTopupService();
-$topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
+$topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1') && !CtvProviderClient::isTestMode();
 $requestedIccid = ctv_topup_clean_iccid((string)($_POST['iccid'] ?? $_GET['iccid'] ?? ''));
 $action = (string)($_POST['action'] ?? ($requestedIccid !== '' ? 'lookup' : ''));
 
