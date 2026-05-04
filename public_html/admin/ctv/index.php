@@ -15,12 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'set_status') {
         $status = (int)($_POST['status'] ?? 0) ? 1 : 0;
         db()->prepare('UPDATE ctv_users SET status=? WHERE id=?')->execute([$status, $id]);
+        AuditLog::log($admin['user'], $status ? 'ctv_activate' : 'ctv_deactivate', 'ctv', (string)$id);
         $flash = ['ok', 'Đã cập nhật trạng thái CTV #' . $id];
     } elseif ($action === 'set_discount') {
         $discount = (int)($_POST['discount'] ?? 0); if ($discount < 0 || $discount > 500000) throw new RuntimeException('Chiết khấu không hợp lệ');
         $tier = (int)($_POST['tier_id'] ?? 0);
         if ($tier > 0) { $st=db()->prepare('SELECT 1 FROM ctv_tiers WHERE id=?'); $st->execute([$tier]); if (!$st->fetchColumn()) throw new RuntimeException('Tier không tồn tại'); }
         db()->prepare('UPDATE ctv_users SET discount_per_esim=?, tier_id=? WHERE id=?')->execute([$discount, $tier ?: null, $id]);
+        AuditLog::log($admin['user'], 'ctv_discount_update', 'ctv', (string)$id, ['discount' => $discount, 'tier' => $tier]);
         $flash = ['ok', 'Đã cập nhật chiết khấu CTV #' . $id];
     } elseif ($action === 'wallet_credit' || $action === 'wallet_debit') {
         $amount = (int)($_POST['amount'] ?? 0); $note = trim((string)($_POST['note'] ?? ''));
@@ -30,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $svc = new CtvWalletService();
         if ($action === 'wallet_credit') $svc->credit($id, $amount, 'admin_credit', 'manual', null, $note, $admin['user']);
         else $svc->debit($id, $amount, 'admin_debit', 'manual', null, $note, $admin['user']);
+        AuditLog::log($admin['user'], $action === 'wallet_credit' ? 'wallet_credit' : 'wallet_debit', 'ctv', (string)$id, ['amount' => $amount, 'note' => $note]);
         $flash = ['ok', 'Đã cập nhật ví CTV #' . $id];
     }
 }

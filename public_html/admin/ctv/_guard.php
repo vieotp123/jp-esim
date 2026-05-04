@@ -56,6 +56,7 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email QR</a>
     <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Failed Queue</a>
     <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Logs</a>
+    <a href="/admin/ctv/audit.php"<?= admin_nav_active('/admin/ctv/audit.php') ?>>Audit</a>
   </nav>
   <span class="right">
     <span class="vip-tag">VIP</span>

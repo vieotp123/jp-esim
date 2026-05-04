@@ -23,15 +23,18 @@ try {
             $resolverNote = $note !== '' ? $note : ('Resolved by ' . $admin['user']);
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $resolverNote, $id]);
+            AuditLog::log($admin['user'], 'queue_resolve', 'queue', (string)$id, ['ref' => $row['ref_id'], 'kind' => $row['kind'], 'note' => $resolverNote]);
             $flash = ['ok', 'Đã đánh dấu giải quyết #' . $id];
         } elseif ($action === 'ignore') {
             $resolverNote = $note !== '' ? $note : ('Ignored by ' . $admin['user']);
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['ignored', $resolverNote, $id]);
+            AuditLog::log($admin['user'], 'queue_ignore', 'queue', (string)$id, ['ref' => $row['ref_id'], 'kind' => $row['kind'], 'note' => $resolverNote]);
             $flash = ['warn', 'Đã bỏ qua #' . $id];
         } elseif ($action === 'reopen') {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NULL, resolver_note=? WHERE id=?')
                 ->execute(['open', $note !== '' ? $note : null, $id]);
+            AuditLog::log($admin['user'], 'queue_reopen', 'queue', (string)$id, ['ref' => $row['ref_id'], 'kind' => $row['kind']]);
             $flash = ['ok', 'Đã mở lại #' . $id];
         } elseif ($action === 'cancel_order') {
             $refId = (string)($row['ref_id'] ?? '');
@@ -48,6 +51,7 @@ try {
             $cancelNote = '[cancelled] ' . ($note !== '' ? $note : 'Admin cancel') . ' by ' . $admin['user'];
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $cancelNote, $id]);
+            AuditLog::log($admin['user'], 'queue_cancel', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $cancelNote]);
             $flash = ['warn', 'Đã huỷ đơn ' . htmlspecialchars($stripped) . ' và đóng mục #' . $id . ' — không gọi provider.'];
         } elseif ($action === 'mark_refunded') {
             $refId = (string)($row['ref_id'] ?? '');
@@ -64,6 +68,7 @@ try {
             $refundNote = '[refunded] ' . ($note !== '' ? $note : 'Manual bank refund confirmed') . ' by ' . $admin['user'];
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $refundNote, $id]);
+            AuditLog::log($admin['user'], 'queue_refund', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $refundNote]);
             $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . htmlspecialchars($stripped) . ' — không gọi provider/bank API.'];
         } elseif ($action === 'retry') {
             $refId = (string)($row['ref_id'] ?? '');
