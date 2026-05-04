@@ -65,7 +65,7 @@ $assetVer = time();
       <div class="segmented" id="telecomTabs"></div>
       <div class="plan-grid" id="plans"></div>
       <div class="form-card">
-        <label>Email nhận QR</label><input id="orderEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label>Email nhận QR</label><input id="orderEmail" type="email" placeholder="email@cuaban.com" autocomplete="email">
                 <button class="primary" id="buyBtn">Mua ngay</button>
       </div>
       <div class="info-card trust-card">
@@ -98,7 +98,7 @@ $assetVer = time();
       <div class="form-card"><label>ICCID hoặc mã đơn</label><div class="input-row"><input id="topupLookup" placeholder="8985... hoặc Nxxxxxxx"><button id="lookupTopupBtn">Kiểm tra</button></div></div>
       <div id="topupInfo"></div>
       <div class="plan-grid" id="topupPlans"></div>
-      <div class="form-card hidden" id="topupForm"><label>Email</label><input id="topupEmail" type="email" placeholder="you@example.com"><button class="primary" id="createTopupBtn">Tạo đơn nạp data</button></div>
+      <div class="form-card hidden" id="topupForm"><label>Email nhận thông báo</label><input id="topupEmail" type="email" placeholder="email@cuaban.com"><button class="primary" id="createTopupBtn">Tạo đơn nạp data</button></div>
     </section>
 
     <section class="view" id="view-support">

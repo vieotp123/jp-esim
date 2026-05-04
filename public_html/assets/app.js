@@ -171,7 +171,7 @@ async function lookupTopup(){
   const id=input ? input.value.trim() : '';
   if(!id)return toast('Nhập ICCID hoặc mã đơn');
   const info=$('#topupInfo');
-  if(info) info.innerHTML='<div class="info-card"><b>Đang kiểm tra eSIM...</b><br><span class="muted">Hệ thống đang gọi trực tiếp nhà cung cấp bằng ICCID.</span></div>';
+  if(info) info.innerHTML='<div class="info-card"><b>Đang kiểm tra eSIM...</b><br><span class="muted">Hệ thống đang kiểm tra thông tin eSIM theo ICCID.</span></div>';
   try{
     const d=await api('/api/topup.php?id='+encodeURIComponent(id));
     state.topupIccid=d.iccid;
