@@ -138,7 +138,7 @@ final class PasskeyService
 
         $userId = (int)$passkey['user_id'];
 
-        $challengeRow = $this->consumeChallenge($userType, $userId > 0 ? $userId : null, 'authenticate');
+        $challengeRow = $this->consumeChallenge($userType, null, 'authenticate');
         $challengeBinary = $challengeRow['challenge_binary'];
 
         $this->webauthn->processGet(
