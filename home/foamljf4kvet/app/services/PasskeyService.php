@@ -75,7 +75,10 @@ final class PasskeyService
         $credentialIdB64 = $this->base64url_encode($credentialId);
         $publicKeyPem = $data->credentialPublicKey;
         $signCount = $data->signatureCounter ?? 0;
-        $aaguid = $data->AAGUID ?? null;
+        $aaguidRaw = $data->AAGUID ?? null;
+        $aaguid = ($aaguidRaw !== null && strlen($aaguidRaw) === 16)
+            ? vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($aaguidRaw), 4))
+            : $aaguidRaw;
 
         $st = $this->pdo->prepare('SELECT id FROM user_passkeys WHERE credential_id = ?');
         $st->execute([$credentialIdB64]);
