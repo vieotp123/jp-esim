@@ -61,7 +61,7 @@ function admin_layout_header(string $title, array $admin): void {
     ?>
 <!doctype html><html lang="vi"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title><?= htmlspecialchars($title) ?> · jp-esim Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,9 +77,9 @@ function admin_layout_header(string $title, array $admin): void {
   </div>
   <nav>
     <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Tổng quan</a>
-    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>Danh sách CTV</a>
-    <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn CTV</a>
-    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Hàng đợi Email</a>
+    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>CTV</a>
+    <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn hàng</a>
+    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email</a>
     <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi</a>
     <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>Nạp ví</a>
     <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Thông báo</a>
@@ -88,11 +88,11 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/passkey-setup.php"<?= admin_nav_active('/admin/ctv/passkey-setup.php') ?>>Passkey</a>
   </nav>
   <span class="right">
-    <span class="vip-tag">VIP</span>
+    <span class="vip-tag">ADMIN</span>
     <span><?= htmlspecialchars($admin['user']) ?></span>
   </span>
 </header>
 <main>
-<div class="page-title"><h1><?= htmlspecialchars($title) ?></h1><span class="crumb">/admin/ctv</span></div>
+<div class="page-title"><h1><?= htmlspecialchars($title) ?></h1></div>
 <?php }
 function admin_layout_footer(): void { echo '</main></body></html>'; }
