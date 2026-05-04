@@ -58,7 +58,14 @@
   - Part 4: Retail experience — /tra-cuu order tracking page with progress bar, Vietnamese email templates (esim_ready, order_confirmed, topup_confirmed, order_failed)
   - Part 5: Database migrations (ctv_notifications, ctv_topup_requests, admin_audit_log)
   - Provider leak scan: removed provider_order_no from CTV exports and pages
-- Next: Phase E — webhook replay testing, monitoring/alerting, full production readiness review
+- Phase E (passkey auth): Phase 1 done — optional passkey for CTV and admin
+  - PasskeyService wrapper around lbuchs/WebAuthn v2.2 (RP ID: jp-esim.vip)
+  - DB: user_passkeys + webauthn_challenges tables (migration 004)
+  - CTV: /ctv/security.php register/revoke, /ctv/login.php passkey login button, /ctv/passkey-api.php
+  - Admin: /admin/ctv/passkey-setup.php register/revoke, /admin/ctv/passkey-api.php, optional ADMIN_REQUIRE_PASSKEY=1 enforcement
+  - Client: /assets/passkey.js (WebAuthn create/get helpers)
+  - Passwords always remain as fallback
+- Next: Phase E Phase 2 — passkey-preferred (prompt passkey first, password fallback), webhook replay testing, monitoring/alerting
 
 ## Reporting
 After each task: list files changed, tests run, results, commit hash.

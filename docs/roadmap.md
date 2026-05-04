@@ -126,4 +126,13 @@ After each milestone report:
   - Part 5 (DB): migrations for ctv_notifications, ctv_topup_requests, admin_audit_log
   - Leak scan: removed provider_order_no from CTV export CSV and CTV-facing pages
   - Smoke tests: all endpoints 200/401/302 as expected, lint 0 errors, provider domain scan clean
+- 2026-05-04: Phase E Passkey Auth Phase 1 complete:
+  - PasskeyService: lbuchs/WebAuthn v2.2 wrapper, RP ID jp-esim.vip, challenge TTL 5min, max 5 passkeys/user
+  - DB migration 004: user_passkeys (credential_id, public_key_pem, sign_count, transports, device_name) + webauthn_challenges
+  - CTV passkey: security.php (register/revoke UI), passkey-api.php (6 actions), login.php passkey button, _layout.php nav link
+  - Admin passkey: passkey-setup.php (register/revoke UI), passkey-api.php (6 actions), _guard.php (nav link + optional ADMIN_REQUIRE_PASSKEY enforcement with 8h TTL)
+  - Client: passkey.js (b64url encode/decode, WebAuthn create/get, register/login helpers)
+  - CtvAuth::loginWithPasskey() for session creation after passkey assertion
+  - Passwords remain as full fallback — passkeys are additive only
+  - Smoke: all lint clean, CTV login 200 with passkey.js, security 302, APIs 401 without auth, provider leak scan clean
 - Local latest commit: see `git log --oneline -5`.
