@@ -17,7 +17,7 @@ $target = '/?topup_id=' . rawurlencode($id) . '#topup';
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow">
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Đang chuyển đến nạp data</title>
 <script>
