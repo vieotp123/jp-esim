@@ -39,7 +39,7 @@ ctv_layout_header('Đơn eSIM', $user);
       <tr>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars($r['orderId']) ?>" class="kbd" style="text-decoration:none"><?= htmlspecialchars($r['orderId']) ?></a></td>
         <td><?= htmlspecialchars($r['carrier'].' '.$r['planName']) ?></td>
-        <td><?= (int)$r['quantity'] ?></td>
+        <td><?= (int)$r['quantity'] ?><?php if ((int)$r['quantity'] > 1 && isset($r['provisionedCount'])): $pc = (int)$r['provisionedCount']; ?> <span class="tag <?= $pc >= (int)$r['quantity'] ? 'ok' : ($pc > 0 ? 'warn' : '') ?>" style="font-size:11px"><?= $pc ?>/<?= (int)$r['quantity'] ?></span><?php endif; ?></td>
         <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></td>
         <td>
           <?php

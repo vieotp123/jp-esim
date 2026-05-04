@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (new CtvWalletService())->debit($ctvId, $totalCharge, 'order_retry', 'ctv_order', $orderId, $adminNote, $admin['user']);
                 db()->prepare('UPDATE ctv_orders SET status=1, needs_admin=0, error_message=NULL, updated_at=NOW() WHERE ctv_order_id=?')->execute([$orderId]);
                 try {
-                    $resp = (new CtvProviderClient())->createOrder($ctvId, $orderId, (string)$row['pack_code'], $orderId);
+                    $resp = (new CtvProviderClient())->createOrder($ctvId, $orderId, (string)$row['pack_code'], $orderId, (int)$row['quantity']);
                     if (!empty($resp['success'])) {
                         db()->prepare('UPDATE ctv_orders SET status=2, provider_order_no=?, provider_transaction_id=?, updated_at=NOW() WHERE ctv_order_id=?')
                             ->execute([(string)($resp['obj']['orderNo'] ?? ''), (string)($resp['obj']['transactionId'] ?? $orderId), $orderId]);
@@ -88,7 +88,11 @@ admin_layout_header('Đơn CTV', $admin);
       <tr>
         <td><span class="kbd"><?= htmlspecialchars($oid) ?></span></td>
         <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
-        <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['plan_name']) ?> ×<?= (int)$r['quantity'] ?></td>
+        <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['plan_name']) ?> ×<?= (int)$r['quantity'] ?><?php
+          $qty=(int)$r['quantity'];
+          $pcSt=db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');$pcSt->execute([$oid]);$pc=(int)$pcSt->fetchColumn();
+          if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:11px"><?= $pc ?>/<?= $qty ?></span><?php endif;
+        ?></td>
         <td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td>
         <td><span class="tag <?= $statusCls[$st] ?? '' ?>"><?= $statusMap[$st] ?? '?' ?></span><?php if ((int)$r['needs_admin']): ?> <span class="tag err">Cần xử lý</span><?php endif; ?></td>
         <td style="max-width:240px;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message'] ?? ''), 0, 220, '…')) ?></td>

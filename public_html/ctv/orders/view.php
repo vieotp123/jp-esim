@@ -50,8 +50,8 @@ $topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
 
 ctv_layout_header('Đơn ' . $orderId, $user);
 
-// Auto-refresh hint: while order is pending or success-without-esims, refetch every 30s.
-$needsAutoRefresh = ((int)$order['status'] < 2) || ((int)$order['status'] === 2 && empty($esims));
+// Auto-refresh while pending, success-without-esims, or partial provisioning.
+$needsAutoRefresh = ((int)$order['status'] < 2) || ((int)$order['status'] === 2 && (empty($esims) || count($esims) < (int)$order['quantity']));
 if ($needsAutoRefresh) {
     echo '<meta http-equiv="refresh" content="30">';
 }
@@ -100,7 +100,10 @@ function _bytes_to_gb($b): string {
       <div class="kv">
         <b>Gói</b><div><?= htmlspecialchars((string)$order['carrier'].' '.(string)$order['plan_name']) ?></div>
         <b>Mã gói</b><div><span class="kbd"><?= htmlspecialchars((string)$order['pack_code']) ?></span></div>
-        <b>Số lượng</b><div><?= (int)$order['quantity'] ?></div>
+        <b>Số lượng</b><div><?= (int)$order['quantity'] ?><?php
+          $qty = (int)$order['quantity'];
+          $provCount = count($esims);
+          if ($qty > 1): ?> <span class="tag <?= $provCount >= $qty ? 'ok' : ($provCount > 0 ? 'warn' : '') ?>"><?= $provCount ?>/<?= $qty ?> provisioned</span><?php endif; ?></div>
         <b>Tạo lúc</b><div><?= htmlspecialchars((string)$order['created_at']) ?></div>
         <b>Cập nhật</b><div><?= htmlspecialchars((string)$order['updated_at']) ?></div>
         <b>Email khách</b><div><?= htmlspecialchars((string)($order['email'] ?? '—')) ?></div>
@@ -121,8 +124,18 @@ function _bytes_to_gb($b): string {
   </div>
 </div>
 
+<?php
+$qty = (int)$order['quantity'];
+$provCount = count($esims);
+$isPartial = (int)$order['status'] === 2 && $qty > 1 && $provCount > 0 && $provCount < $qty;
+if ($isPartial): ?>
+<div class="card" style="border:1px solid #e2a336;background:rgba(226,163,54,0.08)">
+  <p style="margin:0;color:#e2a336"><strong>⚠ Provisioned chưa đủ:</strong> <?= $provCount ?>/<?= $qty ?> eSIM đã sẵn sàng. Hệ thống đang tiếp tục lấy phần còn lại — admin đã được thông báo.</p>
+</div>
+<?php endif; ?>
+
 <div class="card">
-  <h2>eSIM (<?= count($esims) ?>)
+  <h2>eSIM (<?= count($esims) ?><?php if ($qty > 1): ?>/<?= $qty ?><?php endif; ?>)
     <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>" style="float:right">Làm mới</a>
   </h2>
   <?php if (!$esims): ?>
