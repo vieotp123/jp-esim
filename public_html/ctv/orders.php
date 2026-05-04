@@ -44,7 +44,7 @@ ctv_layout_header('Đơn eSIM', $user);
       </div>
       <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)($r['planLabel'] ?? $r['carrier'])) ?></span></div>
       <div class="m-row"><span class="m-label">SL</span><span class="m-val"><?= (int)$r['quantity'] ?><?php if ((int)$r['quantity'] > 1 && isset($r['provisionedCount'])): $pc = (int)$r['provisionedCount']; ?> <span class="tag <?= $pc >= (int)$r['quantity'] ? 'ok' : ($pc > 0 ? 'warn' : '') ?>" style="font-size:10px"><?= $pc ?>/<?= (int)$r['quantity'] ?></span><?php endif; ?></span></div>
-      <div class="m-row"><span class="m-label">Phí Partner</span><span class="m-val" style="color:var(--c-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Phí đối tác</span><span class="m-val" style="color:var(--c-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></span></div>
       <div class="m-row"><span class="m-label">Ngày tạo</span><span class="m-val muted"><?= htmlspecialchars((string)$r['createdAt']) ?></span></div>
       <?php if ($r['errorMessage']): ?><div style="font-size:12px;color:var(--c-muted);margin-top:4px">⚠ <?= htmlspecialchars($r['errorMessage']) ?></div><?php endif; ?>
     </a>
@@ -52,7 +52,7 @@ ctv_layout_header('Đơn eSIM', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Mã đơn</th><th>Gói</th><th>SL</th><th>Phí Partner</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+    <thead><tr><th>Mã đơn</th><th>Gói</th><th>SL</th><th>Phí đối tác</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>

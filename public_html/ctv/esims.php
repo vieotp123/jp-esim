@@ -52,7 +52,7 @@ function ctv_esims_profile_label(array $row): string {
 }
 
 $csrf = CtvAuth::csrfToken();
-ctv_layout_header('eSIM của Partner', $user);
+ctv_layout_header('eSIM đối tác', $user);
 ?>
 <style>
   .qr-thumb{height:44px;width:44px;border-radius:8px;border:1px solid var(--c-line-2);transition:transform .15s}
@@ -92,7 +92,7 @@ ctv_layout_header('eSIM của Partner', $user);
   </div>
   <div class="table-wrap" style="margin-bottom:16px">
   <table>
-    <thead><tr><th>Đơn Partner</th><th>Nhà mạng</th><th>Cập nhật</th></tr></thead>
+    <thead><tr><th>Đơn đối tác</th><th>Nhà mạng</th><th>Cập nhật</th></tr></thead>
     <tbody>
       <?php foreach ($pending as $p): ?>
       <tr>
@@ -141,7 +141,7 @@ ctv_layout_header('eSIM của Partner', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th class="select-cell"><input type="checkbox" id="selectAllEsims" aria-label="Chọn tất cả eSIM"></th><th>QR</th><th>ICCID</th><th>Đơn Partner</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
+    <thead><tr><th class="select-cell"><input type="checkbox" id="selectAllEsims" aria-label="Chọn tất cả eSIM"></th><th>QR</th><th>ICCID</th><th>Đơn đối tác</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
