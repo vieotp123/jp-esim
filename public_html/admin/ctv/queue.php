@@ -52,7 +52,7 @@ try {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $cancelNote, $id]);
             AuditLog::log($admin['user'], 'queue_cancel', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $cancelNote]);
-            $flash = ['warn', 'Đã huỷ đơn ' . htmlspecialchars($stripped) . ' và đóng mục #' . $id . ' — không gọi provider.'];
+            $flash = ['warn', 'Đã huỷ đơn ' . htmlspecialchars($stripped) . ' và đóng mục #' . $id . ' — không gọi hệ thống ngoài.'];
         } elseif ($action === 'mark_refunded') {
             $refId = (string)($row['ref_id'] ?? '');
             $stripped = str_starts_with($refId, 'TEST-DEMO-') ? substr($refId, strlen('TEST-DEMO-')) : $refId;
@@ -69,7 +69,7 @@ try {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $refundNote, $id]);
             AuditLog::log($admin['user'], 'queue_refund', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $refundNote]);
-            $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . htmlspecialchars($stripped) . ' — không gọi provider/bank API.'];
+            $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
         } elseif ($action === 'retry') {
             $refId = (string)($row['ref_id'] ?? '');
             $kind  = (string)($row['kind'] ?? '');
@@ -92,14 +92,14 @@ try {
                 if ($ok) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                         ->execute(['resolved', '[email retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
-                    $flash = ['ok', 'Đã resend email cho ' . htmlspecialchars($stripped) . ' — không gọi provider.'];
+                    $flash = ['ok', 'Đã gửi lại email cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
                 } else {
                     $flash = ['err', 'Resend email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra Mailgun/logs.'];
                 }
             } else {
                 $providerTest = LegacyProviderClient::isTestMode();
                 if (!$isTestDemo && !$providerTest) {
-                    throw new RuntimeException('Provider retry bị chặn: cần PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-* (an toàn). Bật env và refresh.');
+                    throw new RuntimeException('Thử lại bị chặn: cần PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-* (an toàn). Bật env và tải lại.');
                 }
                 $svc = new RetailFulfillmentService();
                 $result = null;
@@ -248,14 +248,14 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
           <?php if ($st === 'open'): ?>
             <?php if ($k === 'provider_error' || $k === 'email_error'): ?>
               <?php if ($k === 'email_error'): ?>
-              <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Resend email cho mục này?\nKhông gọi provider, chỉ gửi lại mail khách.');">
+              <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Gửi lại email cho mục này?\nKhông gọi hệ thống ngoài, chỉ gửi lại mail khách.');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="retry">
                 <button class="btn gold sm" title="Gửi lại email qua Mailgun, không gọi nhà cung cấp">✉ Gửi lại email</button>
               </form>
               <?php else: ?>
-              <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Retry provider cho mục này?\nLưu ý: sẽ chỉ thực thi khi PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-*');">
+              <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Thử lại xử lý cho mục này?\nLưu ý: sẽ chỉ thực thi khi PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-*');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="retry">
@@ -265,7 +265,7 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
             <?php endif; ?>
             <details>
               <summary>Huỷ / Hoàn tiền / Xử lý</summary>
-              <form method="post" style="margin-top:8px" onsubmit="return confirm('HUỶ ĐƠN: Đặt status=3 (cancelled) cho đơn gốc.\nKhông gọi provider API.\nKhông hoàn tiền tự động — cần chuyển khoản thủ công nếu cần.');">
+              <form method="post" style="margin-top:8px" onsubmit="return confirm('HUỶ ĐƠN: Đặt status=3 (cancelled) cho đơn gốc.\nKhông gọi hệ thống ngoài.\nKhông hoàn tiền tự động — cần chuyển khoản thủ công nếu cần.');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="cancel_order">
