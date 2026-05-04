@@ -45,16 +45,16 @@ $recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total A
 admin_layout_header('Tổng quan Admin', $admin);
 ?>
 <div class="summary">
-  <div class="card gold"><b>Doanh thu hôm nay</b><h2><?= htmlspecialchars(format_vnd($revToday)) ?></h2><div class="sub">Lẻ + CTV</div></div>
+  <div class="card gold"><b>Doanh thu hôm nay</b><h2><?= htmlspecialchars(format_vnd($revToday)) ?></h2><div class="sub">Lẻ + Đối tác</div></div>
   <div class="card"><b>Doanh thu 7 ngày</b><h2><?= htmlspecialchars(format_vnd($rev7d)) ?></h2></div>
   <div class="card"><b>Doanh thu 30 ngày</b><h2><?= htmlspecialchars(format_vnd($rev30d)) ?></h2></div>
-  <div class="card"><b>CTV hoạt động</b><h2><?= $ctvActive ?></h2><div class="sub">Chờ xác minh: <?= $ctvPending ?> · Vô hiệu: <?= $ctvDisabled ?></div></div>
+  <div class="card"><b>Đối tác hoạt động</b><h2><?= $ctvActive ?></h2><div class="sub">Chờ xác minh: <?= $ctvPending ?> · Vô hiệu: <?= $ctvDisabled ?></div></div>
   <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Đơn cần xử lý</b><h2><?= $queueTotal ?></h2><?php if ($queueMap): ?><div class="sub"><?php $kindVi=['amount_mismatch'=>'Sai số tiền','fulfillment_error'=>'Lỗi xử lý','email_error'=>'Lỗi email','payment_orphan'=>'Thiếu đơn']; foreach ($queueMap as $k => $v) echo '<span class="tag err" style="margin:2px">'.htmlspecialchars($kindVi[$k] ?? $k).': '.$v.'</span> '; ?></div><?php endif; ?></div>
 </div>
 
 <div class="dash-grid">
 <div class="card">
-  <h2>Top 5 CTV (30 ngày)</h2>
+  <h2>Top 5 đối tác (30 ngày)</h2>
   <?php if ($top5): ?>
   <div class="m-cards">
     <?php foreach ($top5 as $t): ?>
@@ -66,7 +66,7 @@ admin_layout_header('Tổng quan Admin', $admin);
     <?php endforeach; ?>
   </div>
   <div class="table-wrap">
-  <table><thead><tr><th>CTV</th><th>Đơn</th><th>Doanh thu</th></tr></thead><tbody>
+  <table><thead><tr><th>Đối tác</th><th>Đơn</th><th>Doanh thu</th></tr></thead><tbody>
   <?php foreach ($top5 as $t): ?>
   <tr>
     <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?></a> <?= htmlspecialchars((string)($t['company_name'] ?: $t['email'])) ?></td>
@@ -82,7 +82,7 @@ admin_layout_header('Tổng quan Admin', $admin);
 <div class="card">
   <h2>Đơn hàng theo trạng thái</h2>
   <?php foreach (['retail', 'ctv'] as $src): ?>
-  <h3><?= $src === 'retail' ? 'KHÁCH LẺ' : 'CTV' ?></h3>
+  <h3><?= $src === 'retail' ? 'KHÁCH LẺ' : 'Đối tác' ?></h3>
   <div class="filter-row">
     <?php foreach ($orderBreakdown[$src] ?? [] as $label => $cnt): ?>
       <span class="tag <?= $label === 'Thành công' ? 'ok' : ($label === 'Thất bại' ? 'err' : ($label === 'Chờ TT' ? 'warn' : 'info')) ?>"><?= htmlspecialchars($label) ?>: <?= $cnt ?></span>
@@ -93,7 +93,7 @@ admin_layout_header('Tổng quan Admin', $admin);
 </div>
 
 <div class="card">
-  <h2>10 đơn gần nhất (Lẻ + CTV)</h2>
+  <h2>10 đơn gần nhất (Lẻ + Đối tác)</h2>
   <div class="m-cards">
     <?php foreach ($recent as $r):
       $s = (int)$r['status'];
@@ -101,7 +101,7 @@ admin_layout_header('Tổng quan Admin', $admin);
       $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
     ?>
     <div class="m-card">
-      <div class="m-head"><span><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'CTV' : 'Lẻ' ?></span> <span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></span><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></div>
+      <div class="m-head"><span><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'Đối tác' : 'Lẻ' ?></span> <span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></span><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></div>
       <div class="m-row"><span class="m-label">Số tiền</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></span></div>
       <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
     </div>
@@ -115,7 +115,7 @@ admin_layout_header('Tổng quan Admin', $admin);
     $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
   ?>
   <tr>
-    <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'CTV' : 'Lẻ' ?></span></td>
+    <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'Đối tác' : 'Lẻ' ?></span></td>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></td>
     <td><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></td>
     <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>

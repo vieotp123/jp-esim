@@ -63,6 +63,11 @@ header.admin-h .vip-tag{
   background:linear-gradient(180deg, var(--a-gold-2), var(--a-gold-deep)); color:#241804;
   box-shadow:0 4px 14px rgba(230,192,104,.35);
 }
+header.admin-h .passkey-tag{
+  font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;
+  color:#86efac;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.25);
+  white-space:nowrap;
+}
 
 /* Layout */
 main{max-width:1280px; margin:24px auto; padding:0 18px}
@@ -166,6 +171,12 @@ tbody tr{transition:background .1s}
 .flash.ok{background:rgba(52,211,153,.10); color:#86efac; border-color:rgba(52,211,153,.32)}
 .flash.err{background:rgba(248,113,113,.10); color:#fca5a5; border-color:rgba(248,113,113,.30)}
 .flash.warn{background:rgba(251,191,36,.10); color:#fde68a; border-color:rgba(251,191,36,.30)}
+.security-banner{
+  border-color:rgba(230,192,104,.38);
+  background:linear-gradient(180deg, rgba(230,192,104,.13), rgba(17,24,43,.96));
+}
+.security-banner h2{margin-bottom:6px}
+.security-banner .muted{max-width:620px}
 
 /* Misc */
 .kbd{font-family:ui-monospace,'SF Mono',Menlo,monospace; background:#0a1020; padding:2px 8px; border-radius:6px; border:1px solid var(--a-line-2); font-size:12px; color:var(--a-ink-2)}
@@ -213,6 +224,7 @@ details[open] summary{color:var(--a-gold)}
 .m-card .m-val{font-size:13px;color:var(--a-ink);font-weight:500;text-align:right}
 .m-card .m-head{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .m-card .m-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--a-line)}
+.m-card .m-actions form{flex:1;min-width:120px}
 .m-card .m-actions .btn{flex:1;min-height:40px;justify-content:center}
 
 /* Hamburger / Drawer */
@@ -266,6 +278,7 @@ header.admin-h .hamburger span::after{content:'';top:6px;left:0;width:18px;posit
   header.admin-h nav a:last-child{border-bottom:0}
   header.admin-h nav a.active{background:rgba(230,192,104,.08);border-left:3px solid var(--a-gold)}
   header.admin-h .right{gap:8px}
+  header.admin-h .right > span:last-child{display:none}
   main{padding:0 12px; margin:16px auto}
   .page-title h1{font-size:18px}
   .card{padding:16px 14px;border-radius:12px}
@@ -294,6 +307,7 @@ header.admin-h .hamburger span::after{content:'';top:6px;left:0;width:18px;posit
 @media (max-width:480px){
   .summary{grid-template-columns:1fr}
   header.admin-h nav{width:260px}
+  header.admin-h .passkey-tag{display:none}
   table{min-width:500px}
   .btn{width:100%;justify-content:center}
   .btn.sm{width:auto}

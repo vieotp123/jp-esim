@@ -30,10 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = CtvAuth::csrfToken();
-ctv_layout_header('Đăng ký CTV', null);
+ctv_layout_header('Đăng ký Partner', null);
 ?>
 <div class="card" style="max-width:520px;margin:auto;">
-  <h2>Đăng ký tài khoản CTV</h2>
+  <h2>Đăng ký tài khoản Partner</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($ok): ?><div class="flash ok"><?= htmlspecialchars($ok) ?></div><?php endif; ?>
   <form method="post" autocomplete="off">

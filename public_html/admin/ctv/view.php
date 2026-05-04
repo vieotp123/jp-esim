@@ -5,9 +5,9 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 $id = max(0, (int)($_GET['id'] ?? $_POST['ctv_id'] ?? 0));
-if ($id <= 0) { http_response_code(400); echo 'Mã CTV không hợp lệ'; exit; }
+if ($id <= 0) { http_response_code(400); echo 'Mã đối tác không hợp lệ'; exit; }
 $flash=null;
-function load_ctv(int $id): array { $st=db()->prepare('SELECT * FROM ctv_users WHERE id=? LIMIT 1'); $st->execute([$id]); $r=$st->fetch(); if(!$r) { http_response_code(404); echo 'Không tìm thấy CTV'; exit; } return $r; }
+function load_ctv(int $id): array { $st=db()->prepare('SELECT * FROM ctv_users WHERE id=? LIMIT 1'); $st->execute([$id]); $r=$st->fetch(); if(!$r) { http_response_code(404); echo 'Không tìm thấy đối tác'; exit; } return $r; }
 try { if ($_SERVER['REQUEST_METHOD']==='POST') {
     $action=(string)($_POST['action']??''); $ctv=load_ctv($id);
     if ($action==='set_status') { db()->prepare('UPDATE ctv_users SET status=? WHERE id=?')->execute([(int)($_POST['status']??0)?1:0,$id]); $flash=['ok','Đã cập nhật trạng thái']; }
@@ -33,7 +33,7 @@ function admin_ctv_plan_label(array $r): string {
     $parts[] = admin_ctv_plan_data((string)($r['plan_name'] ?? ''));
     return implode(' · ', $parts);
 }
-admin_layout_header('CTV #'.$id, $admin); ?>
+admin_layout_header('Đối tác #'. $id, $admin); ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="card"><a class="btn secondary" href="/admin/ctv/index.php">← Danh sách</a><h2><?= htmlspecialchars((string)$ctv['email']) ?></h2><p>ID #<?= $id ?> · <span class="tag <?= (int)$ctv['status']?'ok':'err' ?>"><?= (int)$ctv['status']?'Hoạt động':'Đã khóa' ?></span> · Ví <?= htmlspecialchars(format_vnd((int)$ctv['balance'])) ?> · Chiết khấu <?= htmlspecialchars(format_vnd((int)$ctv['discount_per_esim'])) ?></p><p class="muted">Đăng nhập cuối: <?= htmlspecialchars((string)($ctv['last_login_at'] ?? '-')) ?> <?= htmlspecialchars((string)($ctv['last_login_ip'] ?? '')) ?></p></div>
 <div class="card">
@@ -62,7 +62,7 @@ admin_layout_header('CTV #'.$id, $admin); ?>
       <input type="number" name="amount" min="1" placeholder="Số tiền (VND)">
       <input type="text" name="note" required placeholder="Ghi chú bắt buộc">
       <button class="btn gold" name="action" value="wallet_credit">Nạp ví</button>
-      <button class="btn danger" name="action" value="wallet_debit" onclick="return confirm('Xác nhận trừ ví CTV #<?= $id ?>?')">Trừ ví</button>
+      <button class="btn danger" name="action" value="wallet_debit" onclick="return confirm('Xác nhận trừ ví đối tác #<?= $id ?>?')">Trừ ví</button>
     </form>
   </div>
 </div>

@@ -12,16 +12,16 @@ $qs = function(array $extra) use ($kind, $ctvFilter): string {
     $params = array_filter(array_merge(['kind'=>$kind, 'ctv_id'=>$ctvFilter ?: null], $extra), fn($v) => $v !== null && $v !== '');
     return '?' . http_build_query($params);
 };
-admin_layout_header("Nhật ký CTV", $admin);
+admin_layout_header("Nhật ký đối tác", $admin);
 ?>
 <div class="card">
   <h2>Nhật ký hệ thống</h2>
   <p>
     <a class="btn <?= $kind==='api'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'api'])) ?>">Nhật ký API</a>
     <a class="btn <?= $kind==='provider'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'provider'])) ?>">Nhật ký xử lý</a>
-    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'wallet'])) ?>">Ví CTV</a>
+    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'wallet'])) ?>">Ví đối tác</a>
     <?php if ($ctvFilter): ?>
-      <span class="tag">Lọc CTV #<?= (int)$ctvFilter ?></span>
+      <span class="tag">Lọc đối tác #<?= (int)$ctvFilter ?></span>
       <a class="btn secondary" href="?kind=<?= htmlspecialchars($kind) ?>">Xóa lọc</a>
     <?php endif; ?>
   </p>
@@ -35,7 +35,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       <?php foreach ($rows as $r): ?>
       <div class="m-card">
         <div class="m-head"><span class="tag <?= (int)$r['success'] === 1 ? 'ok' : 'err' ?>"><?= (int)$r['success'] === 1 ? 'OK' : 'Lỗi' ?></span><span class="muted" style="font-size:12px"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
-        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a></span></div>
+        <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a></span></div>
         <div class="m-row"><span class="m-label">Loại</span><span class="m-val"><?= htmlspecialchars((string)$r['ref_type']) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></span></div>
         <div class="m-row"><span class="m-label">Endpoint</span><span class="m-val muted"><?= htmlspecialchars((string)$r['endpoint']) ?></span></div>
         <div class="m-row"><span class="m-label">HTTP</span><span class="m-val"><?= (int)$r['http_status'] ?></span></div>
@@ -47,7 +47,7 @@ admin_layout_header("Nhật ký CTV", $admin);
     </div>
     <div class="table-wrap">
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>HTTP</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>Đối tác</th><th>Loại</th><th>Endpoint</th><th>HTTP</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
         <tr>
@@ -79,7 +79,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       <?php foreach ($rows as $r): $amt = (int)$r['amount']; ?>
       <div class="m-card">
         <div class="m-head"><span class="tag <?= $amt >= 0 ? 'ok' : 'err' ?>"><?= htmlspecialchars($reasonVi[(string)$r['reason']] ?? (string)$r['reason']) ?></span><span style="font-weight:800;color:<?= $amt >= 0 ? 'var(--a-green)' : 'var(--a-red)' ?>"><?= $amt >= 0 ? '+' : '' ?><?= htmlspecialchars(format_vnd($amt)) ?></span></div>
-        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)$r['email']) ?></span></div>
+        <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)$r['email']) ?></span></div>
         <div class="m-row"><span class="m-label">Số dư sau</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></span></div>
         <div class="m-row"><span class="m-label">Tham chiếu</span><span class="m-val"><?= htmlspecialchars((string)($r['ref_type'] ?? '')) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></span></div>
         <?php if (!empty($r['note'])): ?><div class="m-row"><span class="m-label">Ghi chú</span><span class="m-val muted"><?= htmlspecialchars(mb_strimwidth((string)$r['note'], 0, 60, '…')) ?></span></div><?php endif; ?>
@@ -90,7 +90,7 @@ admin_layout_header("Nhật ký CTV", $admin);
     </div>
     <div class="table-wrap">
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>Lý do</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th><th>Admin</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>Đối tác</th><th>Lý do</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th><th>Admin</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): $amt = (int)$r['amount']; ?>
         <tr>
@@ -120,7 +120,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       <?php foreach ($rows as $r): $httpCode = (int)($r['response_status'] ?? 0); ?>
       <div class="m-card">
         <div class="m-head"><span><span class="tag"><?= htmlspecialchars((string)$r['method']) ?></span> <span class="muted" style="font-size:12px"><?= htmlspecialchars((string)$r['endpoint']) ?></span></span><span class="tag <?= $httpCode >= 200 && $httpCode < 300 ? 'ok' : ($httpCode >= 400 ? 'err' : 'warn') ?>"><?= $httpCode ?></span></div>
-        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['email'] ?? '')) ?></span></div>
+        <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)($r['email'] ?? '')) ?></span></div>
         <div class="m-row"><span class="m-label">IP</span><span class="m-val muted"><?= htmlspecialchars((string)($r['ip'] ?? '')) ?></span></div>
         <div class="m-row"><span class="m-label">Thời lượng</span><span class="m-val"><?= (int)($r['duration_ms'] ?? 0) ?>ms</span></div>
         <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
@@ -129,7 +129,7 @@ admin_layout_header("Nhật ký CTV", $admin);
     </div>
     <div class="table-wrap">
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>HTTP</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>Đối tác</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>HTTP</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): $httpCode = (int)($r['response_status'] ?? 0); ?>
         <tr>

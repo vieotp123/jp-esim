@@ -73,7 +73,7 @@ function admin_orders_plan_label(array $r): string {
     return implode(' · ', $parts);
 }
 
-admin_layout_header('Đơn CTV', $admin);
+admin_layout_header('Đơn đối tác', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="summary">
@@ -82,7 +82,7 @@ admin_layout_header('Đơn CTV', $admin);
   <div class="card"><b>Cần xử lý</b><h2><?= (int)($counts['needs'] ?? 0) ?></h2></div>
 </div>
 <div class="card">
-  <h2>Đơn CTV (<?= count($rows) ?>)</h2>
+  <h2>Đơn đối tác (<?= count($rows) ?>)</h2>
   <div class="filter-row">
     <a href="?" class="pill <?= !$onlyFailed?'active':'' ?>">Tất cả</a>
     <a href="?failed=1" class="pill <?= $onlyFailed?'active':'' ?>">Cần xử lý</a>
@@ -104,7 +104,7 @@ admin_layout_header('Đơn CTV', $admin);
         <span class="kbd"><?= htmlspecialchars($oid) ?></span>
         <span class="tag <?= $statusCls[$st] ?? '' ?>"><?= $statusMap[$st] ?? '?' ?></span>
       </div>
-      <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
+      <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
       <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_orders_plan_label($r)) ?> ×<?= $qty ?><?php if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:10px"><?= $pc ?>/<?= $qty ?></span><?php endif; ?></span></div>
       <div class="m-row"><span class="m-label">Phí</span><span class="m-val" style="font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></span></div>
       <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
@@ -141,7 +141,7 @@ admin_layout_header('Đơn CTV', $admin);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Mã</th><th>CTV</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th><th>Tạo lúc</th><th></th></tr></thead>
+    <thead><tr><th>Mã</th><th>Đối tác</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th><th>Tạo lúc</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($rows as $r):
       $statusMap=[0=>'Chờ',1=>'Đang xử lý',2=>'Thành công',3=>'Thất bại'];
@@ -163,7 +163,7 @@ admin_layout_header('Đơn CTV', $admin);
         <td><?= htmlspecialchars((string)$r['created_at']) ?></td>
         <td>
           <?php if ($st===3): ?>
-          <form method="post" class="inline" onsubmit="return confirm('Xác nhận thử lại đơn <?= htmlspecialchars($oid, ENT_QUOTES) ?>? Số dư CTV sẽ bị trừ lại trước khi xử lý.');">
+          <form method="post" class="inline" onsubmit="return confirm('Xác nhận thử lại đơn <?= htmlspecialchars($oid, ENT_QUOTES) ?>? Số dư đối tác sẽ bị trừ lại trước khi xử lý.');">
             <?php admin_csrf_field(); ?>
             <input type="hidden" name="action" value="retry">
             <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">

@@ -22,7 +22,7 @@ $order = $st->fetch();
 if (!$order) {
     http_response_code(404);
     ctv_layout_header('Không tìm thấy đơn', $user);
-    echo '<div class="card"><h2>Không tìm thấy đơn</h2><p class="muted">Đơn không tồn tại hoặc không thuộc tài khoản CTV của bạn.</p><p><a class="btn secondary" href="/ctv/orders.php">Về danh sách đơn</a></p></div>';
+    echo '<div class="card"><h2>Không tìm thấy đơn</h2><p class="muted">Đơn không tồn tại hoặc không thuộc tài khoản Partner của bạn.</p><p><a class="btn secondary" href="/ctv/orders.php">Về danh sách đơn</a></p></div>';
     ctv_layout_footer();
     exit;
 }
@@ -146,7 +146,7 @@ $orderPlanLabel = trim((string)$order['carrier'] . ' · ' . ctv_order_plan_data(
       <div class="kv">
         <b>Giá lẻ</b><div><?= htmlspecialchars(format_vnd((int)$order['retail_price'])) ?> / eSIM</div>
         <b>Chiết khấu</b><div><?= htmlspecialchars(format_vnd((int)$order['discount'])) ?></div>
-        <b>Giá CTV</b><div><b><?= htmlspecialchars(format_vnd((int)$order['ctv_price'])) ?></b> / eSIM</div>
+        <b>Giá Partner</b><div><b><?= htmlspecialchars(format_vnd((int)$order['ctv_price'])) ?></b> / eSIM</div>
         <b>Tổng phí</b><div><b style="color:#7ad27a"><?= htmlspecialchars(format_vnd((int)$order['total_charge'])) ?></b></div>
       </div>
     </div>

@@ -15,10 +15,10 @@ function ctv_pricing_plan_data(string $name): string {
     return 'Data';
 }
 
-ctv_layout_header('Bảng giá CTV', $user);
+ctv_layout_header('Bảng giá Partner', $user);
 ?>
 <div class="card">
-  <h2>Bảng giá CTV</h2>
+  <h2>Bảng giá Partner</h2>
   <div class="filter-row">
     <a href="?type=esim" class="pill <?= $type==='esim'?'active':'' ?>">eSIM mới</a>
     <a href="?type=topup" class="pill <?= $type==='topup'?'active':'' ?>">Nạp data</a>
@@ -36,13 +36,13 @@ ctv_layout_header('Bảng giá CTV', $user);
       <div class="m-row"><span class="m-label">Số ngày</span><span class="m-val"><?= htmlspecialchars((string)$p['day']) ?></span></div>
       <div class="m-row"><span class="m-label">Giá lẻ</span><span class="m-val"><?= htmlspecialchars((string)$p['retailPriceText']) ?></span></div>
       <div class="m-row"><span class="m-label">Chiết khấu</span><span class="m-val" style="color:var(--c-green)">-<?= htmlspecialchars(format_vnd((int)$p['discount'])) ?></span></div>
-      <div class="m-row"><span class="m-label">Giá CTV</span><span class="m-val" style="color:var(--c-gold);font-weight:700;font-size:15px"><?= htmlspecialchars((string)$p['ctvPriceText']) ?></span></div>
+      <div class="m-row"><span class="m-label">Giá Partner</span><span class="m-val" style="color:var(--c-gold);font-weight:700;font-size:15px"><?= htmlspecialchars((string)$p['ctvPriceText']) ?></span></div>
     </div>
     <?php endforeach; ?>
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Nhà mạng</th><th>Dung lượng</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá CTV</th></tr></thead>
+    <thead><tr><th>Nhà mạng</th><th>Dung lượng</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá Partner</th></tr></thead>
     <tbody>
       <?php foreach ($data['plans'] as $p): ?>
       <tr>

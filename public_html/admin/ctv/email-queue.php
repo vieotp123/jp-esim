@@ -40,7 +40,7 @@ function admin_email_profile_label(array $r): string {
 <div class="card">
   <div class="filter-row">
     <?php _pill('all','Tất cả',$sum['total'],$status); _pill('sent','Đã gửi',$sum['sent'],$status); _pill('pending','Chưa gửi',$sum['pending'],$status); _pill('error','Lỗi',$sum['failed'],$status); ?>
-    <span class="spacer"></span><a class="btn secondary" href="/admin/ctv/orders.php">Đơn CTV</a>
+    <span class="spacer"></span><a class="btn secondary" href="/admin/ctv/orders.php">Đơn đối tác</a>
   </div>
 </div>
 <div class="card"><h2>Email QR (<?= count($rows) ?>)</h2>
@@ -55,7 +55,7 @@ function admin_email_profile_label(array $r): string {
       <?php if($sent): ?><span class="tag ok">Đã gửi</span><?php elseif($err): ?><span class="tag err">Lỗi</span><?php else: ?><span class="tag warn">Chờ</span><?php endif; ?>
     </div>
     <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><a href="/admin/ctv/orders.php?q=<?= rawurlencode((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></span></div>
-    <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
     <div class="m-row"><span class="m-label">Khách</span><span class="m-val"><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></span></div>
     <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_email_profile_label($r)) ?></span></div>
     <?php if($err): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['email_last_error'],0,100,'...')) ?></div><?php endif; ?>
@@ -63,7 +63,7 @@ function admin_email_profile_label(array $r): string {
   <?php endforeach; ?>
   </div>
   <div class="table-wrap">
-  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
+  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>Đối tác</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
   <tr>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['iccid']) ?></span><br><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>

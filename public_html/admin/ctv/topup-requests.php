@@ -74,7 +74,7 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   <?php endforeach; ?>
   </div>
   <div class="table-wrap">
-  <table><thead><tr><th>#</th><th>CTV</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
+  <table><thead><tr><th>#</th><th>Đối tác</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
   <?php foreach ($rows as $r):
     $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
     $sLabel = match ($r['status']) { 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', default => 'Chờ duyệt' };

@@ -12,6 +12,10 @@ $passkeys = (new PasskeyService())->listCredentials('admin', $adminId);
 admin_layout_header('Passkey', $admin);
 ?>
 <script src="/assets/passkey.js?v=20260504"></script>
+<div class="card security-banner" style="max-width:720px">
+  <h2>Admin dùng passkey-only khi bật bắt buộc</h2>
+  <p class="muted">Hãy đăng ký passkey cho thiết bị quản trị tin cậy. Khi ADMIN_REQUIRE_PASSKEY bật, khu vực admin luôn yêu cầu passkey trước khi vào bảng điều khiển.</p>
+</div>
 <div class="card" style="max-width:720px">
   <h2>Passkey / Khoá bảo mật</h2>
   <p class="muted" style="margin-bottom:16px">Passkey cho phép xác thực hai lớp bằng Face ID, Touch ID hoặc Windows Hello. Tối đa 5 passkey mỗi tài khoản.</p>

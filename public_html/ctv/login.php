@@ -31,11 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = CtvAuth::csrfToken();
-ctv_layout_header('Đăng nhập CTV', null);
+ctv_layout_header('Đăng nhập Partner', null);
 ?>
 <script src="/assets/passkey.js?v=20260504"></script>
 <div class="card" style="max-width:480px;margin:auto;">
-  <h2>Đăng nhập CTV</h2>
+  <h2>Đăng nhập Partner</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <div id="passkeyLoginWrap" style="display:none;margin-bottom:16px">
     <button class="btn gold" style="width:100%;padding:14px;font-size:16px" id="passkeyLoginBtn" onclick="passkeyLogin()">

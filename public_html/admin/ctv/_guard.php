@@ -83,7 +83,10 @@ function admin_nav_active(string $href): string {
 }
 function admin_layout_header(string $title, array $admin): void {
     security_headers(true);
-    $assetVer = '20260504a';
+    $assetVer = '20260504b';
+    $passkeyText = admin_passkey_required()
+        ? (admin_passkey_verified() ? 'Passkey verified' : 'Passkey required')
+        : 'Passkey optional';
     ?>
 <!doctype html><html lang="vi"><head>
 <meta charset="utf-8">
@@ -98,14 +101,14 @@ function admin_layout_header(string $title, array $admin): void {
 <body>
 <div class="nav-overlay" id="navOverlay"></div>
 <header class="admin-h">
-  <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span></button>
+  <button class="hamburger" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="mainNav"><span></span></button>
   <div class="brand">
     <span class="brand-mark">JP</span>
     <span class="brand-name">jp-esim <em>Admin</em></span>
   </div>
   <nav id="mainNav">
     <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Tổng quan</a>
-    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>CTV</a>
+    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>Đối tác</a>
     <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn hàng</a>
     <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email</a>
     <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi</a>
@@ -117,6 +120,7 @@ function admin_layout_header(string $title, array $admin): void {
   </nav>
   <span class="right">
     <span class="vip-tag">ADMIN</span>
+    <span class="passkey-tag"><?= htmlspecialchars($passkeyText) ?></span>
     <span><?= htmlspecialchars($admin['user']) ?></span>
   </span>
 </header>
@@ -125,6 +129,6 @@ function admin_layout_header(string $title, array $admin): void {
 <?php }
 function admin_layout_footer(): void {
     echo '</main>';
-    echo '<script>(function(){var b=document.getElementById("menuBtn"),n=document.getElementById("mainNav"),o=document.getElementById("navOverlay");if(b&&n){b.addEventListener("click",function(){n.classList.toggle("open");o.classList.toggle("open");});o.addEventListener("click",function(){n.classList.remove("open");o.classList.remove("open");});n.querySelectorAll("a").forEach(function(a){a.addEventListener("click",function(){n.classList.remove("open");o.classList.remove("open");});});}})();</script>';
+    echo '<script>(function(){var b=document.getElementById("menuBtn"),n=document.getElementById("mainNav"),o=document.getElementById("navOverlay");function closeNav(){n.classList.remove("open");o.classList.remove("open");b.setAttribute("aria-expanded","false");}if(b&&n&&o){b.addEventListener("click",function(){var open=!n.classList.contains("open");n.classList.toggle("open",open);o.classList.toggle("open",open);b.setAttribute("aria-expanded",open?"true":"false");});o.addEventListener("click",closeNav);document.addEventListener("keydown",function(e){if(e.key==="Escape")closeNav();});n.querySelectorAll("a").forEach(function(a){a.addEventListener("click",closeNav);});}})();</script>';
     echo '</body></html>';
 }
