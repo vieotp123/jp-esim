@@ -142,7 +142,7 @@ button.btn,.btn{
 }
 .btn:hover{filter:brightness(1.08)}
 .btn:active{transform:translateY(1px)}
-.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn:disabled{opacity:.55;cursor:not-allowed;pointer-events:none}
 .btn.secondary{background:linear-gradient(180deg, #2a3760, #1f2a44); box-shadow:none; border:1px solid var(--c-line-2); color:var(--c-ink-2)}
 .btn.secondary:hover{color:#fff;border-color:var(--c-gold);filter:none}
 .btn.danger{background:linear-gradient(180deg, #ef5b5b, #c33b3b); box-shadow:0 6px 16px rgba(220,60,60,.30)}

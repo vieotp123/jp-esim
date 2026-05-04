@@ -105,7 +105,7 @@ function _bytes_to_gb($b): string {
         <b>Cập nhật</b><div><?= htmlspecialchars((string)$order['updated_at']) ?></div>
         <b>Email khách</b><div><?= htmlspecialchars((string)($order['email'] ?? '—')) ?></div>
         <?php if (!empty($order['notes'])): ?><b>Ghi chú</b><div><?= htmlspecialchars((string)$order['notes']) ?></div><?php endif; ?>
-        <?php if (!empty($order['client_ref'])): ?><b>Client ref</b><div><span class="kbd"><?= htmlspecialchars((string)$order['client_ref']) ?></span></div><?php endif; ?>
+        <?php if (!empty($order['client_ref'])): ?><b>Mã tham chiếu</b><div><span class="kbd"><?= htmlspecialchars((string)$order['client_ref']) ?></span></div><?php endif; ?>
         <?php if (!empty($order['error_message'])): ?><b>Lỗi</b><div class="muted"><?= htmlspecialchars((string)$order['error_message']) ?></div><?php endif; ?>
       </div>
     </div>

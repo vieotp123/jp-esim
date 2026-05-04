@@ -43,22 +43,37 @@ ctv_layout_header('Nạp data eSIM', $user);
       <?php if (!empty($result['errorMessage'])): ?> · <?= htmlspecialchars($result['errorMessage']) ?><?php endif; ?>
     </div>
   <?php endif; ?>
-  <form method="post" autocomplete="off">
+  <?php if (empty($plans)): ?>
+    <div class="empty-state"><div class="icon">📦</div><p>Chưa có gói nạp data nào khả dụng.</p><p>Vui lòng liên hệ admin.</p></div>
+  <?php else: ?>
+  <form method="post" autocomplete="off" id="topupForm">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
-    <div class="row">
-      <div class="field"><label>ICCID</label><input type="text" name="iccid" required pattern="[0-9]{15,32}" inputmode="numeric" placeholder="8985..."><p class="muted">ICCID thường dài 18-22 số, chỉ nhập chữ số.</p></div>
-      <div class="field">
-        <label>Gói nạp</label>
-        <select name="plan_id" id="topup_plan" required>
-          <?php foreach ($plans as $p): ?>
-            <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['ctvPriceText']) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
+    <div class="field">
+      <label>ICCID</label>
+      <input type="text" name="iccid" required pattern="[0-9]{15,32}" inputmode="numeric" placeholder="8985..." value="<?= htmlspecialchars((string)($_GET['iccid'] ?? '')) ?>">
+      <p class="muted">ICCID thường dài 18-22 số, chỉ nhập chữ số. Tìm ICCID trong danh sách eSIM.</p>
     </div>
-    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ số dư trước khi gọi nhà cung cấp.</p>
-    <p>Tạm tính: <span class="kbd" id="topup_quote">-</span></p><button class="btn" type="submit" onclick="return confirm('Xác nhận nạp data và trừ ví?')">Nạp data</button>
+    <div class="field">
+      <label>Gói nạp</label>
+      <select name="plan_id" id="topup_plan" required>
+        <?php foreach ($plans as $p): ?>
+          <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['ctvPriceText']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="field">
+      <label>Tạm tính</label>
+      <div class="kbd" id="topup_quote" style="padding:10px 12px;font-size:16px;font-weight:700">-</div>
+    </div>
+    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ ví trước khi xử lý; nếu lỗi sẽ hoàn tự động.</p>
+    <button class="btn" type="submit" id="topupBtn" onclick="return confirm('Xác nhận nạp data và trừ ví?')">Nạp data</button>
   </form>
+  <?php endif; ?>
 </div>
-<script>function tq(){const s=document.getElementById("topup_plan"), o=document.getElementById("topup_quote"); if(!s||!o)return; o.textContent=Number(s.options[s.selectedIndex]?.dataset.price||0).toLocaleString("vi-VN")+" VND";} document.getElementById("topup_plan")?.addEventListener("change",tq); tq();</script>
+<script>
+function tq(){const s=document.getElementById("topup_plan"),o=document.getElementById("topup_quote");if(!s||!o)return;o.textContent=Number(s.options[s.selectedIndex]?.dataset.price||0).toLocaleString("vi-VN")+" VND";}
+document.getElementById("topup_plan")?.addEventListener("change",tq);
+tq();
+document.getElementById("topupForm")?.addEventListener("submit",function(){const b=document.getElementById("topupBtn");if(b){b.disabled=true;b.textContent="Đang xử lý...";}});
+</script>
 <?php ctv_layout_footer();

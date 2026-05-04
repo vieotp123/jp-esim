@@ -46,25 +46,53 @@ ctv_layout_header('Tạo eSIM', $user);
       Đơn <strong><?= htmlspecialchars($createdResult['orderId']) ?></strong>: <?= htmlspecialchars($statusVi[$createdResult['status']] ?? $createdResult['status']) ?>
       <?php if (!empty($createdResult['errorMessage'])): ?> · <?= htmlspecialchars($createdResult['errorMessage']) ?><?php endif; ?>
     </div>
+    <?php if ($createdResult['status'] === 'success' || $createdResult['status'] === 'pending'): ?>
+      <p><a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars(rawurlencode($createdResult['orderId'])) ?>">Xem chi tiết đơn →</a></p>
+    <?php endif; ?>
   <?php endif; ?>
-  <form method="post" autocomplete="off">
+  <?php if (empty($plans)): ?>
+    <div class="empty-state"><div class="icon">📦</div><p>Chưa có gói eSIM nào khả dụng.</p><p>Vui lòng liên hệ admin.</p></div>
+  <?php else: ?>
+  <form method="post" autocomplete="off" id="createForm">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <div class="field">
+      <label>Gói eSIM</label>
+      <select name="plan_id" id="plan_id" required>
+        <?php foreach ($plans as $p): ?>
+          <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['day'].' ngày · '.$p['ctvPriceText']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
     <div class="row">
       <div class="field">
-        <label>Gói eSIM</label>
-        <select name="plan_id" id="plan_id" required>
-          <?php foreach ($plans as $p): ?>
-            <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['day'].' ngày · '.$p['ctvPriceText']) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <label>Số lượng</label>
+        <input id="quantity" type="number" name="quantity" min="1" max="50" value="1" required inputmode="numeric">
+        <p class="muted">Tối đa 50 eSIM mỗi đơn.</p>
       </div>
-      <div class="field"><label>Số lượng</label><input id="quantity" type="number" name="quantity" min="1" max="50" value="1" required></div><div class="field"><label>Tạm tính</label><div class="kbd" id="quote">-</div></div>
-      <div class="field"><label>Email khách (tùy chọn)</label><input type="email" name="email" placeholder="customer@..."></div>
+      <div class="field">
+        <label>Tạm tính</label>
+        <div class="kbd" id="quote" style="padding:10px 12px;font-size:16px;font-weight:700">-</div>
+      </div>
     </div>
-    <div class="field"><label>Ghi chú</label><input type="text" name="notes"></div>
-    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ số dư trước khi gọi nhà cung cấp; nếu lỗi sẽ hoàn tự động.</p>
-    <button class="btn" type="submit" onclick="return confirm('Xác nhận tạo đơn và trừ ví?')">Tạo đơn</button>
+    <div class="field">
+      <label>Email khách (tùy chọn)</label>
+      <input type="email" name="email" placeholder="email@khachhang.com">
+      <p class="muted">Nếu nhập, hệ thống sẽ gửi QR eSIM tới email này.</p>
+    </div>
+    <div class="field">
+      <label>Ghi chú (tùy chọn)</label>
+      <input type="text" name="notes" placeholder="VD: Tên khách, mã booking...">
+    </div>
+    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ ví trước khi xử lý; nếu lỗi sẽ hoàn tự động.</p>
+    <button class="btn" type="submit" id="submitBtn" onclick="return confirm('Xác nhận tạo đơn và trừ ví?')">Tạo đơn</button>
   </form>
+  <?php endif; ?>
 </div>
-<script>function upd(){const s=document.getElementById("plan_id"), q=document.getElementById("quantity"), o=document.getElementById("quote"); if(!s||!q||!o)return; const p=Number(s.options[s.selectedIndex]?.dataset.price||0), n=Math.max(1,Number(q.value||1)); o.textContent=(p*n).toLocaleString("vi-VN")+" VND";} document.getElementById("plan_id")?.addEventListener("change",upd); document.getElementById("quantity")?.addEventListener("input",upd); upd();</script>
+<script>
+function upd(){const s=document.getElementById("plan_id"),q=document.getElementById("quantity"),o=document.getElementById("quote");if(!s||!q||!o)return;const p=Number(s.options[s.selectedIndex]?.dataset.price||0),n=Math.max(1,Number(q.value||1));o.textContent=(p*n).toLocaleString("vi-VN")+" VND";}
+document.getElementById("plan_id")?.addEventListener("change",upd);
+document.getElementById("quantity")?.addEventListener("input",upd);
+upd();
+document.getElementById("createForm")?.addEventListener("submit",function(){const b=document.getElementById("submitBtn");if(b){b.disabled=true;b.textContent="Đang xử lý...";}});
+</script>
 <?php ctv_layout_footer();
