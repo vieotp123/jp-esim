@@ -323,8 +323,8 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
   <ul class="muted" style="margin:0;padding-left:20px;line-height:1.8">
     <li><b>Huỷ đơn</b> — đặt order/topup status=3 (cancelled). Không gọi provider. Cần hoàn tiền thủ công.</li>
     <li><b>Đánh dấu hoàn tiền</b> — đặt order/topup status=3 + ghi nhận đã hoàn tiền. Không gọi bank/provider API.</li>
-    <li><b>Retry</b> — chỉ hoạt động khi PROVIDER_TEST_MODE=1 hoặc email_error. Không dùng cho amount_mismatch.</li>
-    <li><b>Resolve/Ignore</b> — đóng mục mà không thay đổi trạng thái đơn gốc.</li>
+    <li><b>Thử lại</b> — chỉ hoạt động khi PROVIDER_TEST_MODE=1 hoặc email_error. Không dùng cho amount_mismatch.</li>
+    <li><b>Giải quyết / Bỏ qua</b> — đóng mục mà không thay đổi trạng thái đơn gốc.</li>
   </ul>
 </div>
 <?php admin_layout_footer();

@@ -23,7 +23,7 @@ try {
             } else {
                 $count = $svc->broadcast($title, $message ?: null, $type);
                 AuditLog::log($admin['user'], 'notification_broadcast', null, null, ['title' => $title, 'count' => $count]);
-                $flash = ['ok', 'Đã gửi broadcast tới ' . $count . ' CTV'];
+                $flash = ['ok', 'Đã gửi thông báo tới ' . $count . ' CTV'];
             }
         }
     }
@@ -44,7 +44,7 @@ admin_layout_header('Thông báo CTV', $admin);
     <?php admin_csrf_field(); ?>
     <input type="hidden" name="action" value="send">
     <div style="margin-bottom:8px"><label>CTV ID</label><input type="number" name="ctv_id" min="1" required placeholder="ID CTV"></div>
-    <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">system</option><option value="order">order</option><option value="wallet">wallet</option><option value="promo">promo</option></select></div>
+    <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">Hệ thống</option><option value="order">Đơn hàng</option><option value="wallet">Ví</option><option value="promo">Khuyến mãi</option></select></div>
     <div style="margin-bottom:8px"><label>Tiêu đề</label><input type="text" name="title" required maxlength="255"></div>
     <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3" style="width:100%;background:#0a1020;color:#e8edf7;border:1px solid #1f2a44;border-radius:6px;padding:8px;font-family:inherit"></textarea></div>
     <button class="btn">Gửi</button>
@@ -52,15 +52,15 @@ admin_layout_header('Thông báo CTV', $admin);
 </div>
 
 <div class="card">
-  <h2>Broadcast tất cả CTV active</h2>
+  <h2>Gửi hàng loạt cho tất cả CTV hoạt động</h2>
   <form method="post">
     <?php admin_csrf_field(); ?>
     <input type="hidden" name="action" value="send">
     <input type="hidden" name="ctv_id" value="0">
-    <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">system</option><option value="promo">promo</option></select></div>
+    <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">Hệ thống</option><option value="promo">Khuyến mãi</option></select></div>
     <div style="margin-bottom:8px"><label>Tiêu đề</label><input type="text" name="title" required maxlength="255"></div>
     <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3" style="width:100%;background:#0a1020;color:#e8edf7;border:1px solid #1f2a44;border-radius:6px;padding:8px;font-family:inherit"></textarea></div>
-    <button class="btn gold" onclick="return confirm('Gửi broadcast cho tất cả CTV active?')">Broadcast</button>
+    <button class="btn gold" onclick="return confirm('Gửi thông báo cho tất cả CTV hoạt động?')">Gửi hàng loạt</button>
   </form>
 </div>
 </div>

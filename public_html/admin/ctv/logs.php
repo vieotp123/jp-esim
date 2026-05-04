@@ -31,7 +31,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>Status</th><th>OK</th><th>Lỗi</th><th>Request</th><th>Response</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>Mã trạng thái</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
         <tr>
@@ -40,7 +40,7 @@ admin_layout_header("Nhật ký CTV", $admin);
           <td><?= htmlspecialchars((string)$r['ref_type']) ?> <?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></td>
           <td><?= htmlspecialchars((string)$r['endpoint']) ?></td>
           <td><?= (int)$r['http_status'] ?></td>
-          <td><?= (int)$r['success'] === 1 ? 'yes' : 'no' ?></td>
+          <td><?= (int)$r['success'] === 1 ? 'Có' : 'Không' ?></td>
           <td><?= htmlspecialchars((string)($r['error_message'] ?? '')) ?></td>
           <td style="max-width:280px;overflow:hidden;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['request_redacted'] ?? ''), 0, 220, '…')) ?></td>
           <td style="max-width:280px;overflow:hidden;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['response_redacted'] ?? ''), 0, 220, '…')) ?></td>
@@ -56,7 +56,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>Reason</th><th>Số tiền</th><th>Số dư sau</th><th>Ref</th><th>Note</th><th>Admin</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>CTV</th><th>Lý do</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th><th>Admin</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
         <tr>
@@ -80,7 +80,7 @@ admin_layout_header("Nhật ký CTV", $admin);
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Method</th><th>Status</th><th>Duration</th><th>Request</th><th>Response</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>Mã trạng thái</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
         <tr>
