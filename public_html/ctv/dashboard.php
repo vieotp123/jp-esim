@@ -34,9 +34,9 @@ ctv_flash_render();
 ?>
 <style>
   .dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
-  .dash-metric{background:#141414;border:1px solid #232323;border-radius:12px;padding:14px}
-  .dash-metric b{display:block;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:.5px}.dash-metric .num{font-size:28px;font-weight:800;margin-top:6px}
-  .bars{display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:10px}.bar{flex:1;background:linear-gradient(180deg,#7ad27a,#256d3c);border-radius:6px 6px 2px 2px;min-height:3px;position:relative}.bar:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3}.top-list{display:grid;gap:8px}.top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid #232323;background:#141414;border-radius:10px;padding:10px 12px}.top-item span{color:#9ca3af}
+  .dash-metric{background:var(--c-card);border:1px solid var(--c-line);border-radius:12px;padding:14px}
+  .dash-metric b{display:block;color:var(--c-muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}.dash-metric .num{font-size:28px;font-weight:800;margin-top:6px}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:10px}.bar{flex:1;background:linear-gradient(180deg,var(--c-gold-2),var(--c-gold-deep));border-radius:6px 6px 2px 2px;min-height:3px;position:relative}.bar:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3}.top-list{display:grid;gap:8px}.top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--c-line);background:var(--c-card);border-radius:10px;padding:10px 12px}.top-item span{color:var(--c-muted)}
 </style>
 <div class="dash-metrics">
   <div class="dash-metric"><b>Tổng đơn</b><div class="num"><?= $totalOrders ?></div></div>
@@ -69,7 +69,7 @@ ctv_flash_render();
         <div class="bar" style="height:<?= $h ?>px" data-tip="<?= htmlspecialchars(date('d/m', strtotime($r['d'])).' · '.format_vnd((int)$r['revenue']).' · '.$r['orders'].' đơn') ?>"></div>
       <?php endforeach; ?>
     </div>
-    <p class="muted">Hover/click từng cột để xem ngày, doanh thu và số đơn.</p>
+    <p class="muted">Di chuột/chạm vào cột để xem ngày, doanh thu và số đơn.</p>
   </div>
   <div class="card">
     <h2>Top sản phẩm</h2>
