@@ -109,7 +109,23 @@ After each milestone report:
 5. Commit/push status.
 6. Owner inputs needed.
 
+## Production V1 Status (2026-05-04)
+
+All automated production readiness work is complete. Remaining items require human verification:
+- Real browser reCAPTCHA test (site key + secret pair confirmation)
+- Passkey human test on iPhone Safari + Chrome desktop
+- DNS www redirect verification
+- Mailgun production send: set `CTV_MAIL_DRY_RUN=0`, `CTV_MAIL_SAFE_MODE=0`
+- Provider API manual verification before unlocking `TOPUP_LOCKED=0`
+- External uptime monitoring setup
+- Database backup cron configuration
+
+See `docs/PRODUCTION_V1_CHECKLIST.md` for the full checklist.
+See `docs/PRODUCTION_V1_REPORT.md` for the completed work summary.
+
 ## Latest Autopilot Status
+- 2026-05-04: Production V1 automated work complete — docs, scripts, UX polish, SEO, passkey rollout docs
+- 2026-05-04: Phase F (i18n + UX polish) complete — full Vietnamese UI, mobile responsive, empty states, theme consistency
 - 2026-05-04: Phase C retail/admin hardening complete:
   - BankWebhookService: zero/negative amount guard, overpayment detection (>=3x flags admin queue)
   - Admin queue: cancel-order and mark-refunded actions (status=3, no provider calls)
