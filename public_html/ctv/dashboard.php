@@ -91,6 +91,13 @@ ctv_flash_render();
   }
 </style>
 
+<div class="stat" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+  <div>
+    <div class="stat-label">Số dư ví</div>
+    <div class="stat-val gold" style="font-size:30px"><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></div>
+  </div>
+  <a class="btn gold" href="/ctv/create-esim.php" style="white-space:nowrap">Tạo eSIM mới</a>
+</div>
 <div class="stats">
   <div class="stat"><div class="stat-label">Tổng đơn</div><div class="stat-val"><?= $totalOrders ?></div></div>
   <div class="stat"><div class="stat-label">Thành công</div><div class="stat-val green"><?= htmlspecialchars((string)$successRate) ?>%</div></div>
