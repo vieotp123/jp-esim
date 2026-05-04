@@ -14,7 +14,7 @@ final class MailService {
             if (!$order || (int)($order['emailsent'] ?? 0) === 1) return (bool)$order;
             $to = (string)($order['email'] ?? '');
             if ($to === '' || !valid_email($to)) { app_log('MAIL FAIL '.$orderId.' - invalid email','ERROR'); return false; }
-            $q = $pdo->prepare('SELECT iccid, qrCodeUrl FROM esimlist WHERE BINARY order_id = BINARY ?');
+            $q = $pdo->prepare('SELECT iccid, qrCodeUrl, ac FROM esimlist WHERE BINARY order_id = BINARY ?');
             $q->execute([$orderId]);
             $esims = $q->fetchAll();
             if (empty($esims)) { app_log('MAIL FAIL '.$orderId.' - empty esimlist','ERROR'); return false; }
@@ -79,10 +79,20 @@ final class MailService {
     private function sendOrderMail(string $to, string $orderId, array $esims, string $ratinghash): bool {
         $temps=[]; $blocks=[]; $files=[];
         foreach($esims as $idx=>$e){
-            $qrUrl=(string)($e['qrCodeUrl']??''); $iccid=(string)($e['iccid']??''); if($qrUrl===''||$iccid==='') continue;
+            $iccid=(string)($e['iccid']??''); $lpa=(string)($e['ac']??''); if($iccid==='') continue;
             $tmp=tempnam(sys_get_temp_dir(),'qr_'); if($tmp===false) continue; $tmpPng=$tmp.'.png'; @unlink($tmp);
-            if($this->downloadFile($qrUrl,$tmpPng)){ $remote='qr_'.($idx+1).'_'.substr(hash('sha256',$iccid),0,10).'.png'; $temps[]=$tmpPng; $blocks[]=['iccid'=>$iccid,'cid'=>$remote]; $files[]=new CURLFile($tmpPng,'image/png',$remote); }
-            else { app_log('Cannot download QR '.$qrUrl,'ERROR'); @unlink($tmpPng); }
+            $bytes=null;
+            try { if($lpa!=='' && stripos($lpa,'LPA:')===0){ $bytes=QrService::pngBytes($lpa,8,2,'M'); } }
+            catch(Throwable $ex){ app_log('QR self-render failed (mail) iccid='.$iccid.' '.$ex->getMessage(),'ERROR'); }
+            // Fallback: legacy provider URL download (kept for orders with no LPA stored).
+            if($bytes===null){
+                $qrUrl=(string)($e['qrCodeUrl']??'');
+                if($qrUrl==='' || !$this->downloadFile($qrUrl,$tmpPng)){ if(is_file($tmpPng)) @unlink($tmpPng); continue; }
+            } else {
+                if(@file_put_contents($tmpPng,$bytes)===false){ continue; }
+            }
+            $remote='qr_'.($idx+1).'_'.substr(hash('sha256',$iccid),0,10).'.png';
+            $temps[]=$tmpPng; $blocks[]=['iccid'=>$iccid,'cid'=>$remote]; $files[]=new CURLFile($tmpPng,'image/png',$remote);
         }
         if(empty($blocks)){ foreach($temps as $f) @unlink($f); return false; }
         [$html,$alt]=$this->buildAutoThemeHtml($orderId,$blocks);

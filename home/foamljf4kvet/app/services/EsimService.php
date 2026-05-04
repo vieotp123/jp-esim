@@ -46,7 +46,7 @@ final class EsimService {
         $st = db()->prepare('SELECT * FROM esimlist WHERE BINARY order_id = BINARY ? ORDER BY id DESC');
         $st->execute([$orderId]);
         $out = [];
-        foreach ($st->fetchAll() as $e) $out[] = $this->format($e);
+        foreach ($st->fetchAll() as $e) $out[] = $this->format($e, $orderId);
         return $out;
     }
 
@@ -102,7 +102,7 @@ final class EsimService {
         if (!$isVisible) {
             foreach ($esims as &$e) {
                 $e['qrCodeUrl'] = '';
-                $e['lpa'] = '';
+                $e['qrUrl'] = '';
                 $e['install'] = ['ios'=>'', 'android'=>''];
             }
             unset($e);
@@ -129,19 +129,37 @@ final class EsimService {
         catch (Throwable $e) { app_log('Auto email failed ' . $orderId . ' ' . $e->getMessage(), 'ERROR'); }
     }
 
-    private function format(array $e): array {
+    private function format(array $e, string $orderId = ''): array {
         $vol = (int)($e['totalVolume'] ?? 0);
-        $lpa = (string)($e['ac'] ?? '');
+        $iccid = (string)($e['iccid'] ?? '');
+        $oid = $orderId !== '' ? $orderId : (string)($e['order_id'] ?? '');
+        $hasLpa = !empty($e['ac']);
+        // NOTE: lpa/qrCodeUrl/shortUrl/smdpAddress intentionally OMITTED from public payload
+        // to avoid leaking provider domains (e.g. qrsim.net, simlessly) and SM-DP+ host.
+        // Frontend should use qrUrl + install.ios/android (proxied through /r/* endpoints).
+        $qrUrl = ($hasLpa && $oid !== '' && $iccid !== '')
+            ? '/r/qr.php?o=' . rawurlencode($oid) . '&i=' . rawurlencode($iccid)
+            : '';
         return [
-            'iccid' => (string)($e['iccid'] ?? ''), 'lpa' => $lpa, 'qrCodeUrl' => (string)($e['qrCodeUrl'] ?? ''),
-            'shortUrl' => (string)($e['shortUrl'] ?? ''), 'apn' => (string)($e['apn'] ?? ''), 'smdpAddress' => '',
-            'matchingId' => '', 'smdpStatus' => (string)($e['smdpStatus'] ?? ''), 'esimStatus' => (string)($e['esimStatus'] ?? ''),
-            'totalVolume' => $vol, 'totalVolumeGB' => round($vol / 1073741824, 2), 'totalDuration' => (int)($e['totalDuration'] ?? 0),
-            'durationUnit' => (string)($e['durationUnit'] ?? 'DAY'), 'expiredTime' => (string)($e['expiredTime'] ?? ''),
-            'packageName' => (string)($e['packageName'] ?? ''), 'packageCode' => (string)($e['packageCode'] ?? ''),
+            'iccid' => $iccid,
+            'qrUrl' => $qrUrl,
+            'qrCodeUrl' => $qrUrl, // back-compat alias for older frontend code
+            'apn' => (string)($e['apn'] ?? ''),
+            'smdpStatus' => (string)($e['smdpStatus'] ?? ''),
+            'esimStatus' => (string)($e['esimStatus'] ?? ''),
+            'totalVolume' => $vol,
+            'totalVolumeGB' => round($vol / 1073741824, 2),
+            'totalDuration' => (int)($e['totalDuration'] ?? 0),
+            'durationUnit' => (string)($e['durationUnit'] ?? 'DAY'),
+            'expiredTime' => (string)($e['expiredTime'] ?? ''),
+            'packageName' => (string)($e['packageName'] ?? ''),
+            'packageCode' => (string)($e['packageCode'] ?? ''),
             'install' => [
-                'ios' => $lpa !== '' ? 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' . rawurlencode($lpa) : '',
-                'android' => $lpa !== '' ? 'https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' . rawurlencode($lpa) : 'intent:#Intent;action=android.settings.MANAGE_ALL_SIM_PROFILES_SETTINGS;end',
+                'ios' => ($hasLpa && $oid !== '' && $iccid !== '')
+                    ? '/r/install.php?os=ios&o=' . rawurlencode($oid) . '&i=' . rawurlencode($iccid) : '',
+                'android' => ($hasLpa && $oid !== '' && $iccid !== '')
+                    ? '/r/install.php?os=android&o=' . rawurlencode($oid) . '&i=' . rawurlencode($iccid)
+                    : 'intent:#Intent;action=android.settings.MANAGE_ALL_SIM_PROFILES_SETTINGS;end',
             ],
         ];
     }
