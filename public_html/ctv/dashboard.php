@@ -4,9 +4,7 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_layout.php';
 
 $user = CtvAuth::requireUser();
-$wallet = new CtvWalletService();
-$bal = $wallet->balance((int)$user['id']);
-$user['balance'] = $bal;
+$user['balance'] = 0;
 
 $pdo = db();
 $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalOrders = (int)$st->fetchColumn();
@@ -14,7 +12,6 @@ $st = $pdo->prepare("SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=? AND status=2
 $st = $pdo->prepare("SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=? AND status=3"); $st->execute([(int)$user['id']]); $failOrders = (int)$st->fetchColumn();
 $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_topup_orders WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalTopups = (int)$st->fetchColumn();
 $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalEsims = (int)$st->fetchColumn();
-$tx = $wallet->transactions((int)$user['id'], 10);
 $successRate = $totalOrders > 0 ? round(($okOrders / $totalOrders) * 100, 1) : 0;
 $st = $pdo->prepare("SELECT DATE(created_at) d, COUNT(*) orders, SUM(CASE WHEN status=2 THEN total_charge ELSE 0 END) revenue FROM ctv_orders WHERE ctv_id=? AND created_at >= (CURDATE() - INTERVAL 29 DAY) GROUP BY DATE(created_at) ORDER BY d ASC");
 $st->execute([(int)$user['id']]);
@@ -42,18 +39,13 @@ ctv_flash_render();
   .bars{display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:10px}.bar{flex:1;background:linear-gradient(180deg,#7ad27a,#256d3c);border-radius:6px 6px 2px 2px;min-height:3px;position:relative}.bar:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3}.top-list{display:grid;gap:8px}.top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid #232323;background:#141414;border-radius:10px;padding:10px 12px}.top-item span{color:#9ca3af}
 </style>
 <div class="dash-metrics">
-  <div class="dash-metric"><b>Số dư ví</b><div class="num"><?= htmlspecialchars(format_vnd($bal)) ?></div></div>
+  <div class="dash-metric"><b>Tổng đơn</b><div class="num"><?= $totalOrders ?></div></div>
   <div class="dash-metric"><b>Tỉ lệ thành công</b><div class="num"><?= htmlspecialchars((string)$successRate) ?>%</div></div>
   <div class="dash-metric"><b>eSIM đã lưu</b><div class="num"><?= $totalEsims ?></div></div>
   <div class="dash-metric"><b>Đơn nạp data</b><div class="num"><?= $totalTopups ?></div></div>
 </div>
 
 <div class="grid">
-  <div class="card">
-    <h2>Số dư ví</h2>
-    <div class="metric"><?= htmlspecialchars(format_vnd($bal)) ?></div>
-    <p class="muted">Liên hệ admin để nạp số dư hoặc điều chỉnh chiết khấu.</p>
-  </div>
   <div class="card">
     <h2>Đơn eSIM</h2>
     <p>Tổng: <strong><?= $totalOrders ?></strong> · Thành công: <strong><?= $okOrders ?></strong> · Thất bại: <strong style="color:#dc2626"><?= $failOrders ?></strong></p>
@@ -87,26 +79,4 @@ ctv_flash_render();
   </div>
 </div>
 
-<div class="card">
-  <h2>Giao dịch ví gần đây</h2>
-  <?php if (!$tx): ?>
-    <p class="muted">Chưa có giao dịch nào.</p>
-  <?php else: ?>
-  <table>
-    <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th></tr></thead>
-    <tbody>
-      <?php foreach ($tx as $r): ?>
-      <tr>
-        <td><?= htmlspecialchars((string)$r['created_at']) ?></td>
-        <td><?= htmlspecialchars((string)$r['reason']) ?></td>
-        <td style="color:<?= ((int)$r['amount']) >= 0 ? '#166534' : '#991b1b' ?>"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
-        <td><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></td>
-        <td><?= htmlspecialchars((string)($r['ref_type'] ?? '')) ?> <?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></td>
-        <td><?= htmlspecialchars((string)($r['note'] ?? '')) ?></td>
-      </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
-  <?php endif; ?>
-</div>
 <?php ctv_layout_footer();

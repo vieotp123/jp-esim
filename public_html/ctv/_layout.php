@@ -221,7 +221,6 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
       <a href="/ctv/esims.php"<?= ctv_nav_active('/ctv/esims.php') ?>>eSIM</a>
       <a href="/ctv/create-esim.php"<?= ctv_nav_active('/ctv/create-esim.php') ?>>Tạo eSIM</a>
       <a href="/ctv/topup-esim.php"<?= ctv_nav_active('/ctv/topup-esim.php') ?>>Nạp data</a>
-      <a href="/ctv/topup-request.php"<?= ctv_nav_active('/ctv/topup-request.php') ?>>Nạp ví</a>
       <a href="/ctv/security.php"<?= ctv_nav_active('/ctv/security.php') ?>>Bảo mật</a>
       <a href="/ctv/api-keys.php"<?= ctv_nav_active('/ctv/api-keys.php') ?>>API Keys</a>
       <a href="/ctv/export.php"<?= ctv_nav_active('/ctv/export.php') ?>>Xuất CSV</a>
