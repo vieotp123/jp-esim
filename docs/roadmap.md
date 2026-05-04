@@ -118,4 +118,12 @@ After each milestone report:
   - install.php: Referrer-Policy:no-referrer + X-Content-Type-Options headers
   - Admin queue: removed EsimAccess provider name from UI text
   - Full smoke: lint OK, homepage 200, plans API 200, .env 403, admin auth 401, provider leaks=0 (HTML+JS)
-- Local latest commit: `d294077`.
+- 2026-05-04: Phase D large-scale hardening complete:
+  - Part 1 (Admin): enhanced CTV user list (orders/spent/wallet tx), admin dashboard (revenue/CTV stats/queue/recent orders)
+  - Part 2 (CTV panel): notification system (bell icon + dropdown, session AJAX, admin broadcast page), CSV export with date range filter, wallet top-up request with proof upload + admin approval/reject
+  - Part 3 (Security): file-based rate limiter for all public APIs + CTV API, admin audit log service + viewer page
+  - Part 4 (Retail): /tra-cuu order tracking with 4-step progress bar, Vietnamese email templates (esim_ready, order_confirmed, topup_confirmed, order_failed) + EmailTemplate service
+  - Part 5 (DB): migrations for ctv_notifications, ctv_topup_requests, admin_audit_log
+  - Leak scan: removed provider_order_no from CTV export CSV and CTV-facing pages
+  - Smoke tests: all endpoints 200/401/302 as expected, lint 0 errors, provider domain scan clean
+- Local latest commit: see `git log --oneline -5`.

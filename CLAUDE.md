@@ -50,8 +50,15 @@
 ## Current Status
 - Phase A (captcha): done
 - Phase B (CTV foundation): done — auth, wallet, pricing, orders, QR proxy, email queue, dashboard, API docs
-- Phase C (retail/admin hardening): done — queue fix, dedupe, webhook amount validation (zero/negative guard + overpayment detection), cancel/refund admin flows, provider leak audit, install.php security headers, TopupService error sanitisation
-- Next: Phase D — admin CTV management polish, webhook replay testing, monitoring/alerting, production readiness review
+- Phase C (retail/admin hardening): done — queue fix, dedupe, webhook amount validation, cancel/refund admin flows, provider leak audit, security headers, error sanitisation
+- Phase D (large-scale hardening): done
+  - Part 1: Admin CTV management polish — enhanced user list (orders/spent/wallet history), admin dashboard (revenue/stats/queue)
+  - Part 2: CTV panel improvements — notification system (bell icon, API, admin broadcast), CSV export with date range, wallet top-up request with proof upload + admin approval
+  - Part 3: Security — file-based rate limiter (public + CTV API), security headers (already existed), admin audit log with viewer
+  - Part 4: Retail experience — /tra-cuu order tracking page with progress bar, Vietnamese email templates (esim_ready, order_confirmed, topup_confirmed, order_failed)
+  - Part 5: Database migrations (ctv_notifications, ctv_topup_requests, admin_audit_log)
+  - Provider leak scan: removed provider_order_no from CTV exports and pages
+- Next: Phase E — webhook replay testing, monitoring/alerting, full production readiness review
 
 ## Reporting
 After each task: list files changed, tests run, results, commit hash.
