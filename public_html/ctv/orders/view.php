@@ -132,7 +132,7 @@ $orderPlanLabel = trim((string)$order['carrier'] . ' · ' . ctv_order_plan_data(
         <b>Số lượng</b><div><?= (int)$order['quantity'] ?><?php
           $qty = (int)$order['quantity'];
           $provCount = count($esims);
-          if ($qty > 1): ?> <span class="tag <?= $provCount >= $qty ? 'ok' : ($provCount > 0 ? 'warn' : '') ?>"><?= $provCount ?>/<?= $qty ?> provisioned</span><?php endif; ?></div>
+          if ($qty > 1): ?> <span class="tag <?= $provCount >= $qty ? 'ok' : ($provCount > 0 ? 'warn' : '') ?>"><?= $provCount ?>/<?= $qty ?> đã cấp</span><?php endif; ?></div>
         <b>Tạo lúc</b><div><?= htmlspecialchars((string)$order['created_at']) ?></div>
         <b>Cập nhật</b><div><?= htmlspecialchars((string)$order['updated_at']) ?></div>
         <b>Email khách</b><div><?= htmlspecialchars((string)($order['email'] ?? '—')) ?></div>

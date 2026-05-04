@@ -82,7 +82,7 @@ final class CtvProviderClient {
             $out = [];
             foreach ($v as $k => $val) {
                 $kl = is_string($k) ? strtolower($k) : '';
-                if (in_array($kl, ['accesscode', 'rt-accesscode', 'rtaccesscode', 'authorization', 'apikey', 'api_key', 'token', 'secret', 'password', 'mailgun_api_key', 'recaptcha_secret'], true)) {
+                if (in_array($kl, ['accesscode', 'rt-accesscode', 'rtaccesscode', 'authorization', 'apikey', 'api_key', 'token', 'secret', 'password', 'mailgun_api_key', 'recaptcha_secret', 'packagecode', 'pack_code', 'packcode', 'packagename', 'package_name', 'topup_packcode'], true)) {
                     $out[$k] = '***';
                 } elseif ($kl === 'iccid' && is_string($val)) {
                     $out[$k] = self::maskIccid($val);

@@ -197,7 +197,7 @@ if ($kind === 'orders' || $kind === 'topups' || $kind === 'wallet' || $kind === 
     fwrite($out, "\xEF\xBB\xBF");
     if ($kind === 'orders') {
         fputcsv($out, ['ctv_order_id','iccid','data','days','activation_ios_url','activation_android_url','qr_url','carrier','quantity','ctv_price','total','status','created_at']);
-        $st = db()->prepare('SELECT o.ctv_order_id,o.carrier,o.plan_name,o.ctv_price,o.quantity,o.total_charge,o.status,COALESCE(NULLIF(e.iccid, \'\'), o.iccid) AS iccid,e.ac AS ac,o.created_at,p.day AS plan_days FROM ctv_orders o LEFT JOIN plan p ON p.id=o.plan_id LEFT JOIN ctv_esims e ON e.ctv_order_id=o.ctv_order_id AND e.ctv_id=o.ctv_id AND e.id=(SELECT MIN(e2.id) FROM ctv_esims e2 WHERE e2.ctv_order_id=o.ctv_order_id AND e2.ctv_id=o.ctv_id) WHERE o.ctv_id=?' . str_replace('created_at', 'o.created_at', $dateWhere) . ' ORDER BY o.id DESC LIMIT 10000');
+        $st = db()->prepare('SELECT o.ctv_order_id,o.carrier,o.plan_name,o.ctv_price,o.quantity,o.total_charge,o.status,COALESCE(NULLIF(e.iccid, \'\'), o.iccid) AS iccid,e.ac AS ac,o.created_at,p.day AS plan_days FROM ctv_orders o LEFT JOIN plan p ON p.id=o.plan_id LEFT JOIN ctv_esims e ON e.ctv_order_id=o.ctv_order_id AND e.ctv_id=o.ctv_id WHERE o.ctv_id=?' . str_replace('created_at', 'o.created_at', $dateWhere) . ' ORDER BY o.id DESC, e.id ASC LIMIT 10000');
         $st->execute($dateParams);
         $statusMap = [0 => 'pending', 1 => 'processing', 2 => 'success', 3 => 'failed'];
         foreach ($st->fetchAll() as $r) {

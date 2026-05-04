@@ -85,8 +85,8 @@ function admin_layout_header(string $title, array $admin): void {
     security_headers(true);
     $assetVer = '20260504b';
     $passkeyText = admin_passkey_required()
-        ? (admin_passkey_verified() ? 'Passkey verified' : 'Passkey required')
-        : 'Passkey optional';
+        ? (admin_passkey_verified() ? 'Đã xác thực Passkey' : 'Yêu cầu Passkey')
+        : 'Passkey tùy chọn';
     ?>
 <!doctype html><html lang="vi"><head>
 <meta charset="utf-8">
