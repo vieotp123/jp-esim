@@ -203,6 +203,34 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
       <p>Không có mục nào khớp bộ lọc.</p>
     </div>
   <?php else: ?>
+  <div class="m-cards">
+  <?php foreach ($rows as $r):
+    $st2 = (string)$r['status'];
+    $stCls2 = $st2==='open' ? 'warn' : ($st2==='resolved' ? 'ok' : 'info');
+    $k2 = (string)($r['kind'] ?? '');
+    [$kLabel2, $kCls2] = $kindLabel[$k2] ?? [$k2, 'info'];
+  ?>
+  <div class="m-card">
+    <div class="m-head">
+      <span><span class="kbd">#<?= (int)$r['id'] ?></span> <span class="tag <?= $kCls2 ?>"><?= htmlspecialchars($kLabel2) ?></span></span>
+      <span class="tag <?= $stCls2 ?>"><?= match($st2) { 'open'=>'Mở', 'resolved'=>'Xong', 'ignored'=>'Qua', default=>$st2 } ?></span>
+    </div>
+    <div class="m-row"><span class="m-label">Mã đơn</span><span class="m-val kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+    <?php $err2 = mb_strimwidth((string)($r['error_summary'] ?? ''),0,120,'…'); if ($err2): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars($err2) ?></div><?php endif; ?>
+    <?php if ($st2 === 'open'): ?>
+    <div class="m-actions">
+      <form method="post" style="flex:1"><?php admin_csrf_field(); ?><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="action" value="resolve"><input type="hidden" name="note" value=""><button class="btn sm gold" style="width:100%">Xử lý</button></form>
+      <form method="post" style="flex:1" onsubmit="return confirm('Bỏ qua?')"><?php admin_csrf_field(); ?><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="action" value="ignore"><input type="hidden" name="note" value=""><button class="btn sm secondary" style="width:100%">Bỏ qua</button></form>
+    </div>
+    <?php else: ?>
+    <div class="m-actions">
+      <form method="post" style="flex:1" onsubmit="return confirm('Mở lại?')"><?php admin_csrf_field(); ?><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="action" value="reopen"><button class="btn sm secondary" style="width:100%">Mở lại</button></form>
+    </div>
+    <?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead>

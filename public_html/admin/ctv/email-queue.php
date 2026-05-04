@@ -33,6 +33,21 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
   <?php if (!$rows): ?>
     <div class="empty"><div class="icon">📧</div><p>Không có email nào trong bộ lọc hiện tại.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+  <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
+  <div class="m-card">
+    <div class="m-head">
+      <span class="kbd" style="font-size:10px"><?= htmlspecialchars(mb_strimwidth((string)$r['iccid'],0,20,'…')) ?></span>
+      <?php if($sent): ?><span class="tag ok">Đã gửi</span><?php elseif($err): ?><span class="tag err">Lỗi</span><?php else: ?><span class="tag warn">Chờ</span><?php endif; ?>
+    </div>
+    <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><a href="/admin/ctv/orders.php?q=<?= rawurlencode((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></span></div>
+    <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Khách</span><span class="m-val"><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)($r['package_name'] ?? '')) ?></span></div>
+    <?php if($err): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['email_last_error'],0,100,'...')) ?></div><?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>

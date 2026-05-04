@@ -50,6 +50,29 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   </div>
 
   <?php if (!$rows): ?><div class="empty"><div class="icon">📋</div><p>Chưa có yêu cầu nạp ví nào<?= $filterStatus ? ' ở trạng thái này' : '' ?>.</p></div><?php else: ?>
+  <div class="m-cards">
+  <?php foreach ($rows as $r):
+    $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
+    $sLabel = match ($r['status']) { 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', default => 'Chờ duyệt' };
+  ?>
+  <div class="m-card">
+    <div class="m-head">
+      <span>#<?= (int)$r['id'] ?> — <a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>"><?= htmlspecialchars((string)($r['email'] ?? '')) ?></a></span>
+      <span class="tag <?= $sCls ?>"><?= $sLabel ?></span>
+    </div>
+    <div class="m-row"><span class="m-label">Số tiền</span><span class="m-val" style="color:var(--a-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></span></div>
+    <div class="m-row"><span class="m-label">Ngày gửi</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+    <?php if (!empty($r['admin_note'])): ?><div style="font-size:12px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['admin_note'],0,80,'…')) ?></div><?php endif; ?>
+    <?php if ($r['status'] === 'pending'): ?>
+    <div class="m-actions">
+      <?php if (!empty($r['proof_path'])): ?><a href="<?= htmlspecialchars((string)$r['proof_path']) ?>" target="_blank" class="btn sm secondary">Xem bằng chứng</a><?php endif; ?>
+      <form method="post" style="flex:1"><?php admin_csrf_field(); ?><input type="hidden" name="request_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="note" value=""><button name="action" value="approve" class="btn sm gold" style="width:100%">Duyệt</button></form>
+      <form method="post" style="flex:1" onsubmit="return confirm('Từ chối #<?= (int)$r['id'] ?>?')"><?php admin_csrf_field(); ?><input type="hidden" name="request_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="note" value=""><button name="action" value="reject" class="btn sm danger" style="width:100%">Từ chối</button></form>
+    </div>
+    <?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table><thead><tr><th>#</th><th>CTV</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
   <?php foreach ($rows as $r):
