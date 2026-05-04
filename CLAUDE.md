@@ -65,6 +65,13 @@
   - Admin: /admin/ctv/passkey-setup.php register/revoke, /admin/ctv/passkey-api.php, optional ADMIN_REQUIRE_PASSKEY=1 enforcement
   - Client: /assets/passkey.js (WebAuthn create/get helpers)
   - Passwords always remain as fallback
+- Phase F (i18n + UX polish): done
+  - Full Vietnamese error messages in CTV/admin endpoints (qr, install, notifications-api, guard, orders)
+  - Translated all English UI labels: status tags, buttons, table headers, toast messages across admin and CTV
+  - Provider leak scan: clean — no provider domains in user/CTV/retail-facing output
+  - Mobile responsive CSS for CTV and admin panels (760px/480px breakpoints, table horizontal scroll)
+  - SEO: noarchive on all protected pages, cleaned sitemap (removed noindex pages, added lastmod)
+  - Smoke test script: scripts/smoke_test.sh (11 checks, no secrets needed)
 - Next: Phase E Phase 2 — passkey-preferred (prompt passkey first, password fallback), webhook replay testing, monitoring/alerting
 
 ## Reporting
