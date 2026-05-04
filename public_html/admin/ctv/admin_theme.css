@@ -120,8 +120,11 @@ label{display:block; font-size:13px; color:var(--a-ink-2); margin-bottom:5px}
 .btn.danger{background:linear-gradient(180deg, #ef5b5b, #c33b3b); box-shadow:0 6px 16px rgba(220,60,60,.30)}
 .btn.gold{background:linear-gradient(180deg, var(--a-gold-2), var(--a-gold-deep)); color:#241804; box-shadow:0 6px 16px rgba(230,192,104,.35)}
 .btn.sm{padding:6px 12px; font-size:12.5px; border-radius:7px}
-.btn:disabled{opacity:.55; cursor:not-allowed; filter:none}
+.btn:disabled{opacity:.55; cursor:not-allowed; filter:none; pointer-events:none}
 form.inline{display:inline}
+.action-group{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.action-group form{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.action-group label{margin:0;font-size:12px;white-space:nowrap}
 
 /* Tables */
 table{width:100%; border-collapse:separate; border-spacing:0; font-size:13.5px}
@@ -202,8 +205,12 @@ details[open] summary{color:var(--a-gold)}
   .filter-row{gap:5px}
   .pill{padding:5px 10px;font-size:12px}
   .btn{padding:10px 14px; font-size:12.5px;min-height:40px}
-  input,select,textarea{font-size:16px;padding:10px 12px}
+  input,select,textarea{font-size:16px;padding:10px 12px;min-width:0;width:100%}
   form.inline{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .action-group form{flex-direction:column;align-items:stretch}
+  .action-group form .btn{width:100%;justify-content:center}
+  .action-group input[type=number]{width:100%}
+  details summary{padding:8px 0}
 }
 @media (max-width:480px){
   .summary{grid-template-columns:1fr}

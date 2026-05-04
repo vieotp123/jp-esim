@@ -23,8 +23,46 @@ $provider=db()->prepare('SELECT * FROM ctv_provider_logs WHERE ctv_id=? ORDER BY
 admin_layout_header('CTV #'.$id, $admin); ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="card"><a class="btn secondary" href="/admin/ctv/index.php">← Danh sách</a><h2><?= htmlspecialchars((string)$ctv['email']) ?></h2><p>ID #<?= $id ?> · <span class="tag <?= (int)$ctv['status']?'ok':'err' ?>"><?= (int)$ctv['status']?'Hoạt động':'Đã khóa' ?></span> · Ví <?= htmlspecialchars(format_vnd((int)$ctv['balance'])) ?> · Chiết khấu <?= htmlspecialchars(format_vnd((int)$ctv['discount_per_esim'])) ?></p><p class="muted">Đăng nhập cuối: <?= htmlspecialchars((string)($ctv['last_login_at'] ?? '-')) ?> <?= htmlspecialchars((string)($ctv['last_login_ip'] ?? '')) ?></p></div>
-<div class="card"><h3>Thao tác</h3><form method="post" class="inline"><?php admin_csrf_field(); ?><input type="hidden" name="ctv_id" value="<?= $id ?>"><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="<?= (int)$ctv['status']?0:1 ?>"><button class="btn <?= (int)$ctv['status']?'danger':'' ?>"><?= (int)$ctv['status']?'Khóa':'Mở' ?></button></form><form method="post" class="inline"><?php admin_csrf_field(); ?><input type="hidden" name="ctv_id" value="<?= $id ?>"><input type="hidden" name="action" value="set_discount"><input type="number" name="discount" min="0" max="500000" value="<?= (int)$ctv['discount_per_esim'] ?>"><button class="btn">Lưu chiết khấu</button></form><form method="post"><?php admin_csrf_field(); ?><input type="hidden" name="ctv_id" value="<?= $id ?>"><input type="number" name="amount" min="1" placeholder="VND"><input name="note" required placeholder="Ghi chú"><button class="btn" name="action" value="wallet_credit">Nạp ví</button><button class="btn danger" name="action" value="wallet_debit" onclick="return confirm('Xác nhận trừ ví?')">Trừ ví</button></form></div>
+<div class="card">
+  <h3>Thao tác</h3>
+  <div class="action-group">
+    <form method="post">
+      <?php admin_csrf_field(); ?>
+      <input type="hidden" name="ctv_id" value="<?= $id ?>">
+      <input type="hidden" name="action" value="set_status">
+      <input type="hidden" name="status" value="<?= (int)$ctv['status']?0:1 ?>">
+      <label>Trạng thái</label>
+      <button class="btn <?= (int)$ctv['status']?'danger':'' ?>"><?= (int)$ctv['status']?'Khóa tài khoản':'Mở tài khoản' ?></button>
+    </form>
+    <form method="post">
+      <?php admin_csrf_field(); ?>
+      <input type="hidden" name="ctv_id" value="<?= $id ?>">
+      <input type="hidden" name="action" value="set_discount">
+      <label>Chiết khấu / eSIM (VND)</label>
+      <input type="number" name="discount" min="0" max="500000" value="<?= (int)$ctv['discount_per_esim'] ?>" placeholder="0">
+      <button class="btn">Lưu chiết khấu</button>
+    </form>
+    <form method="post">
+      <?php admin_csrf_field(); ?>
+      <input type="hidden" name="ctv_id" value="<?= $id ?>">
+      <label>Nạp/trừ ví</label>
+      <input type="number" name="amount" min="1" placeholder="Số tiền (VND)">
+      <input type="text" name="note" required placeholder="Ghi chú bắt buộc">
+      <button class="btn gold" name="action" value="wallet_credit">Nạp ví</button>
+      <button class="btn danger" name="action" value="wallet_debit" onclick="return confirm('Xác nhận trừ ví CTV #<?= $id ?>?')">Trừ ví</button>
+    </form>
+  </div>
+</div>
 <div class="card"><h3>Lịch sử ví</h3><table><tr><th>Thời gian</th><th>Số tiền</th><th>Số dư</th><th>Lý do</th><th>Ghi chú</th><th>Admin</th></tr><?php foreach($tx as $r): ?><tr><td><?= htmlspecialchars((string)$r['created_at']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></td><td><?= htmlspecialchars((string)$r['reason']) ?></td><td><?= htmlspecialchars((string)($r['note']??'')) ?></td><td><?= htmlspecialchars((string)($r['admin_user']??'')) ?></td></tr><?php endforeach; ?></table></div>
-<div class="card"><h3>Đơn hàng</h3><table><tr><th>Mã đơn</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th></tr><?php foreach($orders as $r): ?><tr><td><?= htmlspecialchars((string)$r['ctv_order_id']) ?></td><td><?= htmlspecialchars((string)$r['plan_name']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td><td><?= (int)$r['status'] ?></td><td><?= htmlspecialchars((string)($r['error_message']??'')) ?></td></tr><?php endforeach; ?></table></div>
+<div class="card"><h3>Đơn hàng (<?= count($orders) ?>)</h3>
+<?php if (!$orders): ?>
+  <div class="empty"><div class="icon">📋</div><p>Chưa có đơn nào.</p></div>
+<?php else: ?>
+<table><thead><tr><th>Mã đơn</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th></tr></thead><tbody>
+<?php $osMap=[0=>'Chờ',1=>'Đang xử lý',2=>'Thành công',3=>'Thất bại']; $osCls=[0=>'',1=>'warn',2=>'ok',3=>'err']; ?>
+<?php foreach($orders as $r): $os=(int)$r['status']; ?><tr><td><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span></td><td><?= htmlspecialchars((string)$r['plan_name']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td><td><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></td><td style="max-width:200px;font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message']??''),0,150,'…')) ?></td></tr><?php endforeach; ?>
+</tbody></table>
+<?php endif; ?>
+</div>
 <div class="card"><h3>Nạp data / Nhật ký</h3><p>Nạp data: <?= count($topups) ?> · Nhật ký API: <?= count($api) ?> · Nhật ký hệ thống: <?= count($provider) ?></p><p><a class="btn secondary" href="/admin/ctv/logs.php?kind=wallet&ctv_id=<?= $id ?>">Xem nhật ký ví</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=api&ctv_id=<?= $id ?>">Xem nhật ký API</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=provider&ctv_id=<?= $id ?>">Xem nhật ký hệ thống</a></p></div>
 <?php admin_layout_footer();
