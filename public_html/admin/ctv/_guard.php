@@ -76,15 +76,15 @@ function admin_layout_header(string $title, array $admin): void {
     <span class="brand-name">jp-esim <em>Admin</em></span>
   </div>
   <nav>
-    <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Dashboard</a>
-    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>CTV Users</a>
+    <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Tổng quan</a>
+    <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>Danh sách CTV</a>
     <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn CTV</a>
-    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email QR</a>
-    <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Failed Queue</a>
+    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Hàng đợi Email</a>
+    <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi</a>
     <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>Nạp ví</a>
-    <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Notify</a>
-    <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Logs</a>
-    <a href="/admin/ctv/audit.php"<?= admin_nav_active('/admin/ctv/audit.php') ?>>Audit</a>
+    <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Thông báo</a>
+    <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Nhật ký</a>
+    <a href="/admin/ctv/audit.php"<?= admin_nav_active('/admin/ctv/audit.php') ?>>Kiểm toán</a>
     <a href="/admin/ctv/passkey-setup.php"<?= admin_nav_active('/admin/ctv/passkey-setup.php') ?>>Passkey</a>
   </nav>
   <span class="right">

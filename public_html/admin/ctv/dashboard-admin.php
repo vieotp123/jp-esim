@@ -31,7 +31,7 @@ $orderBreakdown = [];
 foreach ($orderStats as $r) {
     $src = (string)$r['src'];
     $s = (int)$r['status'];
-    $label = match ($s) { 0 => 'pending', 1 => 'expired', 2 => 'paid/success', 3 => 'failed', default => 'other' };
+    $label = match ($s) { 0 => 'Chờ TT', 1 => 'Hết hạn', 2 => 'Thành công', 3 => 'Thất bại', default => 'Khác' };
     $orderBreakdown[$src][$label] = ($orderBreakdown[$src][$label] ?? 0) + (int)$r['cnt'];
 }
 
@@ -42,14 +42,14 @@ $queueTotal = array_sum($queueMap);
 
 $recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY id DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();
 
-admin_layout_header('Admin Dashboard', $admin);
+admin_layout_header('Tổng quan Admin', $admin);
 ?>
 <div class="summary">
-  <div class="card gold"><b>Revenue hôm nay</b><h2><?= htmlspecialchars(format_vnd($revToday)) ?></h2><div class="sub">retail + CTV</div></div>
-  <div class="card"><b>Revenue 7 ngày</b><h2><?= htmlspecialchars(format_vnd($rev7d)) ?></h2></div>
-  <div class="card"><b>Revenue 30 ngày</b><h2><?= htmlspecialchars(format_vnd($rev30d)) ?></h2></div>
-  <div class="card"><b>CTV Active</b><h2><?= $ctvActive ?></h2><div class="sub">Pending: <?= $ctvPending ?> · Disabled: <?= $ctvDisabled ?></div></div>
-  <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Failed Queue</b><h2><?= $queueTotal ?></h2><div class="sub"><?php foreach ($queueMap as $k => $v) echo htmlspecialchars($k) . ':' . $v . ' '; ?></div></div>
+  <div class="card gold"><b>Doanh thu hôm nay</b><h2><?= htmlspecialchars(format_vnd($revToday)) ?></h2><div class="sub">Lẻ + CTV</div></div>
+  <div class="card"><b>Doanh thu 7 ngày</b><h2><?= htmlspecialchars(format_vnd($rev7d)) ?></h2></div>
+  <div class="card"><b>Doanh thu 30 ngày</b><h2><?= htmlspecialchars(format_vnd($rev30d)) ?></h2></div>
+  <div class="card"><b>CTV hoạt động</b><h2><?= $ctvActive ?></h2><div class="sub">Chờ xác minh: <?= $ctvPending ?> · Vô hiệu: <?= $ctvDisabled ?></div></div>
+  <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Đơn lỗi</b><h2><?= $queueTotal ?></h2><div class="sub"><?php foreach ($queueMap as $k => $v) echo htmlspecialchars($k) . ':' . $v . ' '; ?></div></div>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -69,12 +69,12 @@ admin_layout_header('Admin Dashboard', $admin);
 </div>
 
 <div class="card">
-  <h2>Orders by Status</h2>
+  <h2>Đơn hàng theo trạng thái</h2>
   <?php foreach (['retail', 'ctv'] as $src): ?>
-  <h3><?= strtoupper($src) ?></h3>
+  <h3><?= $src === 'retail' ? 'KHÁCH LẺ' : 'CTV' ?></h3>
   <div class="filter-row">
     <?php foreach ($orderBreakdown[$src] ?? [] as $label => $cnt): ?>
-      <span class="tag <?= $label === 'paid/success' ? 'ok' : ($label === 'failed' ? 'err' : ($label === 'pending' ? 'warn' : 'info')) ?>"><?= htmlspecialchars($label) ?>: <?= $cnt ?></span>
+      <span class="tag <?= $label === 'Thành công' ? 'ok' : ($label === 'Thất bại' ? 'err' : ($label === 'Chờ TT' ? 'warn' : 'info')) ?>"><?= htmlspecialchars($label) ?>: <?= $cnt ?></span>
     <?php endforeach; ?>
   </div>
   <?php endforeach; ?>
@@ -82,15 +82,15 @@ admin_layout_header('Admin Dashboard', $admin);
 </div>
 
 <div class="card">
-  <h2>10 Đơn gần nhất (Retail + CTV)</h2>
-  <table><thead><tr><th>Nguồn</th><th>Mã đơn</th><th>Status</th><th>Số tiền</th><th>Thời gian</th></tr></thead><tbody>
+  <h2>10 đơn gần nhất (Lẻ + CTV)</h2>
+  <table><thead><tr><th>Nguồn</th><th>Mã đơn</th><th>Trạng thái</th><th>Số tiền</th><th>Thời gian</th></tr></thead><tbody>
   <?php foreach ($recent as $r):
     $s = (int)$r['status'];
-    $sLabel = match ($s) { 0 => 'pending', 1 => 'expired', 2 => 'success', 3 => 'failed', default => (string)$s };
+    $sLabel = match ($s) { 0 => 'Chờ TT', 1 => 'Hết hạn', 2 => 'Thành công', 3 => 'Thất bại', default => (string)$s };
     $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
   ?>
   <tr>
-    <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= htmlspecialchars((string)$r['src']) ?></span></td>
+    <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'CTV' : 'Lẻ' ?></span></td>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></td>
     <td><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></td>
     <td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
