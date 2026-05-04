@@ -16,7 +16,7 @@ try {
         if (mb_strlen($note) > 1000) $note = mb_substr($note, 0, 1000);
         if ($id <= 0) throw new RuntimeException('ID không hợp lệ');
         if (!in_array($action, ['resolve','ignore','reopen','retry'], true)) throw new RuntimeException('Hành động không hỗ trợ');
-        $st = db()->prepare('SELECT id, status FROM order_admin_queue WHERE id=? LIMIT 1');
+        $st = db()->prepare('SELECT id, kind, ref_id, status FROM order_admin_queue WHERE id=? LIMIT 1');
         $st->execute([$id]); $row = $st->fetch();
         if (!$row) throw new RuntimeException('Không tìm thấy mục #' . $id);
         if ($action === 'resolve') {
@@ -34,47 +34,65 @@ try {
                 ->execute(['open', $note !== '' ? $note : null, $id]);
             $flash = ['ok', 'Đã mở lại #' . $id];
         } elseif ($action === 'retry') {
-            // Retry provider. Tôn trọng test-mode + TEST-DEMO ref để tránh gọi API thật ngoài ý muốn.
             $refId = (string)($row['ref_id'] ?? '');
             $kind  = (string)($row['kind'] ?? '');
-            $isTestDemo = str_starts_with($refId, 'TEST-DEMO-');
-            $providerTest = LegacyProviderClient::isTestMode();
-            if (!$isTestDemo && !$providerTest) {
-                throw new RuntimeException('Provider retry bị chặn: cần PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-* (an toàn). Bật env và refresh.');
-            }
             if ($kind === 'amount_mismatch') {
                 throw new RuntimeException('amount_mismatch không retry tự động — cần Resolve/Ignore thủ công.');
             }
-            $svc = new RetailFulfillmentService();
+
+            $isTestDemo = str_starts_with($refId, 'TEST-DEMO-');
             $stripped = $isTestDemo ? substr($refId, strlen('TEST-DEMO-')) : $refId;
-            // Map ref to method: N* -> order, T* -> topup. Demo refs giữ prefix N/T sau khi strip.
             $first = strtoupper(substr($stripped, 0, 1));
-            $result = null;
-            if ($isTestDemo) {
-                // Demo flow: không gọi service thật, chỉ mark resolved và ghi note để admin thấy UI hoạt động.
-                db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                    ->execute(['resolved', '[demo retry] ' . ($note !== '' ? $note : 'Demo retry pass — admin: ' . $admin['user']), $id]);
-                $flash = ['ok', 'Demo retry #' . $id . ' (ref ' . htmlspecialchars($refId) . ') — đã đánh dấu resolved (không gọi API thật).'];
-            } elseif ($first === 'N') {
-                $result = $svc->fulfillPaidOrder($stripped);
-                if (!empty($result['success'])) {
-                    db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                        ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
-                    $flash = ['ok', 'Retry order ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+
+            if ($kind === 'email_error') {
+                // Email retry must not call the provider again. It only resends the customer email.
+                if ($first === 'N') {
+                    $ok = $isTestDemo ? true : (new MailService())->sendOrderIfNeeded($stripped);
+                } elseif ($first === 'T') {
+                    $ok = $isTestDemo ? true : (new MailService())->sendTopupIfNeeded($stripped);
                 } else {
-                    $flash = ['err', 'Retry order ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                    throw new RuntimeException('Không nhận diện được loại ref để resend email (cần N* hoặc T*): ' . htmlspecialchars($refId));
                 }
-            } elseif ($first === 'T') {
-                $result = $svc->fulfillPaidTopup($stripped);
-                if (!empty($result['success'])) {
+                if ($ok) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                        ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
-                    $flash = ['ok', 'Retry topup ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+                        ->execute(['resolved', '[email retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                    $flash = ['ok', 'Đã resend email cho ' . htmlspecialchars($stripped) . ' — không gọi provider.'];
                 } else {
-                    $flash = ['err', 'Retry topup ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                    $flash = ['err', 'Resend email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra Mailgun/logs.'];
                 }
             } else {
-                throw new RuntimeException('Không nhận diện được loại ref (cần N* hoặc T*): ' . htmlspecialchars($refId));
+                // Provider retry. Tôn trọng test-mode + TEST-DEMO ref để tránh gọi API thật ngoài ý muốn.
+                $providerTest = LegacyProviderClient::isTestMode();
+                if (!$isTestDemo && !$providerTest) {
+                    throw new RuntimeException('Provider retry bị chặn: cần PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-* (an toàn). Bật env và refresh.');
+                }
+                $svc = new RetailFulfillmentService();
+                $result = null;
+                if ($isTestDemo) {
+                    db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
+                        ->execute(['resolved', '[demo retry] ' . ($note !== '' ? $note : 'Demo retry pass — admin: ' . $admin['user']), $id]);
+                    $flash = ['ok', 'Demo retry #' . $id . ' (ref ' . htmlspecialchars($refId) . ') — đã đánh dấu resolved (không gọi API thật).'];
+                } elseif ($first === 'N') {
+                    $result = $svc->fulfillPaidOrder($stripped);
+                    if (!empty($result['success'])) {
+                        db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
+                            ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        $flash = ['ok', 'Retry order ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+                    } else {
+                        $flash = ['err', 'Retry order ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                    }
+                } elseif ($first === 'T') {
+                    $result = $svc->fulfillPaidTopup($stripped);
+                    if (!empty($result['success'])) {
+                        db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
+                            ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        $flash = ['ok', 'Retry topup ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+                    } else {
+                        $flash = ['err', 'Retry topup ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                    }
+                } else {
+                    throw new RuntimeException('Không nhận diện được loại ref (cần N* hoặc T*): ' . htmlspecialchars($refId));
+                }
             }
         }
     }
@@ -194,12 +212,21 @@ admin_layout_header('Failed Order Queue', $admin);
         <td>
           <?php if ($st === 'open'): ?>
             <?php if ($k === 'provider_error' || $k === 'email_error'): ?>
+              <?php if ($k === 'email_error'): ?>
+              <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Resend email cho mục này?\nKhông gọi provider, chỉ gửi lại mail khách.');">
+                <?php admin_csrf_field(); ?>
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <input type="hidden" name="action" value="retry">
+                <button class="btn gold sm" title="Gửi lại email qua Mailgun, không gọi provider">✉ Resend email</button>
+              </form>
+              <?php else: ?>
               <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Retry provider cho mục này?\nLưu ý: sẽ chỉ thực thi khi PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-*');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="retry">
                 <button class="btn gold sm" title="Gọi RetailFulfillmentService::fulfillPaidOrder hoặc fulfillPaidTopup">↻ Retry provider</button>
               </form>
+              <?php endif; ?>
             <?php endif; ?>
             <details>
               <summary>Resolve</summary>
