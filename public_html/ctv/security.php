@@ -29,6 +29,16 @@ ctv_flash_render();
   <div id="passkeySection">
     <h3>Passkey đã đăng ký (<?= count($passkeys) ?>/5)</h3>
     <?php if ($passkeys): ?>
+    <div class="m-cards">
+      <?php foreach ($passkeys as $pk): ?>
+      <div class="m-card" id="pk-m-<?= (int)$pk['id'] ?>">
+        <div class="m-head"><span><?= htmlspecialchars((string)($pk['device_name'] ?: 'Passkey #' . $pk['id'])) ?></span></div>
+        <div class="m-row"><span class="m-label">Ngày tạo</span><span class="m-val muted"><?= htmlspecialchars((string)$pk['created_at']) ?></span></div>
+        <div class="m-row"><span class="m-label">Lần dùng cuối</span><span class="m-val muted"><?= $pk['last_used_at'] ? htmlspecialchars((string)$pk['last_used_at']) : 'Chưa dùng' ?></span></div>
+        <div class="m-actions"><button class="btn sm danger" onclick="revokePasskey(<?= (int)$pk['id'] ?>)">Xoá</button></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
     <div class="table-wrap">
     <table>
       <thead><tr><th>Tên thiết bị</th><th>Ngày tạo</th><th>Lần dùng cuối</th><th></th></tr></thead>

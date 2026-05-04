@@ -70,6 +70,16 @@ admin_layout_header('Thông báo CTV', $admin);
   <h2>50 thông báo gần nhất</h2>
   <?php if (!$recent): ?><div class="empty"><div class="icon">🔔</div><p>Chưa có thông báo nào.</p></div><?php else: ?>
   <?php $typeVi = ['system'=>'Hệ thống','order'=>'Đơn hàng','wallet'=>'Ví','promo'=>'Khuyến mãi']; ?>
+  <div class="m-cards">
+    <?php foreach ($recent as $r): ?>
+    <div class="m-card">
+      <div class="m-head"><span><?= htmlspecialchars((string)$r['title']) ?></span><?= (int)$r['is_read'] ? '<span class="tag ok">Đã đọc</span>' : '<span class="tag warn">Chưa đọc</span>' ?></div>
+      <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a> <?= htmlspecialchars((string)($r['email'] ?? '')) ?></span></div>
+      <div class="m-row"><span class="m-label">Loại</span><span class="m-val"><span class="tag"><?= htmlspecialchars($typeVi[(string)$r['type']] ?? (string)$r['type']) ?></span></span></div>
+      <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table><thead><tr><th>ID</th><th>CTV</th><th>Loại</th><th>Tiêu đề</th><th>Đã đọc</th><th>Thời gian</th></tr></thead><tbody>
   <?php foreach ($recent as $r): ?>

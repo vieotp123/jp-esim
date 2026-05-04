@@ -56,6 +56,15 @@ admin_layout_header('Tổng quan Admin', $admin);
 <div class="card">
   <h2>Top 5 CTV (30 ngày)</h2>
   <?php if ($top5): ?>
+  <div class="m-cards">
+    <?php foreach ($top5 as $t): ?>
+    <div class="m-card">
+      <div class="m-head"><span><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?></a> <?= htmlspecialchars((string)($t['company_name'] ?: $t['email'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><?= (int)$t['cnt'] ?></span></div>
+      <div class="m-row"><span class="m-label">Doanh thu</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$t['rev'])) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table><thead><tr><th>CTV</th><th>Đơn</th><th>Doanh thu</th></tr></thead><tbody>
   <?php foreach ($top5 as $t): ?>
@@ -85,6 +94,19 @@ admin_layout_header('Tổng quan Admin', $admin);
 
 <div class="card">
   <h2>10 đơn gần nhất (Lẻ + CTV)</h2>
+  <div class="m-cards">
+    <?php foreach ($recent as $r):
+      $s = (int)$r['status'];
+      $sLabel = match ($s) { 0 => 'Chờ TT', 1 => 'Hết hạn', 2 => 'Thành công', 3 => 'Thất bại', default => (string)$s };
+      $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
+    ?>
+    <div class="m-card">
+      <div class="m-head"><span><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'CTV' : 'Lẻ' ?></span> <span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></span><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></div>
+      <div class="m-row"><span class="m-label">Số tiền</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table><thead><tr><th>Nguồn</th><th>Mã đơn</th><th>Trạng thái</th><th>Số tiền</th><th>Thời gian</th></tr></thead><tbody>
   <?php foreach ($recent as $r):

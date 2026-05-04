@@ -60,6 +60,29 @@ ctv_flash_render();
   <?php if (!$keys): ?>
     <div class="empty-state"><div class="icon">🔑</div><p>Chưa có API key nào.</p><p>Tạo key để tích hợp API vào hệ thống của bạn.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($keys as $k): ?>
+    <div class="m-card">
+      <div class="m-head">
+        <span><?= htmlspecialchars((string)$k['name']) ?></span>
+        <?php if ((int)$k['status'] === 1): ?><span class="tag ok">Hoạt động</span><?php else: ?><span class="tag err">Đã thu hồi</span><?php endif; ?>
+      </div>
+      <div class="m-row"><span class="m-label">Prefix</span><span class="m-val"><span class="kbd">ctvK_<?= htmlspecialchars((string)$k['key_prefix']) ?>_***</span></span></div>
+      <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$k['created_at']) ?></span></div>
+      <div class="m-row"><span class="m-label">Lần dùng cuối</span><span class="m-val muted"><?= htmlspecialchars((string)($k['last_used_at'] ?? 'Chưa dùng')) ?></span></div>
+      <?php if ((int)$k['status'] === 1): ?>
+      <div class="m-actions">
+        <form method="post" onsubmit="return confirm('Thu hồi key <?= htmlspecialchars((string)$k['name']) ?>?')">
+          <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+          <input type="hidden" name="action" value="revoke">
+          <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
+          <button class="btn sm danger" type="submit">Thu hồi</button>
+        </form>
+      </div>
+      <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Tên</th><th>Prefix</th><th>Trạng thái</th><th>Tạo lúc</th><th>Lần dùng cuối</th><th></th></tr></thead>

@@ -31,6 +31,20 @@ admin_layout_header("Nhật ký CTV", $admin);
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
     <?php if (!$rows): ?><div class="empty"><div class="icon">📡</div><p>Chưa có nhật ký xử lý nào.</p></div><?php else: ?>
+    <div class="m-cards">
+      <?php foreach ($rows as $r): ?>
+      <div class="m-card">
+        <div class="m-head"><span class="tag <?= (int)$r['success'] === 1 ? 'ok' : 'err' ?>"><?= (int)$r['success'] === 1 ? 'OK' : 'Lỗi' ?></span><span class="muted" style="font-size:12px"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a></span></div>
+        <div class="m-row"><span class="m-label">Loại</span><span class="m-val"><?= htmlspecialchars((string)$r['ref_type']) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></span></div>
+        <div class="m-row"><span class="m-label">Endpoint</span><span class="m-val muted"><?= htmlspecialchars((string)$r['endpoint']) ?></span></div>
+        <div class="m-row"><span class="m-label">HTTP</span><span class="m-val"><?= (int)$r['http_status'] ?></span></div>
+        <?php if (!empty($r['error_message'])): ?>
+        <div class="m-row"><span class="m-label">Lỗi</span><span class="m-val" style="font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)$r['error_message'], 0, 100, '…')) ?></span></div>
+        <?php endif; ?>
+      </div>
+      <?php endforeach; ?>
+    </div>
     <div class="table-wrap">
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>HTTP</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
@@ -61,6 +75,19 @@ admin_layout_header("Nhật ký CTV", $admin);
     ?>
     <?php if (!$rows): ?><div class="empty"><div class="icon">💰</div><p>Chưa có giao dịch ví nào.</p></div><?php else: ?>
     <?php $reasonVi = ['admin_credit'=>'Admin nạp','admin_debit'=>'Admin trừ','order_charge'=>'Phí đơn','order_refund'=>'Hoàn tiền đơn','order_retry'=>'Thử lại đơn','topup_charge'=>'Phí nạp data','topup_refund'=>'Hoàn tiền nạp data','topup_request'=>'Yêu cầu nạp ví']; ?>
+    <div class="m-cards">
+      <?php foreach ($rows as $r): $amt = (int)$r['amount']; ?>
+      <div class="m-card">
+        <div class="m-head"><span class="tag <?= $amt >= 0 ? 'ok' : 'err' ?>"><?= htmlspecialchars($reasonVi[(string)$r['reason']] ?? (string)$r['reason']) ?></span><span style="font-weight:800;color:<?= $amt >= 0 ? 'var(--a-green)' : 'var(--a-red)' ?>"><?= $amt >= 0 ? '+' : '' ?><?= htmlspecialchars(format_vnd($amt)) ?></span></div>
+        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)$r['email']) ?></span></div>
+        <div class="m-row"><span class="m-label">Số dư sau</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></span></div>
+        <div class="m-row"><span class="m-label">Tham chiếu</span><span class="m-val"><?= htmlspecialchars((string)($r['ref_type'] ?? '')) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></span></div>
+        <?php if (!empty($r['note'])): ?><div class="m-row"><span class="m-label">Ghi chú</span><span class="m-val muted"><?= htmlspecialchars(mb_strimwidth((string)$r['note'], 0, 60, '…')) ?></span></div><?php endif; ?>
+        <?php if (!empty($r['admin_user'])): ?><div class="m-row"><span class="m-label">Admin</span><span class="m-val muted"><?= htmlspecialchars((string)$r['admin_user']) ?></span></div><?php endif; ?>
+        <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
     <div class="table-wrap">
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>Lý do</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th><th>Admin</th></tr></thead>
@@ -89,6 +116,17 @@ admin_layout_header("Nhật ký CTV", $admin);
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
     <?php if (!$rows): ?><div class="empty"><div class="icon">🔌</div><p>Chưa có nhật ký API nào.</p></div><?php else: ?>
+    <div class="m-cards">
+      <?php foreach ($rows as $r): $httpCode = (int)($r['response_status'] ?? 0); ?>
+      <div class="m-card">
+        <div class="m-head"><span><span class="tag"><?= htmlspecialchars((string)$r['method']) ?></span> <span class="muted" style="font-size:12px"><?= htmlspecialchars((string)$r['endpoint']) ?></span></span><span class="tag <?= $httpCode >= 200 && $httpCode < 300 ? 'ok' : ($httpCode >= 400 ? 'err' : 'warn') ?>"><?= $httpCode ?></span></div>
+        <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['email'] ?? '')) ?></span></div>
+        <div class="m-row"><span class="m-label">IP</span><span class="m-val muted"><?= htmlspecialchars((string)($r['ip'] ?? '')) ?></span></div>
+        <div class="m-row"><span class="m-label">Thời lượng</span><span class="m-val"><?= (int)($r['duration_ms'] ?? 0) ?>ms</span></div>
+        <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
     <div class="table-wrap">
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>HTTP</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>

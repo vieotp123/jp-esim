@@ -53,15 +53,47 @@ admin_layout_header('CTV #'.$id, $admin); ?>
     </form>
   </div>
 </div>
-<div class="card"><h3>Lịch sử ví</h3><table><tr><th>Thời gian</th><th>Số tiền</th><th>Số dư</th><th>Lý do</th><th>Ghi chú</th><th>Admin</th></tr><?php foreach($tx as $r): ?><tr><td><?= htmlspecialchars((string)$r['created_at']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></td><td><?= htmlspecialchars((string)$r['reason']) ?></td><td><?= htmlspecialchars((string)($r['note']??'')) ?></td><td><?= htmlspecialchars((string)($r['admin_user']??'')) ?></td></tr><?php endforeach; ?></table></div>
+<div class="card"><h3>Lịch sử ví</h3>
+<?php if (!$tx): ?>
+  <div class="empty"><div class="icon">💰</div><p>Chưa có giao dịch ví nào.</p></div>
+<?php else: ?>
+  <?php $reasonVi = ['admin_credit'=>'Admin nạp','admin_debit'=>'Admin trừ','order_charge'=>'Phí đơn','order_refund'=>'Hoàn tiền đơn','order_retry'=>'Thử lại đơn','topup_charge'=>'Phí nạp data','topup_refund'=>'Hoàn tiền nạp data','topup_request'=>'Yêu cầu nạp ví']; ?>
+  <div class="m-cards">
+    <?php foreach($tx as $r): $amt=(int)$r['amount']; ?>
+    <div class="m-card">
+      <div class="m-head"><span class="tag <?= $amt >= 0 ? 'ok' : 'err' ?>"><?= htmlspecialchars($reasonVi[(string)$r['reason']] ?? (string)$r['reason']) ?></span><span style="font-weight:800;color:<?= $amt >= 0 ? 'var(--a-green)' : 'var(--a-red)' ?>"><?= $amt >= 0 ? '+' : '' ?><?= htmlspecialchars(format_vnd($amt)) ?></span></div>
+      <div class="m-row"><span class="m-label">Số dư</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></span></div>
+      <?php if (!empty($r['note'])): ?><div class="m-row"><span class="m-label">Ghi chú</span><span class="m-val muted"><?= htmlspecialchars((string)$r['note']) ?></span></div><?php endif; ?>
+      <?php if (!empty($r['admin_user'])): ?><div class="m-row"><span class="m-label">Admin</span><span class="m-val muted"><?= htmlspecialchars((string)$r['admin_user']) ?></span></div><?php endif; ?>
+      <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <div class="table-wrap">
+  <table><tr><th>Thời gian</th><th>Số tiền</th><th>Số dư</th><th>Lý do</th><th>Ghi chú</th><th>Admin</th></tr><?php foreach($tx as $r): ?><tr><td><?= htmlspecialchars((string)$r['created_at']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></td><td><?= htmlspecialchars((string)$r['reason']) ?></td><td><?= htmlspecialchars((string)($r['note']??'')) ?></td><td><?= htmlspecialchars((string)($r['admin_user']??'')) ?></td></tr><?php endforeach; ?></table>
+  </div>
+<?php endif; ?>
+</div>
 <div class="card"><h3>Đơn hàng (<?= count($orders) ?>)</h3>
 <?php if (!$orders): ?>
   <div class="empty"><div class="icon">📋</div><p>Chưa có đơn nào.</p></div>
 <?php else: ?>
-<table><thead><tr><th>Mã đơn</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th></tr></thead><tbody>
 <?php $osMap=[0=>'Chờ',1=>'Đang xử lý',2=>'Thành công',3=>'Thất bại']; $osCls=[0=>'',1=>'warn',2=>'ok',3=>'err']; ?>
+<div class="m-cards">
+  <?php foreach($orders as $r): $os=(int)$r['status']; ?>
+  <div class="m-card">
+    <div class="m-head"><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></div>
+    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['plan_name']) ?></span></div>
+    <div class="m-row"><span class="m-label">Phí</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></span></div>
+    <?php if (!empty($r['error_message'])): ?><div class="m-row"><span class="m-label">Lỗi</span><span class="m-val" style="font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)$r['error_message'],0,100,'…')) ?></span></div><?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+</div>
+<div class="table-wrap">
+<table><thead><tr><th>Mã đơn</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th></tr></thead><tbody>
 <?php foreach($orders as $r): $os=(int)$r['status']; ?><tr><td><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span></td><td><?= htmlspecialchars((string)$r['plan_name']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td><td><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></td><td style="max-width:200px;font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message']??''),0,150,'…')) ?></td></tr><?php endforeach; ?>
 </tbody></table>
+</div>
 <?php endif; ?>
 </div>
 <div class="card"><h3>Nạp data / Nhật ký</h3><p>Nạp data: <?= count($topups) ?> · Nhật ký API: <?= count($api) ?> · Nhật ký hệ thống: <?= count($provider) ?></p><p><a class="btn secondary" href="/admin/ctv/logs.php?kind=wallet&ctv_id=<?= $id ?>">Xem nhật ký ví</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=api&ctv_id=<?= $id ?>">Xem nhật ký API</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=provider&ctv_id=<?= $id ?>">Xem nhật ký hệ thống</a></p></div>

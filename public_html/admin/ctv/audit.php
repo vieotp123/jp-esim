@@ -56,6 +56,20 @@ admin_layout_header('Nhật ký kiểm toán', $admin);
   <?php if (!$rows): ?>
     <div class="empty"><div class="icon">📋</div><p>Không có log nào khớp bộ lọc.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($rows as $r): ?>
+    <div class="m-card">
+      <div class="m-head"><span class="tag info"><?= htmlspecialchars((string)$r['action']) ?></span><span class="kbd">#<?= (int)$r['id'] ?></span></div>
+      <div class="m-row"><span class="m-label">Admin</span><span class="m-val"><?= htmlspecialchars((string)$r['admin_user']) ?></span></div>
+      <div class="m-row"><span class="m-label">Đối tượng</span><span class="m-val"><?php if ($r['target_type']): ?><?= htmlspecialchars((string)$r['target_type']) ?><?php if ($r['target_id']): ?> <span class="kbd"><?= htmlspecialchars((string)$r['target_id']) ?></span><?php endif; ?><?php else: ?>–<?php endif; ?></span></div>
+      <div class="m-row"><span class="m-label">IP</span><span class="m-val muted"><?= htmlspecialchars((string)($r['ip'] ?? '')) ?></span></div>
+      <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+      <?php if ($r['details_json']): ?>
+      <details style="margin-top:8px"><summary style="font-size:12px">Chi tiết</summary><pre style="white-space:pre-wrap;font-size:11px;color:var(--a-ink-2);background:#0a1020;padding:8px;border-radius:6px;margin-top:6px;max-height:140px;overflow:auto"><?= htmlspecialchars(mb_strimwidth((string)$r['details_json'], 0, 2000, '…')) ?></pre></details>
+      <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead>
