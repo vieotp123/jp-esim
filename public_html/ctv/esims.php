@@ -28,6 +28,7 @@ $pStmt = db()->prepare('SELECT ctv_order_id, plan_name, carrier, updated_at FROM
 $pStmt->execute([(int)$user['id']]);
 $pending = $pStmt->fetchAll();
 
+$csrf = CtvAuth::csrfToken();
 ctv_layout_header('eSIM của CTV', $user);
 ?>
 <style>
@@ -42,7 +43,7 @@ ctv_layout_header('eSIM của CTV', $user);
       <div class="actions" style="margin-top:0">
         <button class="btn">Lọc</button>
         <a class="btn secondary" href="/ctv/esims.php">Làm mới</a>
-        <a class="btn secondary" href="/ctv/export.php?kind=esims">Xuất CSV</a>
+        <a class="btn secondary" href="/ctv/export.php?kind=esims&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a>
       </div>
     </div>
   </form>
@@ -70,13 +71,22 @@ ctv_layout_header('eSIM của CTV', $user);
   <?php if (!$rows): ?>
     <div class="empty-state"><div class="icon">📱</div><p>Chưa có eSIM nào<?= $q ? ' phù hợp bộ lọc' : '' ?>.</p><p>eSIM sẽ hiển thị sau khi đơn thành công và hệ thống đồng bộ.</p></div>
   <?php else: ?>
+  <form method="post" action="/ctv/export.php" id="esimExportForm">
+  <input type="hidden" name="kind" value="esims">
+  <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+  <div class="actions" style="margin-bottom:12px">
+    <button class="btn secondary" type="submit">Xuất eSIM đã chọn CSV</button>
+  </div>
   <div class="m-cards">
     <?php foreach ($rows as $r):
       $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : '';
     ?>
     <div class="m-card">
       <div class="m-head">
-        <span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>" style="font-size:11px"><?= htmlspecialchars((string)$r['iccid']) ?></span>
+        <label style="display:flex;align-items:center;gap:8px;margin:0">
+          <input type="checkbox" name="ids[]" value="<?= (int)$r['id'] ?>" class="esim-select">
+          <span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>" style="font-size:11px"><?= htmlspecialchars((string)$r['iccid']) ?></span>
+        </label>
         <span class="muted" style="font-size:11px"><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></span>
       </div>
       <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></span></div>
@@ -93,10 +103,11 @@ ctv_layout_header('eSIM của CTV', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
+    <thead><tr><th><input type="checkbox" id="selectAllEsims" aria-label="Chọn tất cả eSIM"></th><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
+        <td><input type="checkbox" name="ids[]" value="<?= (int)$r['id'] ?>" class="esim-select"></td>
         <td>
           <?php $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : ''; if ($qr !== ''): ?>
             <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" class="qr-thumb"></a>
@@ -112,6 +123,24 @@ ctv_layout_header('eSIM của CTV', $user);
     </tbody>
   </table>
   </div>
+  </form>
+  <script>
+  (function(){
+    var form = document.getElementById('esimExportForm');
+    var selectAll = document.getElementById('selectAllEsims');
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('.esim-select'));
+    if (selectAll) selectAll.addEventListener('change', function(){
+      boxes.forEach(function(box){ box.checked = selectAll.checked; });
+    });
+    if (form) form.addEventListener('submit', function(e){
+      var checked = boxes.some(function(box){ return box.checked; });
+      if (!checked) {
+        e.preventDefault();
+        alert('Vui lòng chọn ít nhất một eSIM để xuất CSV.');
+      }
+    });
+  })();
+  </script>
   <?php endif; ?>
 </div>
 <?php ctv_layout_footer();

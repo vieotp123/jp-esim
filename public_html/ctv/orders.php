@@ -13,6 +13,7 @@ $perPage = 50;
 $rows = (new CtvOrderService())->listForCtv((int)$user['id'], $perPage, ($page - 1) * $perPage, $status ?: null);
 if ($q !== '') { $rows = array_values(array_filter($rows, fn($r) => stripos((string)$r['orderId'], $q) !== false || stripos((string)$r['carrier'].' '.(string)$r['planName'], $q) !== false)); }
 
+$csrf = CtvAuth::csrfToken();
 ctv_layout_header('Đơn eSIM', $user);
 ?>
 <div class="card">
@@ -51,7 +52,7 @@ ctv_layout_header('Đơn eSIM', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Mã đơn</th><th>Gói</th><th>SL</th><th>Phí CTV</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>
+    <thead><tr><th>Mã đơn</th><th>Gói</th><th>SL</th><th>Phí CTV</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
@@ -68,9 +69,10 @@ ctv_layout_header('Đơn eSIM', $user);
           <?php if ($r['needsAdmin']): ?><span class="tag err">Cần xử lý</span><?php endif; ?>
         </td>
         <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)$r['createdAt']) ?></span></td>
+        <td><a class="btn sm secondary" href="/ctv/export.php?kind=esims&order_id=<?= rawurlencode((string)$r['orderId']) ?>&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a></td>
       </tr>
       <?php if ($r['errorMessage']): ?>
-      <tr><td colspan="6"><span class="muted" style="font-size:12px">⚠ <?= htmlspecialchars($r['errorMessage']) ?></span></td></tr>
+      <tr><td colspan="7"><span class="muted" style="font-size:12px">⚠ <?= htmlspecialchars($r['errorMessage']) ?></span></td></tr>
       <?php endif; ?>
       <?php endforeach; ?>
     </tbody>

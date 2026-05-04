@@ -47,6 +47,7 @@ $statusMap = [0=>['Chờ xử lý','warn'], 1=>['Đang xử lý','warn'], 2=>['T
 
 // Topup eligibility — code-locked while TOPUP_LOCKED=1
 $topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
+$csrf = CtvAuth::csrfToken();
 
 ctv_layout_header('Đơn ' . $orderId, $user);
 
@@ -91,7 +92,10 @@ function _bytes_to_gb($b): string {
   <h2>
     Đơn <span class="kbd"><?= htmlspecialchars($orderId) ?></span>
     <span class="tag <?= $statusCls ?>" style="margin-left:8px"><?= htmlspecialchars($statusLabel) ?></span>
-    <a class="btn secondary" href="/ctv/orders.php" style="float:right">← Danh sách đơn</a>
+    <span style="float:right;display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn secondary" href="/ctv/export.php?kind=esims&order_id=<?= rawurlencode($orderId) ?>&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a>
+      <a class="btn secondary" href="/ctv/orders.php">← Danh sách đơn</a>
+    </span>
   </h2>
 
   <div class="order-grid">
@@ -136,7 +140,10 @@ if ($isPartial): ?>
 
 <div class="card">
   <h2>eSIM (<?= count($esims) ?><?php if ($qty > 1): ?>/<?= $qty ?><?php endif; ?>)
-    <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>" style="float:right">Làm mới</a>
+    <span style="float:right;display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn secondary" href="/ctv/export.php?kind=esims&order_id=<?= rawurlencode($orderId) ?>&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a>
+      <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>">Làm mới</a>
+    </span>
   </h2>
   <?php if (!$esims): ?>
     <?php if ((int)$order['status'] === 2): ?>
