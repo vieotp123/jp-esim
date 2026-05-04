@@ -47,15 +47,15 @@ $sum = db()->query('SELECT COUNT(*) total, SUM(status=1) active, COALESCE(SUM(ba
 admin_layout_header('Danh sách CTV', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
-<div class="summary"><div class="card"><b>Tổng CTV</b><h2><?= (int)$sum['total'] ?></h2></div><div class="card"><b>Active</b><h2><?= (int)$sum['active'] ?></h2></div><div class="card"><b>Tổng ví</b><h2><?= htmlspecialchars(format_vnd((int)$sum['balance'])) ?></h2></div></div>
-<div class="card"><form method="get"><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Tìm email hoặc ID"><button class="btn">Tìm</button><a class="btn secondary" href="/admin/ctv/index.php">Reset</a></form></div>
+<div class="summary"><div class="card"><b>Tổng CTV</b><h2><?= (int)$sum['total'] ?></h2></div><div class="card"><b>Hoạt động</b><h2><?= (int)$sum['active'] ?></h2></div><div class="card"><b>Tổng ví</b><h2><?= htmlspecialchars(format_vnd((int)$sum['balance'])) ?></h2></div></div>
+<div class="card"><form method="get"><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Tìm email hoặc ID"><button class="btn">Tìm</button><a class="btn secondary" href="/admin/ctv/index.php">Đặt lại</a></form></div>
 <div class="card"><h2>CTV (<?= count($ctvs) ?>)</h2><table><thead><tr><th>ID</th><th>Email / Công ty</th><th>Trạng thái</th><th>Số dư</th><th>Chiết khấu</th><th>Đơn / Doanh thu</th><th>Tạo lúc</th><th>Thao tác</th></tr></thead><tbody>
 <?php foreach ($ctvs as $c): ?><tr>
 <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$c['id'] ?>">#<?= (int)$c['id'] ?></a></td>
 <td><?= htmlspecialchars((string)$c['email']) ?><?php if (!empty($c['company_name'])): ?><br><span class="muted"><?= htmlspecialchars((string)$c['company_name']) ?></span><?php endif; ?><?php if (!empty($c['phone'])): ?><br><span class="muted"><?= htmlspecialchars((string)$c['phone']) ?></span><?php endif; ?></td>
-<td><span class="tag <?= (int)$c['status']===1?'ok':((int)$c['email_verified']?'err':'warn') ?>"><?= (int)$c['status']===1?'active':((int)$c['email_verified']?'disabled':'pending') ?></span></td>
+<td><span class="tag <?= (int)$c['status']===1?'ok':((int)$c['email_verified']?'err':'warn') ?>"><?= (int)$c['status']===1?'Hoạt động':((int)$c['email_verified']?'Đã khóa':'Chờ xác thực') ?></span></td>
 <td><?= htmlspecialchars(format_vnd((int)$c['balance'])) ?></td>
-<td><?= htmlspecialchars(format_vnd((int)$c['discount_per_esim'])) ?><?= $c['tier_id']?' / tier '.(int)$c['tier_id']:'' ?></td>
+<td><?= htmlspecialchars(format_vnd((int)$c['discount_per_esim'])) ?><?= $c['tier_id']?' / hạng '.(int)$c['tier_id']:'' ?></td>
 <td><?= (int)$c['total_orders'] ?> đơn<br><span class="muted"><?= htmlspecialchars(format_vnd((int)$c['total_spent'])) ?></span></td>
 <td><span class="muted"><?= htmlspecialchars((string)($c['created_at'] ?? '')) ?></span></td>
 <td>
