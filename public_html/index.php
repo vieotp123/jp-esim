@@ -15,6 +15,7 @@ $assetVer = time();
   <meta name="keywords" content="eSIM Nhật Bản, eSIM Japan, Docomo eSIM, au 5G eSIM, jp-esim Nhật, nạp data eSIM">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://jp-esim.vip/">
+  <link rel="alternate" hreflang="vi-VN" href="https://jp-esim.vip/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="jp-esim.vip">
   <meta property="og:title" content="eSIM Nhật Bản - Internet Nhật Bản">
@@ -31,7 +32,7 @@ $assetVer = time();
   <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=explicit" defer></script><?php endif; ?>
   <script src="/assets/app.js?v=<?= $assetVer ?>" defer></script>
 
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","paymentAccepted":"BankTransfer"}</script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Organization","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["vi","ja"]}},{"@context":"https://schema.org","@type":"Product","name":"eSIM Nhật Bản","description":"eSIM du lịch Nhật Bản mạng Docomo 4G và au 5G, giao QR tự động sau thanh toán VietQR, hỗ trợ phát WiFi và nạp thêm data.","brand":{"@type":"Brand","name":"jp-esim.vip"},"offers":{"@type":"AggregateOffer","priceCurrency":"VND","availability":"https://schema.org/InStock","offerCount":"10+"}}]</script>
 </head>
 <body>
 <div id="app" class="app-shell">
@@ -43,14 +44,14 @@ $assetVer = time();
   <main>
     <section class="view active" id="view-buy">
       <div class="hero-card">
-        <div><span class="badge">Không cần SIM vật lý</span><h2>JP eSIM Nhật trong 1 phút</h2><p>Chọn gói, thanh toán VietQR và nhận QR eSIM ngay trên màn hình.</p></div>
+        <div><span class="badge">Không cần SIM vật lý</span><h2>eSIM Nhật Bản — Kết nối ngay khi hạ cánh</h2><p>Chọn gói, thanh toán VietQR, nhận QR eSIM tự động trong 1 phút. Dùng mạng Docomo 4G hoặc au 5G tốc độ cao khắp Nhật Bản.</p></div>
       </div>
-            <div class="trust-strip" aria-label="Trust signals">
-        <span class="ts-item ts-gold"><span class="ts-dot"></span>Made for Japan travel</span>
+      <div class="trust-strip" aria-label="Ưu điểm nổi bật">
+        <span class="ts-item ts-gold"><span class="ts-dot"></span>Dành riêng cho du lịch Nhật</span>
         <span class="ts-item"><span class="carrier-chip docomo">Docomo 4G</span></span>
         <span class="ts-item"><span class="carrier-chip au">au 5G</span></span>
-        <span class="ts-item"><span class="ts-dot"></span>VietQR · BIDV</span>
-        <span class="ts-item"><span class="ts-dot"></span>Hỗ trợ 24/7 VN/JP</span>
+        <span class="ts-item"><span class="ts-dot"></span>Giao QR tự động</span>
+        <span class="ts-item"><span class="ts-dot"></span>Hỗ trợ 24/7</span>
       </div>
       <div class="ad-carousel" id="adCarousel" aria-label="Ưu điểm dịch vụ">
         <div class="ad-track">
@@ -81,6 +82,15 @@ $assetVer = time();
           <div class="step-card"><span data-i="wifiFill"></span><b>3. Kết nối</b><small>Bật dữ liệu di động, dùng Internet và phát WiFi.</small></div>
         </div>
       </div>
+      <div class="info-card faq-section">
+        <h2 style="margin:0 0 14px;font-size:20px;letter-spacing:-.4px">Câu hỏi thường gặp</h2>
+        <details class="faq-item"><summary>eSIM là gì? Điện thoại tôi có dùng được không?</summary><p>eSIM là SIM điện tử được tích hợp sẵn trong điện thoại, không cần lắp SIM vật lý. Hầu hết iPhone từ XS trở lên, Samsung Galaxy S20+, Google Pixel 3+ đều hỗ trợ eSIM.</p></details>
+        <details class="faq-item"><summary>Sau khi thanh toán bao lâu nhận được eSIM?</summary><p>QR eSIM được tạo tự động ngay sau khi hệ thống xác nhận thanh toán, thường chỉ trong vòng 1-2 phút. QR hiển thị trên web và gửi qua email.</p></details>
+        <details class="faq-item"><summary>Tôi có thể phát WiFi từ eSIM được không?</summary><p>Có. Tất cả gói eSIM Nhật Bản của chúng tôi đều hỗ trợ phát WiFi (hotspot), bạn có thể chia sẻ mạng cho laptop, iPad hoặc thiết bị khác.</p></details>
+        <details class="faq-item"><summary>Data chưa dùng hết có mất không?</summary><p>Không. Data chưa sử dụng được cộng dồn khi bạn nạp thêm. Bạn có thể nạp data ngay trên trang web mà không cần mua eSIM mới.</p></details>
+        <details class="faq-item"><summary>Tôi cần kích hoạt eSIM khi nào?</summary><p>Bạn nên kích hoạt eSIM trước khi bay hoặc ngay khi đến sân bay Nhật Bản. Chỉ cần quét QR, bật dữ liệu di động là dùng được ngay.</p></details>
+        <details class="faq-item"><summary>Có hỗ trợ hoàn tiền không?</summary><p>Có. Nếu eSIM chưa được kích hoạt, chúng tôi hỗ trợ hoàn tiền 100%. Liên hệ bộ phận hỗ trợ qua Messenger hoặc email để được giải quyết nhanh chóng.</p></details>
+      </div>
     </section>
 
     <section class="view" id="view-topup">
@@ -101,6 +111,18 @@ $assetVer = time();
       <div class="chat-input-wrap"><div class="chat-input"><input id="supportInput" placeholder="Nhập tin nhắn..." autocomplete="off"><button id="sendSupportBtn" aria-label="Gửi tin nhắn">Gửi</button></div></div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><span class="brand-mark">JP</span> jp-esim.vip</div>
+      <div class="footer-links">
+        <a href="/tra-cuu.php">Tra cứu đơn hàng</a>
+        <a href="https://m.me/jp-esim" target="_blank" rel="noopener">Messenger</a>
+        <a href="https://fb.com/jp-esim" target="_blank" rel="noopener">Facebook</a>
+      </div>
+      <p class="footer-copy">&copy; <?= date('Y') ?> jp-esim.vip — Dịch vụ eSIM Nhật Bản</p>
+    </div>
+  </footer>
 
   <nav class="tabbar">
     <button class="tab active" data-view="buy"><span class="tab-ico" data-i="sim"></span><span>JP eSIM</span></button>

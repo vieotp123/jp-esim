@@ -78,7 +78,7 @@ body.light .ios-header h1{background:linear-gradient(180deg,#0f172a,#334155);-we
 /* Plan card upgrade: hover lift + recommended ribbon */
 .plan-card{transition:transform .14s ease, box-shadow .18s ease, border-color .14s}
 .plan-card:hover{transform:translateY(-2px);box-shadow:0 18px 38px rgba(0,0,0,.32);border-color:rgba(230,192,104,.30)}
-.plan-card[data-recommended="1"]::after,.plan-card.recommended::after{content:"RECOMMENDED";position:absolute;top:10px;right:-30px;transform:rotate(35deg);background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));color:var(--ink-warm);font-size:10px;font-weight:900;letter-spacing:.6px;padding:3px 38px;box-shadow:0 4px 10px rgba(230,192,104,.30)}
+.plan-card[data-recommended="1"]::after,.plan-card.recommended::after{content:"NÊN MUA";position:absolute;top:10px;right:-30px;transform:rotate(35deg);background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));color:var(--ink-warm);font-size:10px;font-weight:900;letter-spacing:.6px;padding:3px 38px;box-shadow:0 4px 10px rgba(230,192,104,.30)}
 .price{background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:950}
 
 /* Trust signals row (added in HTML below hero) */
@@ -110,4 +110,24 @@ body.light .trust-strip{background:#fff}
   .ios-header h1{font-size:34px}
   .hero-card h2{font-size:30px}
 }
+/* FAQ */
+.faq-section{padding:18px}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0}
+.faq-item:last-child{border-bottom:0}
+.faq-item summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--text);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.faq-item summary::after{content:'+';font-size:20px;font-weight:900;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.faq-item[open] summary::after{content:'−'}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item p{margin:8px 0 4px;color:var(--muted);line-height:1.55;font-size:14px}
+body.light .faq-item summary{color:#1a1a2e}
+
+/* Footer */
+.site-footer{padding:32px 0 96px;text-align:center;border-top:1px solid var(--line);margin-top:24px}
+.footer-inner{max-width:480px;margin:0 auto;padding:0 16px}
+.footer-brand{font-weight:900;font-size:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.footer-brand .brand-mark{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--gold-2),var(--gold-deep));color:#1a1206;font-size:11px;font-weight:900}
+.footer-links{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-bottom:12px}
+.footer-links a{color:var(--muted);font-size:13px;font-weight:600;transition:color .15s}
+.footer-links a:hover{color:var(--green)}
+.footer-copy{color:var(--muted2);font-size:12px;margin:0}
 /* === end VIP overlay === */
