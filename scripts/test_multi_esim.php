@@ -30,7 +30,7 @@ function rand_alnum(int $len): string { return substr(bin2hex(random_bytes($len)
 
 require_once $appRoot . '/esimaccess.php';
 // Load services selectively (skip ones that would fail without full bootstrap)
-foreach (['CtvProviderClient', 'LegacyProviderClient'] as $svc) {
+foreach (['CtvProviderClient', 'LegacyProviderClient', 'CtvFulfillmentService'] as $svc) {
     $f = $appRoot . '/services/' . $svc . '.php';
     if (file_exists($f)) require_once $f;
 }
@@ -143,6 +143,69 @@ assert_eq(CtvProviderClient::maskIccid('89012345678901234567'), '8901***********
 assert_eq(CtvProviderClient::maskIccid('12345678'), '12345678', '8-char ICCID (no masking)');
 assert_eq(CtvProviderClient::maskIccid('1234567'), '1234567', '7-char ICCID (too short)');
 assert_eq(CtvProviderClient::maskIccid('123456789'), '1234*6789', '9-char ICCID');
+
+// ---------- Test 7: CTV partial fulfillment merge is quantity-aware ----------
+echo "\n=== Test 7: CtvFulfillmentService partial merge ===\n";
+$one = CtvFulfillmentService::mergeProfilesForTest([], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+], 1);
+assert_eq($one['inserted'], 1, 'quantity=1 inserts one profile');
+assert_eq($one['finalCount'], 1, 'quantity=1 final count is one');
+assert_eq($one['status'], 'ready', 'quantity=1 is ready');
+
+$three = CtvFulfillmentService::mergeProfilesForTest([], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+    ['iccid' => '89000000000000000002', 'esimTranNo' => 'ET-002'],
+    ['iccid' => '89000000000000000003', 'esimTranNo' => 'ET-003'],
+], 3);
+assert_eq($three['inserted'], 3, 'quantity=3 inserts three profiles');
+assert_eq($three['status'], 'ready', 'quantity=3 is ready');
+
+$five = CtvFulfillmentService::mergeProfilesForTest([], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+    ['iccid' => '89000000000000000002', 'esimTranNo' => 'ET-002'],
+    ['iccid' => '89000000000000000003', 'esimTranNo' => 'ET-003'],
+    ['iccid' => '89000000000000000004', 'esimTranNo' => 'ET-004'],
+    ['iccid' => '89000000000000000005', 'esimTranNo' => 'ET-005'],
+], 5);
+assert_eq($five['inserted'], 5, 'quantity=5 inserts five profiles');
+assert_eq($five['status'], 'ready', 'quantity=5 is ready');
+
+$partial = CtvFulfillmentService::mergeProfilesForTest([], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+], 3);
+assert_eq($partial['inserted'], 1, 'partial 1/3 inserts one profile');
+assert_eq($partial['finalCount'], 1, 'partial 1/3 final count is one');
+assert_eq($partial['status'], 'partial', 'partial 1/3 remains partial');
+
+$none = CtvFulfillmentService::mergeProfilesForTest([], [], 3);
+assert_eq($none['inserted'], 0, 'empty provider response inserts nothing');
+assert_eq($none['finalCount'], 0, 'empty provider response final count is zero');
+assert_eq($none['status'], 'processing', 'empty provider response stays processing');
+
+$retry = CtvFulfillmentService::mergeProfilesForTest([
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+    ['iccid' => '89000000000000000002', 'esimTranNo' => 'ET-002'],
+    ['iccid' => '89000000000000000003', 'esimTranNo' => 'ET-003'],
+], 3);
+assert_eq($retry['inserted'], 2, 'retry 1/3 to 3 inserts only missing profiles');
+assert_eq($retry['finalCount'], 3, 'retry 1/3 to 3 final count is three');
+assert_eq($retry['status'], 'ready', 'retry 1/3 to 3 becomes ready');
+
+$repeat = CtvFulfillmentService::mergeProfilesForTest([
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+    ['iccid' => '89000000000000000002', 'esimTranNo' => 'ET-002'],
+    ['iccid' => '89000000000000000003', 'esimTranNo' => 'ET-003'],
+], [
+    ['iccid' => '89000000000000000001', 'esimTranNo' => 'ET-001'],
+    ['iccid' => '89000000000000000002', 'esimTranNo' => 'ET-002'],
+    ['iccid' => '89000000000000000003', 'esimTranNo' => 'ET-003'],
+], 3);
+assert_eq($repeat['inserted'], 0, 'repeated sync inserts no duplicates');
+assert_eq($repeat['finalCount'], 3, 'repeated sync keeps final count at three');
+assert_eq($repeat['status'], 'ready', 'repeated sync stays ready');
 
 // ---------- Summary ----------
 echo "\n" . str_repeat('=', 50) . "\n";

@@ -10,7 +10,9 @@ declare(strict_types=1);
  *   2. We must poll EsimAccessClient::queryOrder($orderNo, $tid) until `obj.esimList[]` is populated.
  *   3. Persist each esim into ctv_esims and stamp ctv_orders.iccid (first one).
  *
- * Idempotent: skips orders that already have ctv_esims rows. Safe to call repeatedly.
+ * Idempotent: skips only once the order has at least the requested quantity.
+ * Partial provider responses are safe to retry; existing profiles are deduped by ICCID
+ * and by esimTranNo when that column is available.
  *
  * NOTE: Does NOT touch topup.
  */
@@ -37,33 +39,38 @@ final class CtvFulfillmentService {
             return ['status'=>'skipped', 'count'=>0, 'message'=>'no provider_order_no'];
         }
 
-        // Already populated? skip
-        $st2 = $pdo->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');
-        $st2->execute([$ctvOrderId]);
-        if ((int)$st2->fetchColumn() > 0) {
-            return ['status'=>'ready', 'count'=>0, 'message'=>'already synced'];
-        }
-
         $requestedQty = max(1, (int)($o['quantity'] ?? 1));
+        $hasEsimTranNo = $this->ctvEsimsHasColumn('esimTranNo');
+        $existing = $this->loadExistingProfiles($ctvOrderId, $hasEsimTranNo);
+        $existingCount = (int)$existing['count'];
+        if ($existingCount >= $requestedQty) {
+            return ['status'=>'ready', 'count'=>$existingCount, 'message'=>'already synced'];
+        }
 
         // TEST mode short-circuit: synthesise fake esim rows matching requested quantity.
         if (CtvProviderClient::isTestMode()) {
-            $ins = $pdo->prepare('INSERT INTO ctv_esims(ctv_id,ctv_order_id,iccid,qr_code_url,short_url,ac,apn,total_volume,total_duration,duration_unit,expired_time,package_code,package_name,carrier,smdp_status,esim_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-            $firstIccid = null;
-            for ($n = 0; $n < $requestedQty; $n++) {
+            $ins = $this->prepareCtvEsimInsert($pdo, $hasEsimTranNo);
+            $firstIccid = $existing['firstIccid'];
+            $inserted = 0;
+            for ($n = $existingCount; $n < $requestedQty; $n++) {
                 $fakeIccid = 'TEST' . substr(strtoupper(md5($ctvOrderId . '-' . $n)), 0, 16);
                 if ($firstIccid === null) $firstIccid = $fakeIccid;
-                $ins->execute([
+                $params = [
                     (int)$o['ctv_id'], $ctvOrderId, $fakeIccid,
                     'https://example.com/test.png', 'https://example.com/test', 'LPA:TEST-' . ($n + 1), 'internet',
                     1073741824 * 5, 7, 'DAY', date('Y-m-d H:i:s', time()+86400*30),
                     (string)$o['pack_code'], (string)$o['plan_name'],
                     (string)$o['carrier'], 'INSTALLED', 'NEW',
-                ]);
+                ];
+                if ($hasEsimTranNo) $params[] = 'TEST-TRAN-' . substr(strtoupper(md5($ctvOrderId . '-' . $n)), 0, 16);
+                $ins->execute($params);
+                $inserted++;
             }
-            $pdo->prepare('UPDATE ctv_orders SET iccid=?, updated_at=NOW() WHERE ctv_order_id=?')
-                ->execute([$firstIccid, $ctvOrderId]);
-            return ['status'=>'ready', 'count'=>$requestedQty, 'message'=>'test mode'];
+            if ($firstIccid !== null) {
+                $pdo->prepare('UPDATE ctv_orders SET iccid=COALESCE(NULLIF(iccid, \'\'), ?), needs_admin=0, updated_at=NOW() WHERE ctv_order_id=?')
+                    ->execute([$firstIccid, $ctvOrderId]);
+            }
+            return ['status'=>'ready', 'count'=>$existingCount + $inserted, 'message'=>'test mode'];
         }
 
         // Real provider call (uses RT_ACCESSCODE under the hood).
@@ -87,15 +94,21 @@ final class CtvFulfillmentService {
         $list = $api['obj']['esimList'] ?? [];
         if (!$list) return ['status'=>'processing', 'count'=>0, 'message'=>'esim list empty (provider still preparing)'];
 
-        $ins = $pdo->prepare('INSERT INTO ctv_esims(ctv_id,ctv_order_id,iccid,qr_code_url,short_url,ac,apn,total_volume,total_duration,duration_unit,expired_time,package_code,package_name,carrier,smdp_status,esim_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-        $first = null;
-        $count = 0;
+        $ins = $this->prepareCtvEsimInsert($pdo, $hasEsimTranNo);
+        $first = $existing['firstIccid'];
+        $inserted = 0;
+        $seenKeys = $existing['keys'];
         foreach ($list as $e) {
             $pkg = $e['packageList'][0] ?? [];
             $iccid = (string)($e['iccid'] ?? '');
+            $esimTranNo = (string)($e['esimTranNo'] ?? '');
+            $keys = $this->profileKeys($iccid, $esimTranNo);
+            if ($keys !== [] && $this->hasAnyKey($seenKeys, $keys)) {
+                continue;
+            }
             if (!$first && $iccid !== '') $first = $iccid;
             try {
-                $ins->execute([
+                $params = [
                     (int)$o['ctv_id'], $ctvOrderId, $iccid,
                     (string)($e['qrCodeUrl'] ?? ''), (string)($e['shortUrl'] ?? ''),
                     (string)($e['ac'] ?? ''), (string)($e['apn'] ?? ''),
@@ -107,31 +120,38 @@ final class CtvFulfillmentService {
                     (string)$o['carrier'],
                     (string)($e['smdpStatus'] ?? ''),
                     (string)($e['esimStatus'] ?? ''),
-                ]);
-                $count++;
+                ];
+                if ($hasEsimTranNo) $params[] = $esimTranNo;
+                $ins->execute($params);
+                foreach ($keys as $key) $seenKeys[$key] = true;
+                $inserted++;
             } catch (Throwable $insE) {
                 app_log('ctv_esims insert fail '.$ctvOrderId.' '.$insE->getMessage(), 'ERROR');
             }
         }
+        $finalCount = $existingCount + $inserted;
         if ($first !== null) {
-            $pdo->prepare('UPDATE ctv_orders SET iccid=?, updated_at=NOW() WHERE ctv_order_id=?')
+            $pdo->prepare('UPDATE ctv_orders SET iccid=COALESCE(NULLIF(iccid, \'\'), ?), updated_at=NOW() WHERE ctv_order_id=?')
                 ->execute([$first, $ctvOrderId]);
         }
 
-        $partial = $count > 0 && $count < $requestedQty;
+        $partial = $finalCount > 0 && $finalCount < $requestedQty;
         if ($partial) {
             $pdo->prepare('UPDATE ctv_orders SET needs_admin=1, updated_at=NOW() WHERE ctv_order_id=?')
                 ->execute([$ctvOrderId]);
             try {
                 $pdo->prepare('INSERT INTO order_admin_queue(order_id,reason,detail,created_at) VALUES(?,?,?,NOW())')
-                    ->execute([$ctvOrderId, 'partial_provision', 'Provisioned '.$count.'/'.$requestedQty.' eSIMs']);
+                    ->execute([$ctvOrderId, 'partial_provision', 'Provisioned '.$finalCount.'/'.$requestedQty.' eSIMs']);
             } catch (Throwable $qE) {
                 app_log('admin queue insert fail '.$ctvOrderId.' '.$qE->getMessage(), 'ERROR');
             }
+        } elseif ($finalCount >= $requestedQty) {
+            $pdo->prepare('UPDATE ctv_orders SET needs_admin=0, updated_at=NOW() WHERE ctv_order_id=?')
+                ->execute([$ctvOrderId]);
         }
 
         // Best-effort: notify the customer email, never fail the sync if mail breaks.
-        if ($count > 0 && !$partial) {
+        if ($finalCount >= $requestedQty) {
             try {
                 (new CtvMailService)->sendForOrderIfNeeded($ctvOrderId);
             } catch (Throwable $mailE) {
@@ -140,8 +160,53 @@ final class CtvFulfillmentService {
                 }
             }
         }
+        if ($finalCount <= 0) {
+            return ['status'=>'processing', 'count'=>0, 'message'=>'no new eSIM profiles synced'];
+        }
         $status = $partial ? 'partial' : 'ready';
-        return ['status'=>$status, 'count'=>$count, 'message'=>$partial ? 'partial: '.$count.'/'.$requestedQty : 'synced'];
+        return ['status'=>$status, 'count'=>$finalCount, 'message'=>$partial ? 'partial: '.$finalCount.'/'.$requestedQty : 'synced'];
+    }
+
+    public static function profileKeysForTest(string $iccid, string $esimTranNo = ''): array {
+        return self::buildProfileKeys($iccid, $esimTranNo);
+    }
+
+    public static function mergeProfilesForTest(array $existingRows, array $providerRows, int $requestedQty): array {
+        $keys = [];
+        $existingCount = 0;
+        foreach ($existingRows as $row) {
+            $existingCount++;
+            foreach (self::buildProfileKeys((string)($row['iccid'] ?? ''), (string)($row['esimTranNo'] ?? '')) as $key) {
+                $keys[$key] = true;
+            }
+        }
+        $inserted = 0;
+        foreach ($providerRows as $row) {
+            $rowKeys = self::buildProfileKeys((string)($row['iccid'] ?? ''), (string)($row['esimTranNo'] ?? ''));
+            $duplicate = false;
+            foreach ($rowKeys as $key) {
+                if (isset($keys[$key])) {
+                    $duplicate = true;
+                    break;
+                }
+            }
+            if ($duplicate) continue;
+            foreach ($rowKeys as $key) $keys[$key] = true;
+            $inserted++;
+        }
+        $finalCount = $existingCount + $inserted;
+        $requestedQty = max(1, $requestedQty);
+        $status = 'ready';
+        if ($finalCount <= 0) {
+            $status = 'processing';
+        } elseif ($finalCount < $requestedQty) {
+            $status = 'partial';
+        }
+        return [
+            'inserted' => $inserted,
+            'finalCount' => $finalCount,
+            'status' => $status,
+        ];
     }
 
     /**
@@ -150,7 +215,7 @@ final class CtvFulfillmentService {
      * Returns summary array with counts.
      */
     public function syncPendingForCtv(int $ctvId, int $limit = 20): array {
-        $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT '.(int)$limit);
+        $st = db()->prepare('SELECT o.ctv_order_id FROM ctv_orders o WHERE o.ctv_id=? AND o.status=2 AND (SELECT COUNT(*) FROM ctv_esims e WHERE e.ctv_order_id=o.ctv_order_id) < GREATEST(1, o.quantity) ORDER BY o.id DESC LIMIT '.(int)$limit);
         $st->execute([$ctvId]);
         $ids = $st->fetchAll(PDO::FETCH_COLUMN);
         $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0, 'partial'=>0, 'orders'=>[]];
@@ -165,7 +230,7 @@ final class CtvFulfillmentService {
     public function syncPendingGlobal(int $limit = 50, int $maxAgeMinutes = 1440): array {
         // Only retry orders younger than maxAgeMinutes (default 24h) to avoid hammering long-stuck
         // ones forever. Require provider_order_no — without it there's nothing to query.
-        $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE status=2 AND (iccid IS NULL OR iccid=\'\') AND provider_order_no IS NOT NULL AND provider_order_no<>\'\' AND updated_at >= (NOW() - INTERVAL ? MINUTE) ORDER BY id ASC LIMIT '.(int)$limit);
+        $st = db()->prepare('SELECT o.ctv_order_id FROM ctv_orders o WHERE o.status=2 AND (SELECT COUNT(*) FROM ctv_esims e WHERE e.ctv_order_id=o.ctv_order_id) < GREATEST(1, o.quantity) AND o.provider_order_no IS NOT NULL AND o.provider_order_no<>\'\' AND o.updated_at >= (NOW() - INTERVAL ? MINUTE) ORDER BY o.id ASC LIMIT '.(int)$limit);
         $st->execute([$maxAgeMinutes]);
         $ids = $st->fetchAll(PDO::FETCH_COLUMN);
         $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0, 'partial'=>0];
@@ -183,5 +248,66 @@ final class CtvFulfillmentService {
         } catch (Throwable $e) {
             app_log('ctv_provider_logs insert failed: ' . $e->getMessage(), 'ERROR');
         }
+    }
+
+    private function ctvEsimsHasColumn(string $column): bool {
+        static $cache = [];
+        if (array_key_exists($column, $cache)) return $cache[$column];
+        try {
+            $st = db()->prepare('SHOW COLUMNS FROM ctv_esims LIKE ?');
+            $st->execute([$column]);
+            $cache[$column] = (bool)$st->fetch();
+        } catch (Throwable $e) {
+            $cache[$column] = false;
+        }
+        return $cache[$column];
+    }
+
+    private function loadExistingProfiles(string $ctvOrderId, bool $hasEsimTranNo): array {
+        $cols = $hasEsimTranNo ? 'iccid, esimTranNo' : 'iccid';
+        $st = db()->prepare('SELECT '.$cols.' FROM ctv_esims WHERE ctv_order_id=? ORDER BY id ASC');
+        $st->execute([$ctvOrderId]);
+        $keys = [];
+        $count = 0;
+        $firstIccid = null;
+        foreach ($st->fetchAll() as $row) {
+            $count++;
+            $iccid = (string)($row['iccid'] ?? '');
+            if ($firstIccid === null && $iccid !== '') $firstIccid = $iccid;
+            foreach ($this->profileKeys($iccid, (string)($row['esimTranNo'] ?? '')) as $key) {
+                $keys[$key] = true;
+            }
+        }
+        return ['count'=>$count, 'keys'=>$keys, 'firstIccid'=>$firstIccid];
+    }
+
+    private function prepareCtvEsimInsert(PDO $pdo, bool $hasEsimTranNo): PDOStatement {
+        $cols = 'ctv_id,ctv_order_id,iccid,qr_code_url,short_url,ac,apn,total_volume,total_duration,duration_unit,expired_time,package_code,package_name,carrier,smdp_status,esim_status';
+        $marks = '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?';
+        if ($hasEsimTranNo) {
+            $cols .= ',esimTranNo';
+            $marks .= ',?';
+        }
+        return $pdo->prepare('INSERT INTO ctv_esims('.$cols.') VALUES('.$marks.')');
+    }
+
+    private function profileKeys(string $iccid, string $esimTranNo = ''): array {
+        return self::buildProfileKeys($iccid, $esimTranNo);
+    }
+
+    private static function buildProfileKeys(string $iccid, string $esimTranNo = ''): array {
+        $keys = [];
+        $iccid = trim($iccid);
+        $esimTranNo = trim($esimTranNo);
+        if ($iccid !== '') $keys[] = 'iccid:' . $iccid;
+        if ($esimTranNo !== '') $keys[] = 'esimTranNo:' . $esimTranNo;
+        return $keys;
+    }
+
+    private function hasAnyKey(array $seenKeys, array $keys): bool {
+        foreach ($keys as $key) {
+            if (isset($seenKeys[$key])) return true;
+        }
+        return false;
     }
 }

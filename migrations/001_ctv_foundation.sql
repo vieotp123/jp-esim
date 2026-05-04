@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS ctv_esims (
   ctv_id BIGINT UNSIGNED NOT NULL,
   ctv_order_id VARCHAR(16) NOT NULL,
   iccid VARCHAR(64) NULL,
+  esimTranNo VARCHAR(128) NULL,
   qr_code_url TEXT NULL,
   short_url TEXT NULL,
   ac VARCHAR(255) NULL,
@@ -102,6 +103,7 @@ CREATE TABLE IF NOT EXISTS ctv_esims (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_ctv_esims_ctv (ctv_id, created_at),
   KEY idx_ctv_esims_iccid (iccid),
+  KEY idx_ctv_esims_tran (esimTranNo),
   KEY idx_ctv_esims_order (ctv_order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
