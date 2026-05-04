@@ -133,6 +133,25 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
         case 'wallet':
             if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
             return ['balance' => (new CtvWalletService())->balance((int)$ctv['id'])];
+        case 'notifications':
+            $svc = new CtvNotificationService();
+            if ($method === 'GET') {
+                return [
+                    'unread' => $svc->countUnread((int)$ctv['id']),
+                    'notifications' => $svc->list((int)$ctv['id'], (int)($body['limit'] ?? 20), (int)($body['offset'] ?? 0)),
+                ];
+            }
+            throw new InvalidArgumentException('Method not allowed');
+        case 'notifications.read':
+            if ($method !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            $svc = new CtvNotificationService();
+            $nid = (int)($body['id'] ?? 0);
+            if ($nid > 0) {
+                $svc->markRead((int)$ctv['id'], $nid);
+            } else {
+                $svc->markAllRead((int)$ctv['id']);
+            }
+            return ['ok' => true];
     }
     throw new InvalidArgumentException('Endpoint không hỗ trợ');
 }

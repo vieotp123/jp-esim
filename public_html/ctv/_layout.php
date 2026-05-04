@@ -182,6 +182,29 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
   table{font-size:12.5px}
   .metric{font-size:24px}
 }
+
+.notif-bell{position:relative;cursor:pointer;color:var(--c-ink-2);transition:color .15s}
+.notif-bell:hover{color:var(--c-gold)}
+.notif-count{
+  position:absolute;top:-6px;right:-8px;min-width:17px;height:17px;line-height:17px;
+  font-size:10px;font-weight:800;text-align:center;border-radius:999px;
+  background:var(--c-red);color:#fff;padding:0 4px;
+}
+.notif-dropdown{
+  display:none;position:absolute;top:52px;right:16px;width:340px;max-height:420px;
+  background:var(--c-card);border:1px solid var(--c-line-2);border-radius:14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.55);z-index:100;overflow:hidden;
+}
+.notif-dropdown.open{display:block}
+.notif-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--c-line);font-size:14px}
+.notif-header a{font-size:12px;color:var(--c-blue)}
+.notif-list{max-height:360px;overflow-y:auto}
+.notif-item{padding:10px 16px;border-bottom:1px solid var(--c-line);cursor:pointer;transition:background .1s}
+.notif-item:hover{background:rgba(91,140,255,.06)}
+.notif-item.unread{border-left:3px solid var(--c-gold)}
+.notif-item .ni-title{font-size:13px;font-weight:600;color:var(--c-ink);margin-bottom:2px}
+.notif-item .ni-msg{font-size:12px;color:var(--c-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif-item .ni-time{font-size:11px;color:var(--c-muted);margin-top:3px}
 </style>
 </head>
 <body>
@@ -208,6 +231,14 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
   <span class="right">
     <span class="vip-tag">PARTNER</span>
     <?php if ($user): ?>
+      <span class="notif-bell" id="notifBell" title="Thông báo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-count" id="notifCount" style="display:none">0</span>
+      </span>
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header"><b>Thông báo</b><a href="#" id="notifMarkAll">Đọc tất cả</a></div>
+        <div class="notif-list" id="notifList"><p class="muted" style="padding:12px">Đang tải...</p></div>
+      </div>
       <span><?= htmlspecialchars((string)$user['email']) ?></span>
       <a class="btn secondary" href="/ctv/logout.php" style="padding:6px 12px;font-size:12.5px">Thoát</a>
     <?php endif; ?>
@@ -218,5 +249,65 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
 <?php }
 }
 if (!function_exists('ctv_layout_footer')) {
-    function ctv_layout_footer(): void { echo '</main></body></html>'; }
+    function ctv_layout_footer(): void {
+        echo '</main>';
+        ?>
+<script>
+(function(){
+  var bell=document.getElementById('notifBell'),dd=document.getElementById('notifDropdown'),
+      cnt=document.getElementById('notifCount'),list=document.getElementById('notifList'),
+      markAll=document.getElementById('notifMarkAll');
+  if(!bell)return;
+  function headers(){return {'Accept':'application/json','Content-Type':'application/json'};}
+  function timeAgo(d){
+    var s=Math.floor((Date.now()-new Date(d).getTime())/1000);
+    if(s<60)return 'vừa xong';if(s<3600)return Math.floor(s/60)+'p trước';
+    if(s<86400)return Math.floor(s/3600)+'h trước';return Math.floor(s/86400)+'d trước';
+  }
+  function renderList(items){
+    if(!items||!items.length){list.innerHTML='<p class="muted" style="padding:14px;text-align:center">Không có thông báo</p>';return;}
+    list.innerHTML=items.map(function(n){
+      return '<div class="notif-item'+(n.is_read==0?' unread':'')+'" data-id="'+n.id+'">'
+        +'<div class="ni-title">'+esc(n.title)+'</div>'
+        +(n.message?'<div class="ni-msg">'+esc(n.message)+'</div>':'')
+        +'<div class="ni-time">'+timeAgo(n.created_at)+'</div></div>';
+    }).join('');
+    list.querySelectorAll('.notif-item.unread').forEach(function(el){
+      el.addEventListener('click',function(){
+        var id=el.getAttribute('data-id');
+        fetch('/ctv/notifications-api.php?action=read',{method:'POST',headers:headers(),body:JSON.stringify({id:parseInt(id)})}).then(function(){el.classList.remove('unread');loadCount();});
+      });
+    });
+  }
+  function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function loadCount(){
+    fetch('/ctv/notifications-api.php?action=list&limit=1').then(function(r){return r.json()}).then(function(j){
+      if(j.ok){var u=j.data.unread||0;cnt.textContent=u;cnt.style.display=u>0?'':'none';}
+    }).catch(function(){});
+  }
+  function loadList(){
+    list.innerHTML='<p class="muted" style="padding:12px">Đang tải...</p>';
+    fetch('/ctv/notifications-api.php?action=list&limit=20').then(function(r){return r.json()}).then(function(j){
+      if(j.ok)renderList(j.data.notifications);else list.innerHTML='<p class="muted" style="padding:12px">Lỗi</p>';
+    }).catch(function(){list.innerHTML='<p class="muted" style="padding:12px">Lỗi kết nối</p>';});
+  }
+  bell.addEventListener('click',function(e){
+    e.stopPropagation();
+    var open=dd.classList.toggle('open');
+    if(open)loadList();
+  });
+  document.addEventListener('click',function(e){if(!dd.contains(e.target)&&e.target!==bell)dd.classList.remove('open');});
+  markAll.addEventListener('click',function(e){
+    e.preventDefault();
+    fetch('/ctv/notifications-api.php?action=read',{method:'POST',headers:headers(),body:JSON.stringify({})}).then(function(){
+      loadCount();list.querySelectorAll('.notif-item.unread').forEach(function(el){el.classList.remove('unread');});
+    });
+  });
+  loadCount();
+  setInterval(loadCount,60000);
+})();
+</script>
+        <?php
+        echo '</body></html>';
+    }
 }
