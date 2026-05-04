@@ -50,6 +50,12 @@ $topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
 
 ctv_layout_header('Đơn ' . $orderId, $user);
 
+// Auto-refresh hint: while order is pending or success-without-esims, refetch every 30s.
+$needsAutoRefresh = ((int)$order['status'] < 2) || ((int)$order['status'] === 2 && empty($esims));
+if ($needsAutoRefresh) {
+    echo '<meta http-equiv="refresh" content="30">';
+}
+
 function _bytes_to_gb($b): string {
     $b = (int)$b;
     if ($b <= 0) return '0';
@@ -140,6 +146,13 @@ function _bytes_to_gb($b): string {
           <b>SMDP</b><div><?= htmlspecialchars((string)($e['smdp_status'] ?? '—')) ?></div>
           <b>eSIM status</b><div><?= htmlspecialchars((string)($e['esim_status'] ?? '—')) ?></div>
           <b>APN</b><div><span class="kbd"><?= htmlspecialchars((string)($e['apn'] ?? '')) ?></span></div>
+          <?php if (!empty($e['email_sent_at'])): ?>
+          <b>Email QR</b><div class="muted">đã gửi <?= htmlspecialchars((string)$e['email_sent_at']) ?></div>
+          <?php elseif (!empty($e['email_last_error'])): ?>
+          <b>Email QR</b><div class="muted">lỗi: <?= htmlspecialchars((string)$e['email_last_error']) ?> (đã thử <?= (int)($e['email_attempts'] ?? 0) ?> lần)</div>
+          <?php else: ?>
+          <b>Email QR</b><div class="muted">chưa gửi</div>
+          <?php endif; ?>
 
         </div>
         <div class="install-row">

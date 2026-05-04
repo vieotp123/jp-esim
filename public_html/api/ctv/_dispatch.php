@@ -120,9 +120,16 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
             if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
             $limit = max(1, min((int)($body['limit'] ?? 50), 200));
             $offset = max(0, (int)($body['offset'] ?? 0));
-            $st = db()->prepare('SELECT iccid,ctv_order_id,carrier,package_name,expired_time,esim_status,created_at FROM ctv_esims WHERE ctv_id=? ORDER BY id DESC LIMIT '.(int)$limit.' OFFSET '.(int)$offset);
+            $st = db()->prepare('SELECT iccid,ctv_order_id,carrier,package_name,total_volume,total_duration,duration_unit,expired_time,esim_status,smdp_status,email_sent_at,created_at FROM ctv_esims WHERE ctv_id=? ORDER BY id DESC LIMIT '.(int)$limit.' OFFSET '.(int)$offset);
             $st->execute([(int)$ctv['id']]);
-            return ['esims' => $st->fetchAll()];
+            $rows = $st->fetchAll();
+            // Add qrUrl pointing to internal proxy (key-auth flow handled separately via /api/ctv/esim_qr)
+            foreach ($rows as &$r) {
+                $iccid = (string)($r['iccid'] ?? '');
+                $r['qrUrl'] = $iccid !== '' ? '/api/ctv/esim_qr.php?iccid=' . rawurlencode($iccid) : '';
+            }
+            unset($r);
+            return ['esims' => $rows];
         case 'wallet':
             if ($method !== 'GET') throw new InvalidArgumentException('Method not allowed');
             return ['balance' => (new CtvWalletService())->balance((int)$ctv['id'])];
