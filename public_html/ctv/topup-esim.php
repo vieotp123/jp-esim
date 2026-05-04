@@ -83,6 +83,12 @@ $current = is_array($lookup['current'] ?? null) ? $lookup['current'] : [];
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Nạp data eSIM', $user);
 ?>
+<style>
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px;padding:14px 16px;background:var(--c-surface);border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm)}
+.kv b{font-weight:600;color:var(--c-muted);white-space:nowrap}
+.kv div{color:var(--c-ink);word-break:break-all}
+@media(max-width:480px){.kv{grid-template-columns:1fr;gap:4px 0}.kv b{margin-top:8px}.kv b:first-child{margin-top:0}}
+</style>
 <div class="card" style="max-width:760px">
   <h2>Nạp data cho eSIM</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
