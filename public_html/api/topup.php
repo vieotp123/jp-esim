@@ -31,7 +31,14 @@ try {
         case 'topup':
             $svc = new TopupService();
             if ($_SERVER['REQUEST_METHOD'] === 'GET') json_ok($svc->lookup(trim((string)($_GET['iccid'] ?? $_GET['id'] ?? ''))));
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') { $d=read_json_body(); if(!verify_recaptcha((string)($d['captcha'] ?? ''),'topup')) json_error('CAPTCHA_FAILED','Captcha không hợp lệ',400); json_ok($svc->create((string)($d['iccid'] ?? ''),(int)($d['planId'] ?? 0),(string)($d['email'] ?? ''))); }
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+                    json_error('TOPUP_LOCKED','Chức năng nạp data đang tạm dừng. Bạn vẫn có thể tra cứu ICCID, vui lòng thử lại sau.',423);
+                }
+                $d=read_json_body();
+                if(!verify_recaptcha((string)($d['captcha'] ?? ''),'topup')) json_error('CAPTCHA_FAILED','Captcha không hợp lệ',400);
+                json_ok($svc->create((string)($d['iccid'] ?? ''),(int)($d['planId'] ?? 0),(string)($d['email'] ?? '')));
+            }
             json_error('METHOD_NOT_ALLOWED','Phương thức không hợp lệ',405);
         case 'voucher':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_error('METHOD_NOT_ALLOWED','Phương thức không hợp lệ',405);

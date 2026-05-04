@@ -23,9 +23,20 @@ function admin_ctv_require(): array {
     $expectedUser = (string)app_config('ADMIN_USER', 'admin');
     $expectedPass = (string)app_config('ADMIN_PASS', '');
     if ($expectedPass === '') { http_response_code(503); header('Content-Type: text/plain; charset=utf-8'); echo 'Khu vực quản trị đã tắt.'; exit; }
-    $u = $_SERVER['PHP_AUTH_USER'] ?? ''; $p = $_SERVER['PHP_AUTH_PW'] ?? '';
-    if (!hash_equals($expectedUser, (string)$u) || !hash_equals($expectedPass, (string)$p)) { header('WWW-Authenticate: Basic realm="jp-esim admin"'); http_response_code(401); echo 'Yêu cầu xác thực.'; exit; }
     admin_session_start();
+    $u = $_SERVER['PHP_AUTH_USER'] ?? ''; $p = $_SERVER['PHP_AUTH_PW'] ?? '';
+    if (!hash_equals($expectedUser, (string)$u) || !hash_equals($expectedPass, (string)$p)) {
+        if (empty($_SESSION['admin_authenticated']) && !RateLimiter::isAdminIp()) {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $rl = new RateLimiter();
+            if (!$rl->check('admin_basic_auth:' . $ip, 12, 300)) {
+                http_response_code(429);
+                echo 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
+                exit;
+            }
+        }
+        header('WWW-Authenticate: Basic realm="jp-esim admin"'); http_response_code(401); echo 'Yêu cầu xác thực.'; exit;
+    }
     if (empty($_SESSION['admin_authenticated'])) { session_regenerate_id(true); $_SESSION['admin_authenticated'] = 1; }
     admin_require_passkey_if_enabled($expectedUser);
     return ['user' => $expectedUser];

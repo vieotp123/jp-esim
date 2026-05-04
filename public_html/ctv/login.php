@@ -10,7 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
         $err = 'Phiên không hợp lệ, vui lòng thử lại.';
     } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $emailKey = strtolower(trim((string)($_POST['email'] ?? '')));
+        $emailKey = hash('sha256', $emailKey);
+        $rl = new RateLimiter();
         try {
+            if (!$rl->check('ctv_login_ip:' . $ip, 30, 300) || !$rl->check('ctv_login_email:' . $ip . ':' . $emailKey, 10, 300)) {
+                throw new RuntimeException('Quá nhiều lần đăng nhập. Vui lòng thử lại sau.');
+            }
             CtvAuth::login((string)($_POST['email'] ?? ''), (string)($_POST['password'] ?? ''));
             header('Location: /ctv/dashboard.php');
             exit;

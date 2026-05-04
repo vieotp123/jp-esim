@@ -14,7 +14,23 @@ final class RateLimiter {
     public function check(string $key, int $limit, int $windowSeconds): bool {
         $file = $this->dir . '/' . md5($key) . '.json';
         $now = time();
-        $data = $this->load($file);
+        $fh = @fopen($file, 'c+b');
+        if ($fh === false) {
+            app_log('RateLimiter open failed key=' . md5($key), 'WARN');
+            return false;
+        }
+
+        if (!flock($fh, LOCK_EX)) {
+            fclose($fh);
+            app_log('RateLimiter lock failed key=' . md5($key), 'WARN');
+            return false;
+        }
+
+        $raw = stream_get_contents($fh);
+        $data = $raw !== false && $raw !== '' ? json_decode($raw, true) : ['hits' => []];
+        if (!is_array($data)) {
+            $data = ['hits' => []];
+        }
 
         $data['hits'] = array_values(array_filter(
             $data['hits'] ?? [],
@@ -22,11 +38,28 @@ final class RateLimiter {
         ));
 
         if (count($data['hits']) >= $limit) {
+            flock($fh, LOCK_UN);
+            fclose($fh);
             return false;
         }
 
         $data['hits'][] = $now;
-        $this->save($file, $data);
+        $encoded = json_encode($data);
+        if ($encoded === false) {
+            flock($fh, LOCK_UN);
+            fclose($fh);
+            app_log('RateLimiter encode failed key=' . md5($key), 'WARN');
+            return false;
+        }
+        rewind($fh);
+        if (!ftruncate($fh, 0) || fwrite($fh, $encoded) === false || !fflush($fh)) {
+            flock($fh, LOCK_UN);
+            fclose($fh);
+            app_log('RateLimiter write failed key=' . md5($key), 'WARN');
+            return false;
+        }
+        flock($fh, LOCK_UN);
+        fclose($fh);
         return true;
     }
 
@@ -65,7 +98,4 @@ final class RateLimiter {
         return is_array($data) ? $data : ['hits' => []];
     }
 
-    private function save(string $file, array $data): void {
-        @file_put_contents($file, json_encode($data), LOCK_EX);
-    }
 }

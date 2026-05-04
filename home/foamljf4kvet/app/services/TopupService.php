@@ -46,6 +46,9 @@ final class TopupService {
     }
 
     public function create(string $iccid, int $planId, string $email): array {
+        if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+            throw new InvalidArgumentException('Chức năng nạp data đang tạm dừng. Bạn vẫn có thể tra cứu ICCID, vui lòng thử lại sau.');
+        }
         if (!valid_email($email)) throw new InvalidArgumentException('Email không hợp lệ');
         $iccid = preg_replace('/\s+/', '', $iccid);
         if (!preg_match('/^[0-9]{15,32}$/', $iccid)) throw new InvalidArgumentException('ICCID không hợp lệ');
