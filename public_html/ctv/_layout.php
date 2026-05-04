@@ -181,9 +181,26 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
 
 @media (max-width:760px){
   header.ctv-h{padding:10px 14px}
-  header.ctv-h nav a{padding:6px 10px;font-size:13px}
-  table{font-size:12.5px}
-  .metric{font-size:24px}
+  header.ctv-h nav{gap:2px}
+  header.ctv-h nav a{padding:6px 8px;font-size:12px}
+  header.ctv-h .right{margin-left:0;width:100%;justify-content:flex-end}
+  main{padding:0 10px}
+  .card{padding:14px 12px;border-radius:12px;overflow-x:auto}
+  .row{flex-direction:column;gap:8px}
+  .row > *{flex:1 1 auto}
+  .grid{grid-template-columns:1fr}
+  table{font-size:12px;min-width:560px}
+  thead th{padding:8px 8px;font-size:10.5px}
+  tbody td{padding:8px 8px}
+  .metric{font-size:22px}
+  .page-title h1{font-size:18px}
+  .actions{gap:6px}
+  .btn{padding:8px 12px;font-size:13px}
+}
+@media (max-width:480px){
+  header.ctv-h nav a{padding:5px 7px;font-size:11.5px}
+  .card{padding:12px 10px}
+  table{min-width:480px}
 }
 
 .notif-bell{position:relative;cursor:pointer;color:var(--c-ink-2);transition:color .15s}

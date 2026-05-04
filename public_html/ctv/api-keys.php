@@ -34,15 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $keys = $svc->listForCtv((int)$user['id']);
 $csrf = CtvAuth::csrfToken();
-ctv_layout_header('API Keys', $user);
+ctv_layout_header('Khoá API', $user);
 ctv_flash_render();
 ?>
 <div class="card">
-  <h2>API Keys</h2>
+  <h2>Khoá API</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($newToken): ?>
     <div class="flash warn">
-      Token mới (chỉ hiển thị một lần): <span class="kbd" id="new-token"><?= htmlspecialchars($newToken['token']) ?></span> <button class="btn secondary" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('new-token').textContent)">Copy</button>
+      Token mới (chỉ hiển thị một lần): <span class="kbd" id="new-token"><?= htmlspecialchars($newToken['token']) ?></span> <button class="btn secondary" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('new-token').textContent)">Sao chép</button>
     </div>
   <?php endif; ?>
   <form method="post">
@@ -68,7 +68,7 @@ ctv_flash_render();
         <td><?= htmlspecialchars((string)$k['name']) ?></td>
         <td><span class="kbd">ctvK_<?= htmlspecialchars((string)$k['key_prefix']) ?>_***</span></td>
         <td>
-          <?php if ((int)$k['status'] === 1): ?><span class="tag ok">active</span><?php else: ?><span class="tag err">revoked</span><?php endif; ?>
+          <?php if ((int)$k['status'] === 1): ?><span class="tag ok">Hoạt động</span><?php else: ?><span class="tag err">Đã thu hồi</span><?php endif; ?>
         </td>
         <td><?= htmlspecialchars((string)$k['created_at']) ?></td>
         <td><?= htmlspecialchars((string)($k['last_used_at'] ?? '')) ?></td>

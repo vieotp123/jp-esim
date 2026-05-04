@@ -17,7 +17,7 @@ ctv_layout_header('Đơn eSIM', $user);
 ?>
 <div class="card">
   <h2>Đơn eSIM của bạn</h2>
-  <form method="get" class="row"><div class="field"><label>Tìm đơn/gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="CTV order id hoặc tên gói..."></div><div class="field"><label>Trạng thái</label><select name="status"><option value="">Tất cả</option><option value="success" <?= $status==='success'?'selected':'' ?>>Thành công</option><option value="processing" <?= $status==='processing'?'selected':'' ?>>Đang xử lý</option><option value="failed" <?= $status==='failed'?'selected':'' ?>>Thất bại</option></select></div><div class="field"><label>&nbsp;</label><button class="btn">Lọc</button></div></form><p>
+  <form method="get" class="row"><div class="field"><label>Tìm đơn/gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Mã đơn hoặc tên gói..."></div><div class="field"><label>Trạng thái</label><select name="status"><option value="">Tất cả</option><option value="success" <?= $status==='success'?'selected':'' ?>>Thành công</option><option value="processing" <?= $status==='processing'?'selected':'' ?>>Đang xử lý</option><option value="failed" <?= $status==='failed'?'selected':'' ?>>Thất bại</option></select></div><div class="field"><label>&nbsp;</label><button class="btn">Lọc</button></div></form><p>
     <a href="?status=" class="tag">Tất cả</a>
     <a href="?status=success" class="tag ok">Thành công</a>
     <a href="?status=processing" class="tag warn">Đang xử lý</a>
@@ -36,9 +36,12 @@ ctv_layout_header('Đơn eSIM', $user);
         <td><?= (int)$r['quantity'] ?></td>
         <td><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></td>
         <td>
-          <?php $cls = $r['status']==='success' ? 'ok' : ($r['status']==='failed' ? 'err' : 'warn'); ?>
-          <span class="tag <?= $cls ?>"><?= htmlspecialchars($r['status']) ?></span>
-          <?php if ($r['needsAdmin']): ?><span class="tag err">cần admin</span><?php endif; ?>
+          <?php
+            $cls = $r['status']==='success' ? 'ok' : ($r['status']==='failed' ? 'err' : 'warn');
+            $statusLabel = match($r['status']) { 'success'=>'Thành công', 'failed'=>'Thất bại', default=>'Đang xử lý' };
+          ?>
+          <span class="tag <?= $cls ?>"><?= $statusLabel ?></span>
+          <?php if ($r['needsAdmin']): ?><span class="tag err">Cần xử lý</span><?php endif; ?>
         </td>
         <td><?= htmlspecialchars((string)$r['createdAt']) ?></td>
       </tr>

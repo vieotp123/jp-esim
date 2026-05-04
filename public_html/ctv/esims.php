@@ -36,8 +36,8 @@ ctv_layout_header('eSIM của CTV', $user);
     <div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>"></div>
     <div class="field"><label>&nbsp;</label>
       <button class="btn">Lọc</button>
-      <a class="btn secondary" href="/ctv/esims.php">Refresh QR</a>
-      <a class="btn secondary" href="/ctv/export.php?kind=esims">Export eSIM</a>
+      <a class="btn secondary" href="/ctv/esims.php">Làm mới QR</a>
+      <a class="btn secondary" href="/ctv/export.php?kind=esims">Xuất eSIM</a>
     </div>
   </form>
 
