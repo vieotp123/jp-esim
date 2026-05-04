@@ -171,7 +171,7 @@ admin_layout_header('Failed Order Queue', $admin);
 <div class="summary">
   <div class="card gold"><b>Đang chờ xử lý</b><h2><?= (int)($counts['open_n'] ?? 0) ?></h2><div class="sub">tất cả loại</div></div>
   <div class="card"><b>Amount mismatch</b><h2><?= (int)($counts['amt_n'] ?? 0) ?></h2><div class="sub">webhook không khớp số tiền</div></div>
-  <div class="card danger"><b>Provider error</b><h2><?= (int)($counts['prv_n'] ?? 0) ?></h2><div class="sub">EsimAccess fail</div></div>
+  <div class="card danger"><b>Provider error</b><h2><?= (int)($counts['prv_n'] ?? 0) ?></h2><div class="sub">Lỗi nhà cung cấp eSIM</div></div>
   <div class="card"><b>Email error</b><h2><?= (int)($counts['eml_n'] ?? 0) ?></h2><div class="sub">QR không gửi được</div></div>
   <div class="card green"><b>Đã giải quyết</b><h2><?= (int)($counts['resolved_n'] ?? 0) ?></h2><div class="sub">tổng cộng</div></div>
 </div>
@@ -311,7 +311,7 @@ admin_layout_header('Failed Order Queue', $admin);
   <p class="muted">Hàng đợi này được điền tự động bởi <span class="kbd">BankWebhookService</span> và <span class="kbd">RetailFulfillmentService</span> khi gặp:</p>
   <ul class="muted" style="margin:0;padding-left:20px;line-height:1.8">
     <li><b>amount_mismatch</b> — webhook NH nhận tiền nhưng số tiền không khớp đơn → dùng Huỷ đơn hoặc Đánh dấu hoàn tiền.</li>
-    <li><b>provider_error</b> — gọi EsimAccess thất bại sau khi đã xác nhận thanh toán → cần retry hoặc refund.</li>
+    <li><b>provider_error</b> — gọi nhà cung cấp eSIM thất bại sau khi đã xác nhận thanh toán → cần retry hoặc refund.</li>
     <li><b>email_error</b> — eSIM đã tạo thành công nhưng gửi email QR thất bại → cần resend hoặc liên hệ khách.</li>
   </ul>
   <h4 style="margin-top:12px">Hành động:</h4>
