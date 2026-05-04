@@ -48,8 +48,16 @@ admin_layout_header('Danh sách CTV', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="summary"><div class="card"><b>Tổng CTV</b><h2><?= (int)$sum['total'] ?></h2></div><div class="card"><b>Hoạt động</b><h2><?= (int)$sum['active'] ?></h2></div><div class="card"><b>Tổng ví</b><h2><?= htmlspecialchars(format_vnd((int)$sum['balance'])) ?></h2></div></div>
-<div class="card"><form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Tìm email hoặc ID CTV..." style="flex:1;min-width:180px"><button class="btn">Tìm</button><a class="btn secondary" href="/admin/ctv/index.php">Đặt lại</a></form></div>
-<div class="card"><h2>CTV (<?= count($ctvs) ?>)</h2><table><thead><tr><th>ID</th><th>Email / Công ty</th><th>Trạng thái</th><th>Số dư</th><th>Chiết khấu</th><th>Đơn / Doanh thu</th><th>Tạo lúc</th><th>Thao tác</th></tr></thead><tbody>
+<div class="card">
+  <form method="get" class="toolbar">
+    <input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Tìm email hoặc ID CTV..." style="flex:1;min-width:180px">
+    <button class="btn">Tìm</button>
+    <a class="btn secondary" href="/admin/ctv/index.php">Đặt lại</a>
+  </form>
+</div>
+<div class="card"><h2>CTV (<?= count($ctvs) ?>)</h2>
+<div class="table-wrap">
+<table><thead><tr><th>ID</th><th>Email / Công ty</th><th>Trạng thái</th><th>Số dư</th><th>Chiết khấu</th><th>Đơn / Doanh thu</th><th>Tạo lúc</th><th>Thao tác</th></tr></thead><tbody>
 <?php foreach ($ctvs as $c): ?><tr>
 <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$c['id'] ?>">#<?= (int)$c['id'] ?></a></td>
 <td><?= htmlspecialchars((string)$c['email']) ?><?php if (!empty($c['company_name'])): ?><br><span class="muted"><?= htmlspecialchars((string)$c['company_name']) ?></span><?php endif; ?><?php if (!empty($c['phone'])): ?><br><span class="muted"><?= htmlspecialchars((string)$c['phone']) ?></span><?php endif; ?></td>
@@ -86,4 +94,4 @@ if ($txRows): ?>
 </details>
 </details>
 </td>
-</tr><?php endforeach; ?></tbody></table></div><?php admin_layout_footer();
+</tr><?php endforeach; ?></tbody></table></div></div><?php admin_layout_footer();

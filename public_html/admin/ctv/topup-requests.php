@@ -43,13 +43,14 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
 
 <div class="card">
   <div class="filter-row" style="margin-bottom:12px">
-    <a class="tag <?= $filterStatus === '' ? 'gold' : '' ?>" href="?">Tất cả</a>
-    <a class="tag <?= $filterStatus === 'pending' ? 'warn' : '' ?>" href="?status=pending">Chờ duyệt</a>
-    <a class="tag <?= $filterStatus === 'approved' ? 'ok' : '' ?>" href="?status=approved">Đã duyệt</a>
-    <a class="tag <?= $filterStatus === 'rejected' ? 'err' : '' ?>" href="?status=rejected">Từ chối</a>
+    <a class="pill <?= $filterStatus === '' ? 'active' : '' ?>" href="?">Tất cả</a>
+    <a class="pill <?= $filterStatus === 'pending' ? 'active' : '' ?>" href="?status=pending">Chờ duyệt</a>
+    <a class="pill <?= $filterStatus === 'approved' ? 'active' : '' ?>" href="?status=approved">Đã duyệt</a>
+    <a class="pill <?= $filterStatus === 'rejected' ? 'active' : '' ?>" href="?status=rejected">Từ chối</a>
   </div>
 
-  <?php if (!$rows): ?><div class="empty"><div class="icon">📋</div><p>Chưa có yêu cầu nạp ví nào.</p></div><?php else: ?>
+  <?php if (!$rows): ?><div class="empty"><div class="icon">📋</div><p>Chưa có yêu cầu nạp ví nào<?= $filterStatus ? ' ở trạng thái này' : '' ?>.</p></div><?php else: ?>
+  <div class="table-wrap">
   <table><thead><tr><th>#</th><th>CTV</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
   <?php foreach ($rows as $r):
     $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
@@ -83,6 +84,7 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   </tr>
   <?php endforeach; ?>
   </tbody></table>
+  </div>
   <?php endif; ?>
 </div>
 <?php admin_layout_footer();

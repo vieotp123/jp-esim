@@ -54,8 +54,9 @@ admin_layout_header('Nhật ký kiểm toán', $admin);
   </form>
 
   <?php if (!$rows): ?>
-    <div class="empty"><div class="icon">📋</div><p>Không có log nào khớp filter.</p></div>
+    <div class="empty"><div class="icon">📋</div><p>Không có log nào khớp bộ lọc.</p></div>
   <?php else: ?>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -98,6 +99,7 @@ admin_layout_header('Nhật ký kiểm toán', $admin);
     <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
 
   <?php if ($totalPages > 1): ?>
   <div class="filter-row" style="margin-top:12px;justify-content:center">

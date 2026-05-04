@@ -200,9 +200,10 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
   <?php if (!$rows): ?>
     <div class="empty">
       <div class="icon">✓</div>
-      <p>Không có mục nào khớp filter.</p>
+      <p>Không có mục nào khớp bộ lọc.</p>
     </div>
   <?php else: ?>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -308,6 +309,7 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
     <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <?php endif; ?>
 </div>
 

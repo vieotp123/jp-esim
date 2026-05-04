@@ -56,15 +56,17 @@ admin_layout_header('Tổng quan Admin', $admin);
 <div class="card">
   <h2>Top 5 CTV (30 ngày)</h2>
   <?php if ($top5): ?>
+  <div class="table-wrap">
   <table><thead><tr><th>CTV</th><th>Đơn</th><th>Doanh thu</th></tr></thead><tbody>
   <?php foreach ($top5 as $t): ?>
   <tr>
     <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?></a> <?= htmlspecialchars((string)($t['company_name'] ?: $t['email'])) ?></td>
     <td><?= (int)$t['cnt'] ?></td>
-    <td><?= htmlspecialchars(format_vnd((int)$t['rev'])) ?></td>
+    <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$t['rev'])) ?></td>
   </tr>
   <?php endforeach; ?>
   </tbody></table>
+  </div>
   <?php else: ?><div class="empty"><div class="icon">📊</div><p>Chưa có dữ liệu 30 ngày.</p></div><?php endif; ?>
 </div>
 
@@ -83,6 +85,7 @@ admin_layout_header('Tổng quan Admin', $admin);
 
 <div class="card">
   <h2>10 đơn gần nhất (Lẻ + CTV)</h2>
+  <div class="table-wrap">
   <table><thead><tr><th>Nguồn</th><th>Mã đơn</th><th>Trạng thái</th><th>Số tiền</th><th>Thời gian</th></tr></thead><tbody>
   <?php foreach ($recent as $r):
     $s = (int)$r['status'];
@@ -93,10 +96,11 @@ admin_layout_header('Tổng quan Admin', $admin);
     <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'CTV' : 'Lẻ' ?></span></td>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></td>
     <td><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></td>
-    <td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
-    <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
+    <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
+    <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
   </tr>
   <?php endforeach; ?>
   </tbody></table>
+  </div>
 </div>
 <?php admin_layout_footer();

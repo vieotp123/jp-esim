@@ -67,13 +67,15 @@ admin_layout_header('Đơn CTV', $admin);
   <div class="card"><b>Cần xử lý</b><h2><?= (int)($counts['needs'] ?? 0) ?></h2></div>
 </div>
 <div class="card">
-  <h2>Đơn CTV (<?= count($rows) ?>)
-    <a href="?failed=1" class="btn <?= $onlyFailed?'danger':'secondary' ?>" style="float:right">Cần xử lý</a>
-    <a href="?" class="btn <?= !$onlyFailed?'':'secondary' ?>" style="float:right;margin-right:6px">Tất cả</a>
-  </h2>
+  <h2>Đơn CTV (<?= count($rows) ?>)</h2>
+  <div class="filter-row">
+    <a href="?" class="pill <?= !$onlyFailed?'active':'' ?>">Tất cả</a>
+    <a href="?failed=1" class="pill <?= $onlyFailed?'active':'' ?>">Cần xử lý</a>
+  </div>
   <?php if (!$rows): ?>
-    <div class="empty"><div class="icon">📋</div><p>Không có đơn nào.</p></div>
+    <div class="empty"><div class="icon">📋</div><p>Không có đơn nào<?= $onlyFailed ? ' cần xử lý' : '' ?>.</p></div>
   <?php else: ?>
+  <div class="table-wrap">
   <table>
     <thead><tr><th>Mã</th><th>CTV</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th><th>Tạo lúc</th><th></th></tr></thead>
     <tbody>
@@ -121,6 +123,7 @@ admin_layout_header('Đơn CTV', $admin);
     <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <?php endif; ?>
 </div>
 <?php admin_layout_footer();

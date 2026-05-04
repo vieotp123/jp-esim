@@ -30,8 +30,11 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
   </div>
 </div>
 <div class="card"><h2>Email QR (<?= count($rows) ?>)</h2>
+  <?php if (!$rows): ?>
+    <div class="empty"><div class="icon">📧</div><p>Không có email nào trong bộ lọc hiện tại.</p></div>
+  <?php else: ?>
+  <div class="table-wrap">
   <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
-  <?php if (!$rows): ?><tr><td colspan="8"><div class="empty"><div class="icon">📧</div><p>Không có email nào trong bộ lọc hiện tại.</p></div></td></tr><?php endif; ?>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
   <tr>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['iccid']) ?></span><br><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
@@ -44,5 +47,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
     <td style="max-width:360px"><?= htmlspecialchars(mb_strimwidth((string)($r['email_last_error'] ?? ''), 0, 220, '...')) ?></td>
   </tr>
   <?php endforeach; ?></tbody></table>
+  </div>
+  <?php endif; ?>
 </div>
 <?php admin_layout_footer();
