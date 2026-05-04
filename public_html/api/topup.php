@@ -4,6 +4,15 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 security_headers(false);
 try {
     $name = basename(__FILE__, '.php');
+    if (!RateLimiter::isAdminIp()) {
+        $rl = new RateLimiter();
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $limits = ['orders' => [10, 60], 'plans' => [30, 60], 'topup' => [5, 60], 'payment' => [30, 60], 'esim' => [20, 60], 'support' => [10, 60], 'voucher' => [10, 60], 'review' => [5, 60]];
+        [$rlLimit, $rlWindow] = $limits[$name] ?? [30, 60];
+        if (!$rl->check('api:' . $name . ':' . $ip, $rlLimit, $rlWindow)) {
+            json_error('RATE_LIMITED', 'Quá nhiều yêu cầu. Vui lòng thử lại sau.', 429);
+        }
+    }
     switch ($name) {
         case 'plans':
             if ($_SERVER['REQUEST_METHOD'] !== 'GET') json_error('METHOD_NOT_ALLOWED','Method not allowed',405);

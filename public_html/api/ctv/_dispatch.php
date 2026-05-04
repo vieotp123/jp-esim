@@ -44,11 +44,11 @@ function ctv_api_authenticate(): array {
 }
 
 function ctv_api_rate_limit(array $ctv, int $apiKeyId, string $endpoint): void {
-    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
     $limit = (int)app_config('CTV_API_RATE_LIMIT_PER_MINUTE', 60);
-    $st = db()->prepare('SELECT COUNT(*) FROM ctv_api_logs WHERE api_key_id=? AND endpoint=? AND ip=? AND created_at >= (NOW() - INTERVAL 60 SECOND)');
-    $st->execute([$apiKeyId, $endpoint, $ip]);
-    if ((int)$st->fetchColumn() >= $limit) ctv_api_response_error('RATE_LIMITED', 'Too many requests', 429);
+    $rl = new RateLimiter();
+    if (!$rl->check('ctv_api:' . $apiKeyId, $limit, 60)) {
+        ctv_api_response_error('RATE_LIMITED', 'Too many requests', 429);
+    }
 }
 function ctv_api_dispatch(string $endpoint): void {
     $start = microtime(true); $ctv = null; $apiKeyId = null;
