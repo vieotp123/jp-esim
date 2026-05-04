@@ -27,14 +27,15 @@ admin_layout_header('Xác thực Passkey', $admin);
 <script src="/assets/passkey.js?v=20260504"></script>
 <div class="card" style="max-width:480px;margin:40px auto;text-align:center">
   <h2>Xác thực Passkey</h2>
-  <p style="color:#888;margin-bottom:20px">Vui lòng xác thực passkey để tiếp tục.</p>
-  <button class="btn" id="verifyBtn" style="background:#f5a623;color:#fff;border:none;padding:14px 28px;border-radius:6px;cursor:pointer;font-size:16px;width:100%" onclick="verifyPasskey()">
+  <p class="muted" style="margin-bottom:20px">Vui lòng xác thực passkey để tiếp tục.</p>
+  <button class="btn gold" id="verifyBtn" style="width:100%;font-size:16px;padding:14px 28px" onclick="verifyPasskey()">
     Xác thực bằng Passkey
   </button>
   <div id="verifyMsg" style="margin-top:12px"></div>
 </div>
 <script>
 (function(){
+  function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
   window.verifyPasskey = async function() {
     var btn = document.getElementById('verifyBtn');
     var msg = document.getElementById('verifyMsg');
@@ -46,7 +47,7 @@ admin_layout_header('Xác thực Passkey', $admin);
     } catch(e) {
       var text = e.message || 'Xác thực passkey thất bại';
       if (e.name === 'NotAllowedError') text = 'Đã huỷ xác thực';
-      msg.innerHTML = '<div style="padding:10px;border-radius:6px;background:#f8d7da;color:#721c24">' + text + '</div>';
+      msg.innerHTML = '<div class="flash err">' + escHtml(text) + '</div>';
       btn.disabled = false;
     }
   };

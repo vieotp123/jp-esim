@@ -147,6 +147,7 @@ button.btn,.btn{
 .btn.secondary:hover{color:#fff;border-color:var(--c-gold);filter:none}
 .btn.danger{background:linear-gradient(180deg, #ef5b5b, #c33b3b); box-shadow:0 6px 16px rgba(220,60,60,.30)}
 .btn.gold{background:linear-gradient(180deg, var(--c-gold-2), var(--c-gold-deep)); color:#241804; box-shadow:0 6px 16px rgba(230,192,104,.35)}
+.btn.sm{padding:6px 12px;font-size:12.5px;border-radius:7px}
 
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
 thead th{

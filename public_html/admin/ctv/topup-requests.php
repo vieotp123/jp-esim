@@ -49,6 +49,7 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
     <a class="tag <?= $filterStatus === 'rejected' ? 'err' : '' ?>" href="?status=rejected">Từ chối</a>
   </div>
 
+  <?php if (!$rows): ?><div class="empty"><div class="icon">📋</div><p>Chưa có yêu cầu nạp ví nào.</p></div><?php else: ?>
   <table><thead><tr><th>#</th><th>CTV</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
   <?php foreach ($rows as $r):
     $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
@@ -64,15 +65,14 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
     <td>
     <?php if ($r['status'] === 'pending'): ?>
       <details><summary class="btn sm">Xử lý</summary>
-      <div style="margin-top:8px;min-width:260px">
-        <form method="post" style="margin-bottom:6px">
+      <div class="action-group" style="margin-top:8px">
+        <form method="post">
           <?php admin_csrf_field(); ?>
           <input type="hidden" name="request_id" value="<?= (int)$r['id'] ?>">
-          <input name="note" placeholder="Ghi chú (tuỳ chọn)" style="width:200px;margin-bottom:4px">
-          <div style="margin-top:4px">
-            <button name="action" value="approve" class="btn sm gold">Duyệt & nạp ví</button>
-            <button name="action" value="reject" class="btn sm danger" onclick="return confirm('Từ chối yêu cầu #<?= (int)$r['id'] ?>?')">Từ chối</button>
-          </div>
+          <label>Ghi chú</label>
+          <input name="note" placeholder="Tuỳ chọn">
+          <button name="action" value="approve" class="btn sm gold">Duyệt & nạp ví</button>
+          <button name="action" value="reject" class="btn sm danger" onclick="return confirm('Từ chối yêu cầu #<?= (int)$r['id'] ?>?')">Từ chối</button>
         </form>
       </div>
       </details>
@@ -83,5 +83,6 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   </tr>
   <?php endforeach; ?>
   </tbody></table>
+  <?php endif; ?>
 </div>
 <?php admin_layout_footer();

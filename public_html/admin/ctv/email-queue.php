@@ -31,7 +31,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
 </div>
 <div class="card"><h2>Email QR (<?= count($rows) ?>)</h2>
   <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
-  <?php if (!$rows): ?><tr><td colspan="8" class="empty">Không có dữ liệu.</td></tr><?php endif; ?>
+  <?php if (!$rows): ?><tr><td colspan="8"><div class="empty"><div class="icon">📧</div><p>Không có email nào trong bộ lọc hiện tại.</p></div></td></tr><?php endif; ?>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
   <tr>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['iccid']) ?></span><br><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>

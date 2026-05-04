@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st = db()->prepare('SELECT * FROM ctv_orders WHERE ctv_order_id=? LIMIT 1');
                 $st->execute([$orderId]);
                 $row = $st->fetch();
-                if (!$row || (int)$row['status'] !== 3) throw new RuntimeException('Đơn không ở trạng thái failed');
+                if (!$row || (int)$row['status'] !== 3) throw new RuntimeException('Đơn không ở trạng thái Thất bại');
                 $ctvId = (int)$row['ctv_id'];
                 $totalCharge = (int)$row['total_charge'];
                 $adminNote = 'Admin thử lại bởi ' . $admin['user'];

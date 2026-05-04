@@ -14,35 +14,35 @@ admin_layout_header('Passkey', $admin);
 <script src="/assets/passkey.js?v=20260504"></script>
 <div class="card" style="max-width:720px">
   <h2>Passkey / Khoá bảo mật</h2>
-  <p style="color:#888;margin-bottom:16px">Passkey cho phép xác thực hai lớp bằng Face ID, Touch ID hoặc Windows Hello. Tối đa 5 passkey mỗi tài khoản.</p>
+  <p class="muted" style="margin-bottom:16px">Passkey cho phép xác thực hai lớp bằng Face ID, Touch ID hoặc Windows Hello. Tối đa 5 passkey mỗi tài khoản.</p>
 
   <div id="passkeyNotSupported" style="display:none">
-    <div class="flash warn" style="background:#fff3cd;padding:12px;border-radius:6px">Trình duyệt không hỗ trợ Passkey. Vui lòng dùng Safari, Chrome hoặc Edge phiên bản mới.</div>
+    <div class="flash warn">Trình duyệt không hỗ trợ Passkey. Vui lòng dùng Safari, Chrome hoặc Edge phiên bản mới.</div>
   </div>
 
   <div id="passkeySection">
     <h3>Passkey đã đăng ký (<?= count($passkeys) ?>/5)</h3>
     <?php if ($passkeys): ?>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr><th style="text-align:left;padding:8px">Tên thiết bị</th><th style="text-align:left;padding:8px">Ngày tạo</th><th style="text-align:left;padding:8px">Lần dùng cuối</th><th style="padding:8px"></th></tr></thead>
+    <table>
+      <thead><tr><th>Tên thiết bị</th><th>Ngày tạo</th><th>Lần dùng cuối</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($passkeys as $pk): ?>
-      <tr id="pk-<?= (int)$pk['id'] ?>" style="border-top:1px solid #eee">
-        <td style="padding:8px"><strong><?= htmlspecialchars((string)($pk['device_name'] ?: 'Passkey #' . $pk['id'])) ?></strong></td>
-        <td style="padding:8px;color:#888"><?= htmlspecialchars((string)$pk['created_at']) ?></td>
-        <td style="padding:8px;color:#888"><?= $pk['last_used_at'] ? htmlspecialchars((string)$pk['last_used_at']) : 'Chưa dùng' ?></td>
-        <td style="padding:8px"><button class="btn btn-sm" style="background:#dc3545;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer" onclick="revokePasskey(<?= (int)$pk['id'] ?>)">Xoá</button></td>
+      <tr id="pk-<?= (int)$pk['id'] ?>">
+        <td><strong><?= htmlspecialchars((string)($pk['device_name'] ?: 'Passkey #' . $pk['id'])) ?></strong></td>
+        <td><span class="muted"><?= htmlspecialchars((string)$pk['created_at']) ?></span></td>
+        <td><span class="muted"><?= $pk['last_used_at'] ? htmlspecialchars((string)$pk['last_used_at']) : 'Chưa dùng' ?></span></td>
+        <td><button class="btn sm danger" onclick="revokePasskey(<?= (int)$pk['id'] ?>)">Xoá</button></td>
       </tr>
       <?php endforeach; ?>
       </tbody>
     </table>
     <?php else: ?>
-    <p style="color:#888">Chưa có passkey nào.</p>
+    <div class="empty"><div class="icon">🔑</div><p>Chưa có passkey nào. Thêm passkey để xác thực nhanh hơn.</p></div>
     <?php endif; ?>
 
     <?php if (count($passkeys) < 5): ?>
     <div style="margin-top:14px">
-      <button class="btn" id="addPasskeyBtn" style="background:#f5a623;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px" onclick="addPasskey()">Thêm Passkey</button>
+      <button class="btn gold" id="addPasskeyBtn" onclick="addPasskey()">Thêm Passkey</button>
     </div>
     <?php endif; ?>
 
@@ -63,9 +63,7 @@ admin_layout_header('Passkey', $admin);
   }
 
   function showMsg(type, text) {
-    msgEl.innerHTML = '<div style="padding:10px;border-radius:6px;margin-top:8px;' +
-      (type === 'ok' ? 'background:#d4edda;color:#155724' : 'background:#f8d7da;color:#721c24') +
-      '">' + escHtml(text) + '</div>';
+    msgEl.innerHTML = '<div class="flash ' + (type === 'ok' ? 'ok' : 'err') + '">' + escHtml(text) + '</div>';
     setTimeout(function(){ msgEl.innerHTML = ''; }, 6000);
   }
 
@@ -79,11 +77,19 @@ admin_layout_header('Passkey', $admin);
     var btn = document.getElementById('addPasskeyBtn');
     if (btn) btn.disabled = true;
     try {
-      await Passkey.register('/admin/ctv/passkey-api.php');
+      var result = await Passkey.register('/admin/ctv/passkey-api.php');
+      var name = prompt('Đặt tên cho passkey (ví dụ: MacBook văn phòng):', '');
+      if (name && name.trim() && result && result.id) {
+        await fetch('/admin/ctv/passkey-api.php?action=rename', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({id: result.id, name: name.trim()})
+        }).catch(function(){});
+      }
       showMsg('ok', 'Đăng ký passkey thành công!');
       setTimeout(function(){ location.reload(); }, 1200);
     } catch(e) {
-      showMsg('error', e.message || 'Đăng ký passkey thất bại');
+      showMsg('err', e.message || 'Đăng ký passkey thất bại');
       if (btn) btn.disabled = false;
     }
   };
@@ -102,7 +108,7 @@ admin_layout_header('Passkey', $admin);
       if (row) row.remove();
       showMsg('ok', 'Đã xoá passkey');
     } catch(e) {
-      showMsg('error', e.message || 'Xoá thất bại');
+      showMsg('err', e.message || 'Xoá thất bại');
     }
   };
 })();

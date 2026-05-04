@@ -37,7 +37,7 @@ admin_layout_header('Thông báo CTV', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="dash-grid">
 <div class="card">
   <h2>Gửi cho CTV cụ thể</h2>
   <form method="post">
@@ -46,7 +46,7 @@ admin_layout_header('Thông báo CTV', $admin);
     <div style="margin-bottom:8px"><label>CTV ID</label><input type="number" name="ctv_id" min="1" required placeholder="ID CTV"></div>
     <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">Hệ thống</option><option value="order">Đơn hàng</option><option value="wallet">Ví</option><option value="promo">Khuyến mãi</option></select></div>
     <div style="margin-bottom:8px"><label>Tiêu đề</label><input type="text" name="title" required maxlength="255"></div>
-    <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3" style="width:100%;background:#0a1020;color:#e8edf7;border:1px solid #1f2a44;border-radius:6px;padding:8px;font-family:inherit"></textarea></div>
+    <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3"></textarea></div>
     <button class="btn">Gửi</button>
   </form>
 </div>
@@ -59,7 +59,7 @@ admin_layout_header('Thông báo CTV', $admin);
     <input type="hidden" name="ctv_id" value="0">
     <div style="margin-bottom:8px"><label>Loại</label><select name="type"><option value="system">Hệ thống</option><option value="promo">Khuyến mãi</option></select></div>
     <div style="margin-bottom:8px"><label>Tiêu đề</label><input type="text" name="title" required maxlength="255"></div>
-    <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3" style="width:100%;background:#0a1020;color:#e8edf7;border:1px solid #1f2a44;border-radius:6px;padding:8px;font-family:inherit"></textarea></div>
+    <div style="margin-bottom:8px"><label>Nội dung</label><textarea name="message" rows="3"></textarea></div>
     <button class="btn gold" onclick="return confirm('Gửi thông báo cho tất cả CTV hoạt động?')">Gửi hàng loạt</button>
   </form>
 </div>
@@ -67,17 +67,20 @@ admin_layout_header('Thông báo CTV', $admin);
 
 <div class="card">
   <h2>50 thông báo gần nhất</h2>
+  <?php if (!$recent): ?><div class="empty"><div class="icon">🔔</div><p>Chưa có thông báo nào.</p></div><?php else: ?>
+  <?php $typeVi = ['system'=>'Hệ thống','order'=>'Đơn hàng','wallet'=>'Ví','promo'=>'Khuyến mãi']; ?>
   <table><thead><tr><th>ID</th><th>CTV</th><th>Loại</th><th>Tiêu đề</th><th>Đã đọc</th><th>Thời gian</th></tr></thead><tbody>
   <?php foreach ($recent as $r): ?>
   <tr>
     <td><?= (int)$r['id'] ?></td>
     <td><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a> <span class="muted"><?= htmlspecialchars((string)($r['email'] ?? '')) ?></span></td>
-    <td><span class="tag"><?= htmlspecialchars((string)$r['type']) ?></span></td>
+    <td><span class="tag"><?= htmlspecialchars($typeVi[(string)$r['type']] ?? (string)$r['type']) ?></span></td>
     <td><?= htmlspecialchars((string)$r['title']) ?></td>
-    <td><?= (int)$r['is_read'] ? '<span class="tag ok">đã đọc</span>' : '<span class="tag warn">chưa đọc</span>' ?></td>
+    <td><?= (int)$r['is_read'] ? '<span class="tag ok">Đã đọc</span>' : '<span class="tag warn">Chưa đọc</span>' ?></td>
     <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
   </tr>
   <?php endforeach; ?>
   </tbody></table>
+  <?php endif; ?>
 </div>
 <?php admin_layout_footer();

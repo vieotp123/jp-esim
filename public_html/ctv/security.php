@@ -43,7 +43,7 @@ ctv_flash_render();
       </tbody>
     </table>
     <?php else: ?>
-    <p class="muted">Chưa có passkey nào. Thêm passkey để đăng nhập nhanh hơn.</p>
+    <div class="empty-state"><div class="icon">🔑</div><p>Chưa có passkey nào. Thêm passkey để đăng nhập nhanh hơn.</p></div>
     <?php endif; ?>
 
     <?php if (count($passkeys) < 5): ?>

@@ -42,7 +42,7 @@ ctv_layout_header('eSIM của CTV', $user);
   </form>
 
   <?php if ($pending): ?>
-  <div class="muted" style="margin:8px 0">Đang chờ phát hành QR (<?= count($pending) ?> đơn). Refresh để cập nhật.</div>
+  <div class="muted" style="margin:8px 0">Đang chờ phát hành QR (<?= count($pending) ?> đơn). Làm mới trang để cập nhật.</div>
   <table>
     <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Cập nhật</th></tr></thead>
     <tbody>
