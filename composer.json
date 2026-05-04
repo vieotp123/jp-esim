@@ -1,0 +1,8 @@
+{
+    "name": "jpesim/esimtravel",
+    "description": "JP eSIM travel app",
+    "type": "project",
+    "require": {
+        "lbuchs/webauthn": "^2.2"
+    }
+}

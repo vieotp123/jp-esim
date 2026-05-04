@@ -64,6 +64,24 @@ final class CtvAuth {
         return ['id' => (int)$u['id'], 'email' => $u['email'], 'session' => $sid];
     }
 
+    public static function loginWithPasskey(int $userId): array {
+        $pdo = db();
+        $st = $pdo->prepare('SELECT id,email,status,email_verified FROM ctv_users WHERE id=? LIMIT 1');
+        $st->execute([$userId]);
+        $u = $st->fetch();
+        if (!$u) throw new RuntimeException('Tài khoản không tồn tại');
+        if ((int)$u['status'] !== 1) throw new RuntimeException('Tài khoản đã bị tạm khóa');
+        if ((int)$u['email_verified'] !== 1) throw new RuntimeException('Vui lòng xác thực email trước khi đăng nhập');
+        $sid = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', time() + self::TTL_SECONDS);
+        $pdo->prepare('INSERT INTO ctv_sessions(id,ctv_id,ip,user_agent,expires_at) VALUES(?,?,?,?,?)')
+            ->execute([$sid, (int)$u['id'], $_SERVER['REMOTE_ADDR'] ?? null, substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 250), $expires]);
+        $pdo->prepare('UPDATE ctv_users SET last_login_at=NOW(), last_login_ip=? WHERE id=?')
+            ->execute([$_SERVER['REMOTE_ADDR'] ?? null, (int)$u['id']]);
+        self::setSessionCookie($sid);
+        return ['id' => (int)$u['id'], 'email' => $u['email'], 'session' => $sid];
+    }
+
     public static function logout(): void {
         $sid = $_COOKIE[self::COOKIE] ?? '';
         if ($sid !== '') {
