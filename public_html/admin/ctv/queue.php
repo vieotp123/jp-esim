@@ -91,7 +91,7 @@ try {
                 }
                 if ($ok) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                        ->execute(['resolved', '[email gửi lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        ->execute(['resolved', '[email gửi lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
                     $flash = ['ok', 'Đã gửi lại email cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
                 } else {
                     $flash = ['err', 'Gửi lại email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra nhật ký.'];
@@ -111,7 +111,7 @@ try {
                     $result = $svc->fulfillPaidOrder($stripped);
                     if (!empty($result['success'])) {
                         db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
                         $flash = ['ok', 'Thử lại đơn ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
                         $flash = ['err', 'Thử lại đơn ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];
@@ -120,7 +120,7 @@ try {
                     $result = $svc->fulfillPaidTopup($stripped);
                     if (!empty($result['success'])) {
                         db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
                         $flash = ['ok', 'Thử lại nạp data ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
                         $flash = ['err', 'Thử lại nạp data ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];

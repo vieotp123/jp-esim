@@ -125,6 +125,8 @@ admin_layout_header('Passkey', $admin);
       if (!json.ok) throw new Error(json.error || 'Lỗi');
       var row = document.getElementById('pk-' + id);
       if (row) row.remove();
+      var mcard = document.getElementById('pk-m-' + id);
+      if (mcard) mcard.remove();
       showMsg('ok', 'Đã xoá passkey');
     } catch(e) {
       showMsg('err', e.message || 'Xoá thất bại');
