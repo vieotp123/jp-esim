@@ -12,14 +12,14 @@ $qs = function(array $extra) use ($kind, $ctvFilter): string {
     $params = array_filter(array_merge(['kind'=>$kind, 'ctv_id'=>$ctvFilter ?: null], $extra), fn($v) => $v !== null && $v !== '');
     return '?' . http_build_query($params);
 };
-admin_layout_header('Logs CTV', $admin);
+admin_layout_header("Nhật ký CTV", $admin);
 ?>
 <div class="card">
-  <h2>Logs</h2>
+  <h2>Nhật ký hệ thống</h2>
   <p>
-    <a class="btn <?= $kind==='api'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'api'])) ?>">API logs</a>
-    <a class="btn <?= $kind==='provider'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'provider'])) ?>">Provider logs</a>
-    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'wallet'])) ?>">Wallet</a>
+    <a class="btn <?= $kind==='api'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'api'])) ?>">Nhật ký API</a>
+    <a class="btn <?= $kind==='provider'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'provider'])) ?>">Nhật ký xử lý</a>
+    <a class="btn <?= $kind==='wallet'?'':'secondary' ?>" href="<?= htmlspecialchars($qs(['kind'=>'wallet'])) ?>">Ví CTV</a>
     <?php if ($ctvFilter): ?>
       <span class="tag">Lọc CTV #<?= (int)$ctvFilter ?></span>
       <a class="btn secondary" href="?kind=<?= htmlspecialchars($kind) ?>">Xóa lọc</a>
