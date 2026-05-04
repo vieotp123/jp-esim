@@ -196,6 +196,21 @@ details[open] summary{color:var(--a-gold)}
 /* Dashboard grid */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 
+/* Mobile Cards */
+.m-cards{display:none}
+.m-card{
+  background:linear-gradient(180deg,var(--a-card-2),var(--a-card));
+  border:1px solid var(--a-line);border-radius:var(--a-radius);
+  padding:14px;margin-bottom:10px;
+}
+.m-card .m-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.m-card .m-row:last-child{margin-bottom:0}
+.m-card .m-label{font-size:11px;color:var(--a-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.m-card .m-val{font-size:13px;color:var(--a-ink);font-weight:500;text-align:right}
+.m-card .m-head{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-card .m-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--a-line)}
+.m-card .m-actions .btn{flex:1;min-height:40px;justify-content:center}
+
 /* Hamburger / Drawer */
 header.admin-h .hamburger{
   display:none;width:36px;height:36px;border-radius:8px;
@@ -224,6 +239,9 @@ header.admin-h .hamburger span::after{content:'';top:6px;left:0;width:18px;posit
   header.admin-h nav a{padding:7px 10px;font-size:12px}
 }
 @media (max-width:760px){
+  .m-cards{display:block}
+  .m-cards ~ .table-wrap{display:none}
+  .has-mobile-cards .table-wrap{display:none}
   header.admin-h{padding:10px 14px}
   header.admin-h .brand{font-size:14px}
   header.admin-h .brand-mark{width:24px;height:24px;font-size:11px;border-radius:7px}

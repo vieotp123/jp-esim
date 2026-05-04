@@ -31,6 +31,24 @@ ctv_layout_header('Đơn eSIM', $user);
   <?php if (!$rows): ?>
     <div class="empty-state"><div class="icon">📋</div><p>Chưa có đơn nào<?= $status || $q ? ' phù hợp bộ lọc' : '' ?>.</p><p>Đơn sẽ hiển thị ở đây sau khi bạn <a href="/ctv/create-esim.php">tạo eSIM</a>.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($rows as $r):
+      $cls = $r['status']==='success' ? 'ok' : ($r['status']==='failed' ? 'err' : 'warn');
+      $statusLabel = match($r['status']) { 'success'=>'Thành công', 'failed'=>'Thất bại', default=>'Đang xử lý' };
+    ?>
+    <a href="/ctv/orders/view.php?id=<?= htmlspecialchars($r['orderId']) ?>" class="m-card" style="text-decoration:none;color:inherit;display:block">
+      <div class="m-head">
+        <span class="kbd"><?= htmlspecialchars($r['orderId']) ?></span>
+        <span class="tag <?= $cls ?>"><?= $statusLabel ?></span>
+      </div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars($r['carrier'].' '.$r['planName']) ?></span></div>
+      <div class="m-row"><span class="m-label">SL</span><span class="m-val"><?= (int)$r['quantity'] ?><?php if ((int)$r['quantity'] > 1 && isset($r['provisionedCount'])): $pc = (int)$r['provisionedCount']; ?> <span class="tag <?= $pc >= (int)$r['quantity'] ? 'ok' : ($pc > 0 ? 'warn' : '') ?>" style="font-size:10px"><?= $pc ?>/<?= (int)$r['quantity'] ?></span><?php endif; ?></span></div>
+      <div class="m-row"><span class="m-label">Phí CTV</span><span class="m-val" style="color:var(--c-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Ngày tạo</span><span class="m-val muted"><?= htmlspecialchars((string)$r['createdAt']) ?></span></div>
+      <?php if ($r['errorMessage']): ?><div style="font-size:12px;color:var(--c-muted);margin-top:4px">⚠ <?= htmlspecialchars($r['errorMessage']) ?></div><?php endif; ?>
+    </a>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Mã đơn</th><th>Gói</th><th>SL</th><th>Phí CTV</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>

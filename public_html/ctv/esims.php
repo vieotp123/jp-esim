@@ -70,6 +70,27 @@ ctv_layout_header('eSIM của CTV', $user);
   <?php if (!$rows): ?>
     <div class="empty-state"><div class="icon">📱</div><p>Chưa có eSIM nào<?= $q ? ' phù hợp bộ lọc' : '' ?>.</p><p>eSIM sẽ hiển thị sau khi đơn thành công và hệ thống đồng bộ.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($rows as $r):
+      $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : '';
+    ?>
+    <div class="m-card">
+      <div class="m-head">
+        <span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>" style="font-size:11px"><?= htmlspecialchars((string)$r['iccid']) ?></span>
+        <span class="muted" style="font-size:11px"><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></span>
+      </div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></span></div>
+      <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></span></div>
+      <div class="m-row"><span class="m-label">Hết hạn</span><span class="m-val muted"><?= htmlspecialchars((string)($r['expired_time'] ?? '—')) ?></span></div>
+      <?php if ($qr !== ''): ?>
+      <div class="m-actions">
+        <a class="btn sm" href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener">Xem QR</a>
+        <a class="btn sm secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>">Chi tiết</a>
+      </div>
+      <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>

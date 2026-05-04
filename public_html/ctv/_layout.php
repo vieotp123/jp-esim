@@ -329,8 +329,26 @@ tbody tr{transition:background .1s}
 }
 .nav-overlay.open{display:block;opacity:1}
 
+/* ===== MOBILE CARDS ===== */
+.m-cards{display:none}
+.m-card{
+  background:linear-gradient(180deg,var(--c-card-2),var(--c-card));
+  border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm);
+  padding:14px;margin-bottom:10px;
+}
+.m-card .m-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.m-card .m-row:last-child{margin-bottom:0}
+.m-card .m-label{font-size:11px;color:var(--c-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.m-card .m-val{font-size:13px;color:var(--c-ink);font-weight:500;text-align:right}
+.m-card .m-head{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-card .m-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--c-line)}
+.m-card .m-actions .btn{flex:1;min-height:40px;justify-content:center}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
+  .m-cards{display:block}
+  .m-cards ~ .table-wrap{display:none}
+  .has-mobile-cards .table-wrap{display:none}
   .hdr{padding:0 12px}
   .hdr-inner{height:54px;gap:10px}
   .hdr .brand{font-size:14px}

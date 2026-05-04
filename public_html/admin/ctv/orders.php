@@ -75,6 +75,55 @@ admin_layout_header('Đơn CTV', $admin);
   <?php if (!$rows): ?>
     <div class="empty"><div class="icon">📋</div><p>Không có đơn nào<?= $onlyFailed ? ' cần xử lý' : '' ?>.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($rows as $r):
+      $statusMap=[0=>'Chờ',1=>'Đang xử lý',2=>'Thành công',3=>'Thất bại'];
+      $statusCls=[0=>'',1=>'warn',2=>'ok',3=>'err'];
+      $st=(int)$r['status'];
+      $oid=(string)$r['ctv_order_id'];
+      $qty=(int)$r['quantity'];
+      $pcSt=db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');$pcSt->execute([$oid]);$pc=(int)$pcSt->fetchColumn();
+    ?>
+    <div class="m-card">
+      <div class="m-head">
+        <span class="kbd"><?= htmlspecialchars($oid) ?></span>
+        <span class="tag <?= $statusCls[$st] ?? '' ?>"><?= $statusMap[$st] ?? '?' ?></span>
+      </div>
+      <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['plan_name']) ?> ×<?= $qty ?><?php if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:10px"><?= $pc ?>/<?= $qty ?></span><?php endif; ?></span></div>
+      <div class="m-row"><span class="m-label">Phí</span><span class="m-val" style="font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
+      <?php if ((int)$r['needs_admin']): ?><div style="margin-top:4px"><span class="tag err">Cần xử lý</span></div><?php endif; ?>
+      <?php if (!empty($r['error_message'])): ?><div style="font-size:12px;color:var(--a-muted);margin-top:4px">⚠ <?= htmlspecialchars(mb_strimwidth((string)$r['error_message'], 0, 120, '…')) ?></div><?php endif; ?>
+      <div class="m-actions">
+        <?php if ($st===3): ?>
+        <form method="post" style="flex:1" onsubmit="return confirm('Xác nhận thử lại đơn <?= htmlspecialchars($oid, ENT_QUOTES) ?>?');">
+          <?php admin_csrf_field(); ?>
+          <input type="hidden" name="action" value="retry">
+          <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">
+          <button class="btn sm" type="submit" style="width:100%">Thử lại</button>
+        </form>
+        <?php endif; ?>
+        <?php if ($st===2 && empty($r['iccid'])): ?>
+        <form method="post" style="flex:1">
+          <?php admin_csrf_field(); ?>
+          <input type="hidden" name="action" value="sync_esim">
+          <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">
+          <button class="btn sm secondary" type="submit" style="width:100%">Đồng bộ eSIM</button>
+        </form>
+        <?php endif; ?>
+        <?php if ((int)$r['needs_admin']===1): ?>
+        <form method="post" style="flex:1">
+          <?php admin_csrf_field(); ?>
+          <input type="hidden" name="action" value="mark_resolved">
+          <input type="hidden" name="order_id" value="<?= htmlspecialchars($oid, ENT_QUOTES) ?>">
+          <button class="btn sm secondary" type="submit" style="width:100%">Đã xử lý</button>
+        </form>
+        <?php endif; ?>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Mã</th><th>CTV</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th><th>Tạo lúc</th><th></th></tr></thead>
