@@ -30,36 +30,47 @@ $pending = $pStmt->fetchAll();
 
 ctv_layout_header('eSIM của CTV', $user);
 ?>
+<style>
+  .qr-thumb{height:44px;width:44px;border-radius:8px;border:1px solid var(--c-line-2);transition:transform .15s}
+  .qr-thumb:hover{transform:scale(1.6);z-index:5;position:relative}
+</style>
 <div class="card">
   <h2>Danh sách eSIM</h2>
-  <form method="get" class="row">
-    <div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>"></div>
+  <form method="get" class="row" style="margin-bottom:14px">
+    <div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Nhập ICCID, mã đơn hoặc tên gói..."></div>
     <div class="field"><label>&nbsp;</label>
-      <button class="btn">Lọc</button>
-      <a class="btn secondary" href="/ctv/esims.php">Làm mới QR</a>
-      <a class="btn secondary" href="/ctv/export.php?kind=esims">Xuất eSIM</a>
+      <div class="actions" style="margin-top:0">
+        <button class="btn">Lọc</button>
+        <a class="btn secondary" href="/ctv/esims.php">Làm mới</a>
+        <a class="btn secondary" href="/ctv/export.php?kind=esims">Xuất CSV</a>
+      </div>
     </div>
   </form>
 
   <?php if ($pending): ?>
-  <div class="muted" style="margin:8px 0">Đang chờ phát hành QR (<?= count($pending) ?> đơn). Làm mới trang để cập nhật.</div>
+  <div class="flash warn" style="margin-bottom:14px">
+    Đang chờ phát hành QR (<?= count($pending) ?> đơn). Làm mới trang để cập nhật.
+  </div>
+  <div class="table-wrap" style="margin-bottom:16px">
   <table>
     <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Cập nhật</th></tr></thead>
     <tbody>
       <?php foreach ($pending as $p): ?>
       <tr>
-        <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a></td>
+        <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>" class="kbd" style="text-decoration:none"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a></td>
         <td><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></td>
-        <td><?= htmlspecialchars((string)$p['updated_at']) ?></td>
+        <td><span class="muted"><?= htmlspecialchars((string)$p['updated_at']) ?></span></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <?php endif; ?>
 
   <?php if (!$rows): ?>
-    <div class="empty-state"><div class="icon">📱</div><p>Chưa có eSIM nào.</p><p>eSIM sẽ hiển thị sau khi đơn thành công và hệ thống đồng bộ.</p></div>
+    <div class="empty-state"><div class="icon">📱</div><p>Chưa có eSIM nào<?= $q ? ' phù hợp bộ lọc' : '' ?>.</p><p>eSIM sẽ hiển thị sau khi đơn thành công và hệ thống đồng bộ.</p></div>
   <?php else: ?>
+  <div class="table-wrap">
   <table>
     <thead><tr><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
     <tbody>
@@ -67,18 +78,19 @@ ctv_layout_header('eSIM của CTV', $user);
       <tr>
         <td>
           <?php $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : ''; if ($qr !== ''): ?>
-            <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" style="height:48px;width:48px;border-radius:6px;border:1px solid #2a2a2a"></a>
+            <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" class="qr-thumb"></a>
           <?php else: ?><span class="muted">—</span><?php endif; ?>
         </td>
         <td><span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>"><?= htmlspecialchars((string)$r['iccid']) ?></span></td>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></td>
         <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></td>
-        <td><?= htmlspecialchars((string)($r['expired_time'] ?? '')) ?></td>
+        <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)($r['expired_time'] ?? '')) ?></span></td>
         <td><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <?php endif; ?>
 </div>
 <?php ctv_layout_footer();

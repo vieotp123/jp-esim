@@ -37,21 +37,21 @@ $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Khoá API', $user);
 ctv_flash_render();
 ?>
-<div class="card">
-  <h2>Khoá API</h2>
+<div class="card" style="max-width:720px">
+  <h2>Tạo API key</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($newToken): ?>
     <div class="flash warn">
-      Token mới (chỉ hiển thị một lần): <span class="kbd" id="new-token"><?= htmlspecialchars($newToken['token']) ?></span> <button class="btn secondary" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('new-token').textContent)">Sao chép</button>
+      Token mới (chỉ hiển thị một lần):<br>
+      <span class="kbd" id="new-token" style="display:inline-block;margin-top:6px;word-break:break-all"><?= htmlspecialchars($newToken['token']) ?></span>
+      <button class="btn sm secondary" type="button" style="margin-left:8px" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('new-token').textContent)">Sao chép</button>
     </div>
   <?php endif; ?>
-  <form method="post">
+  <form method="post" class="row">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
     <input type="hidden" name="action" value="generate">
-    <div class="row">
-      <div class="field"><label>Tên key</label><input type="text" name="name" placeholder="Ví dụ: integration-sandbox"></div>
-    </div>
-    <button class="btn" type="submit">Tạo API key mới</button>
+    <div class="field"><label>Tên key</label><input type="text" name="name" placeholder="Ví dụ: integration-sandbox" required></div>
+    <div class="field"><label>&nbsp;</label><button class="btn gold" type="submit">Tạo API key mới</button></div>
   </form>
 </div>
 
@@ -60,25 +60,26 @@ ctv_flash_render();
   <?php if (!$keys): ?>
     <div class="empty-state"><div class="icon">🔑</div><p>Chưa có API key nào.</p><p>Tạo key để tích hợp API vào hệ thống của bạn.</p></div>
   <?php else: ?>
+  <div class="table-wrap">
   <table>
     <thead><tr><th>Tên</th><th>Prefix</th><th>Trạng thái</th><th>Tạo lúc</th><th>Lần dùng cuối</th><th></th></tr></thead>
     <tbody>
       <?php foreach ($keys as $k): ?>
       <tr>
-        <td><?= htmlspecialchars((string)$k['name']) ?></td>
+        <td><strong><?= htmlspecialchars((string)$k['name']) ?></strong></td>
         <td><span class="kbd">ctvK_<?= htmlspecialchars((string)$k['key_prefix']) ?>_***</span></td>
         <td>
           <?php if ((int)$k['status'] === 1): ?><span class="tag ok">Hoạt động</span><?php else: ?><span class="tag err">Đã thu hồi</span><?php endif; ?>
         </td>
-        <td><?= htmlspecialchars((string)$k['created_at']) ?></td>
-        <td><?= htmlspecialchars((string)($k['last_used_at'] ?? '')) ?></td>
+        <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)$k['created_at']) ?></span></td>
+        <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)($k['last_used_at'] ?? 'Chưa dùng')) ?></span></td>
         <td>
           <?php if ((int)$k['status'] === 1): ?>
           <form method="post" style="display:inline" onsubmit="return confirm('Thu hồi key <?= htmlspecialchars((string)$k['name']) ?>?')">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
             <input type="hidden" name="action" value="revoke">
             <input type="hidden" name="key_id" value="<?= (int)$k['id'] ?>">
-            <button class="btn danger" type="submit">Thu hồi</button>
+            <button class="btn sm danger" type="submit">Thu hồi</button>
           </form>
           <?php endif; ?>
         </td>
@@ -86,7 +87,9 @@ ctv_flash_render();
       <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
   <?php endif; ?>
-  <p class="muted">Sử dụng header <span class="kbd">Authorization: Bearer ctvK_xxx_xxx</span> hoặc <span class="kbd">X-API-Key: ctvK_...</span> khi gọi <span class="kbd">/api/ctv/*</span>.</p>
+  <div class="divider"></div>
+  <p class="muted">Gửi header <span class="kbd">Authorization: Bearer ctvK_xxx_xxx</span> hoặc <span class="kbd">X-API-Key: ctvK_...</span> khi gọi <span class="kbd">/api/ctv/*</span>.</p>
 </div>
 <?php ctv_layout_footer();

@@ -18,9 +18,9 @@ ctv_layout_header('Bảo mật', $user);
 ctv_flash_render();
 ?>
 <script src="/assets/passkey.js?v=20260504"></script>
-<div class="card" style="max-width:680px">
+<div class="card" style="max-width:720px">
   <h2>Passkey / Khoá bảo mật</h2>
-  <p class="muted">Passkey cho phép đăng nhập bằng Face ID, Touch ID hoặc Windows Hello — không cần nhập mật khẩu. Mỗi tài khoản tối đa 5 passkey.</p>
+  <p class="muted" style="margin-bottom:14px">Passkey cho phép đăng nhập bằng Face ID, Touch ID hoặc Windows Hello — không cần nhập mật khẩu. Mỗi tài khoản tối đa 5 passkey.</p>
 
   <div id="passkeyNotSupported" style="display:none">
     <div class="flash warn">Trình duyệt của bạn không hỗ trợ Passkey. Vui lòng sử dụng Safari, Chrome hoặc Edge phiên bản mới.</div>
@@ -29,19 +29,21 @@ ctv_flash_render();
   <div id="passkeySection">
     <h3>Passkey đã đăng ký (<?= count($passkeys) ?>/5)</h3>
     <?php if ($passkeys): ?>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Tên thiết bị</th><th>Ngày tạo</th><th>Lần dùng cuối</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($passkeys as $pk): ?>
       <tr id="pk-<?= (int)$pk['id'] ?>">
         <td><strong><?= htmlspecialchars((string)($pk['device_name'] ?: 'Passkey #' . $pk['id'])) ?></strong></td>
-        <td><span class="muted"><?= htmlspecialchars((string)$pk['created_at']) ?></span></td>
-        <td><span class="muted"><?= $pk['last_used_at'] ? htmlspecialchars((string)$pk['last_used_at']) : 'Chưa dùng' ?></span></td>
+        <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)$pk['created_at']) ?></span></td>
+        <td style="white-space:nowrap"><span class="muted"><?= $pk['last_used_at'] ? htmlspecialchars((string)$pk['last_used_at']) : 'Chưa dùng' ?></span></td>
         <td><button class="btn sm danger" onclick="revokePasskey(<?= (int)$pk['id'] ?>)">Xoá</button></td>
       </tr>
       <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
     <?php else: ?>
     <div class="empty-state"><div class="icon">🔑</div><p>Chưa có passkey nào. Thêm passkey để đăng nhập nhanh hơn.</p></div>
     <?php endif; ?>
@@ -56,10 +58,12 @@ ctv_flash_render();
   </div>
 </div>
 
-<div class="card" style="max-width:680px">
+<div class="card" style="max-width:720px">
   <h2>Mật khẩu</h2>
   <p class="muted">Mật khẩu luôn khả dụng để đăng nhập, kể cả khi bạn có passkey.</p>
-  <p>Email: <strong><?= htmlspecialchars((string)$user['email']) ?></strong></p>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span class="tag info"><?= htmlspecialchars((string)$user['email']) ?></span>
+  </div>
 </div>
 
 <script>

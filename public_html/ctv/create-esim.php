@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Tạo eSIM', $user);
 ?>
-<div class="card">
+<div class="card" style="max-width:720px">
   <h2>Tạo eSIM mới</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($createdResult): ?>
@@ -47,7 +47,7 @@ ctv_layout_header('Tạo eSIM', $user);
       <?php if (!empty($createdResult['errorMessage'])): ?> · <?= htmlspecialchars($createdResult['errorMessage']) ?><?php endif; ?>
     </div>
     <?php if ($createdResult['status'] === 'success' || $createdResult['status'] === 'pending'): ?>
-      <p><a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars(rawurlencode($createdResult['orderId'])) ?>">Xem chi tiết đơn →</a></p>
+      <div class="actions"><a class="btn gold" href="/ctv/orders/view.php?id=<?= htmlspecialchars(rawurlencode($createdResult['orderId'])) ?>">Xem chi tiết đơn →</a></div>
     <?php endif; ?>
   <?php endif; ?>
   <?php if (empty($plans)): ?>
@@ -62,29 +62,32 @@ ctv_layout_header('Tạo eSIM', $user);
           <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['day'].' ngày · '.$p['ctvPriceText']) ?></option>
         <?php endforeach; ?>
       </select>
+      <div class="helper">Chọn gói phù hợp nhu cầu khách hàng.</div>
     </div>
     <div class="row">
       <div class="field">
         <label>Số lượng</label>
         <input id="quantity" type="number" name="quantity" min="1" max="50" value="1" required inputmode="numeric">
-        <p class="muted">Tối đa 50 eSIM mỗi đơn.</p>
+        <div class="helper">Tối đa 50 eSIM mỗi đơn.</div>
       </div>
       <div class="field">
         <label>Tạm tính</label>
-        <div class="kbd" id="quote" style="padding:10px 12px;font-size:16px;font-weight:700">-</div>
+        <div id="quote" style="padding:12px 14px;font-size:18px;font-weight:800;color:var(--c-gold);background:var(--c-surface);border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm)">—</div>
       </div>
     </div>
+    <div class="divider"></div>
     <div class="field">
       <label>Email khách (tùy chọn)</label>
       <input type="email" name="email" placeholder="email@khachhang.com">
-      <p class="muted">Nếu nhập, hệ thống sẽ gửi QR eSIM tới email này.</p>
+      <div class="helper">Nếu nhập, hệ thống sẽ gửi QR eSIM tới email này.</div>
     </div>
     <div class="field">
       <label>Ghi chú (tùy chọn)</label>
       <input type="text" name="notes" placeholder="VD: Tên khách, mã booking...">
     </div>
-    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ ví trước khi xử lý; nếu lỗi sẽ hoàn tự động.</p>
-    <button class="btn" type="submit" id="submitBtn" onclick="return confirm('Xác nhận tạo đơn và trừ ví?')">Tạo đơn</button>
+    <div class="divider"></div>
+    <p class="muted" style="margin-bottom:14px">Số dư: <strong style="color:var(--c-gold)"><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong> · Trừ ví trước khi xử lý; hoàn tự động nếu lỗi.</p>
+    <button class="btn gold lg" type="submit" id="submitBtn" onclick="return confirm('Xác nhận tạo đơn và trừ ví?')">Tạo đơn eSIM</button>
   </form>
   <?php endif; ?>
 </div>

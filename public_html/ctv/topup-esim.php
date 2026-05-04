@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Nạp data eSIM', $user);
 ?>
-<div class="card">
+<div class="card" style="max-width:720px">
   <h2>Nạp data cho eSIM</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($result): ?>
@@ -51,7 +51,7 @@ ctv_layout_header('Nạp data eSIM', $user);
     <div class="field">
       <label>ICCID</label>
       <input type="text" name="iccid" required pattern="[0-9]{15,32}" inputmode="numeric" placeholder="8985..." value="<?= htmlspecialchars((string)($_GET['iccid'] ?? '')) ?>">
-      <p class="muted">ICCID thường dài 18-22 số, chỉ nhập chữ số. Tìm ICCID trong danh sách eSIM.</p>
+      <div class="helper">ICCID thường dài 18-22 số, chỉ nhập chữ số. Tìm trong <a href="/ctv/esims.php">danh sách eSIM</a>.</div>
     </div>
     <div class="field">
       <label>Gói nạp</label>
@@ -63,10 +63,11 @@ ctv_layout_header('Nạp data eSIM', $user);
     </div>
     <div class="field">
       <label>Tạm tính</label>
-      <div class="kbd" id="topup_quote" style="padding:10px 12px;font-size:16px;font-weight:700">-</div>
+      <div id="topup_quote" style="padding:12px 14px;font-size:18px;font-weight:800;color:var(--c-gold);background:var(--c-surface);border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm)">—</div>
     </div>
-    <p class="muted">Số dư hiện tại: <strong><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong>. Hệ thống sẽ trừ ví trước khi xử lý; nếu lỗi sẽ hoàn tự động.</p>
-    <button class="btn" type="submit" id="topupBtn" onclick="return confirm('Xác nhận nạp data và trừ ví?')">Nạp data</button>
+    <div class="divider"></div>
+    <p class="muted" style="margin-bottom:14px">Số dư: <strong style="color:var(--c-gold)"><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></strong> · Trừ ví trước khi xử lý; hoàn tự động nếu lỗi.</p>
+    <button class="btn gold lg" type="submit" id="topupBtn" onclick="return confirm('Xác nhận nạp data và trừ ví?')">Nạp data</button>
   </form>
   <?php endif; ?>
 </div>

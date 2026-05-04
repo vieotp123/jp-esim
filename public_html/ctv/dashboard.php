@@ -4,7 +4,7 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_layout.php';
 
 $user = CtvAuth::requireUser();
-$user['balance'] = 0;
+$user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
 $pdo = db();
 $st = $pdo->prepare('SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=?'); $st->execute([(int)$user['id']]); $totalOrders = (int)$st->fetchColumn();
@@ -33,67 +33,122 @@ ctv_layout_header('Tổng quan', $user);
 ctv_flash_render();
 ?>
 <style>
-  .dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px}
-  .dash-metric{background:var(--c-card);border:1px solid var(--c-line);border-radius:12px;padding:14px}
-  .dash-metric b{display:block;color:var(--c-muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
-  .dash-metric .num{font-size:28px;font-weight:800;margin-top:6px}
-  .bars{display:flex;align-items:flex-end;gap:3px;height:140px;padding-top:10px}
-  .bar{flex:1;background:linear-gradient(180deg,var(--c-gold-2),var(--c-gold-deep));border-radius:5px 5px 2px 2px;min-height:3px;position:relative;min-width:0}
-  .bar:hover::after,.bar:active::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3;pointer-events:none}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  .stat{
+    background:linear-gradient(180deg,var(--c-card-2),var(--c-card));
+    border:1px solid var(--c-line-2);border-radius:var(--c-radius);
+    padding:16px 18px;position:relative;overflow:hidden;
+  }
+  .stat::after{
+    content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;
+    border-radius:50%;background:radial-gradient(circle,rgba(230,192,104,.08),transparent 70%);
+    pointer-events:none;
+  }
+  .stat-label{font-size:11px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.6px}
+  .stat-val{font-size:26px;font-weight:900;margin-top:4px;letter-spacing:-.5px}
+  .stat-val.gold{color:var(--c-gold)}
+  .stat-val.green{color:var(--c-green)}
+  .stat-val.red{color:var(--c-red)}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:10px}
+  .bar{
+    flex:1;min-width:0;min-height:3px;
+    background:linear-gradient(180deg,var(--c-gold-2),var(--c-gold-deep));
+    border-radius:4px 4px 1px 1px;position:relative;
+    transition:filter .15s;
+  }
+  .bar:hover{filter:brightness(1.2)}
+  .bar:hover::after,.bar:active::after{
+    content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);
+    transform:translateX(-50%);white-space:nowrap;
+    background:var(--c-ink);color:var(--c-bg);padding:5px 10px;border-radius:8px;
+    font-size:11px;font-weight:600;z-index:3;pointer-events:none;
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+  }
   .top-list{display:grid;gap:8px}
-  .top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--c-line);background:var(--c-card);border-radius:10px;padding:10px 12px}
-  .top-item span{color:var(--c-muted)}
-  .chart-card{grid-column:1/-1}
-  @media(max-width:760px){
-    .dash-metrics{grid-template-columns:repeat(2,1fr)}
-    .dash-metric .num{font-size:22px}
+  .top-item{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    border:1px solid var(--c-line-2);background:var(--c-surface);
+    border-radius:var(--c-radius-sm);padding:12px 14px;transition:border-color .15s;
+  }
+  .top-item:hover{border-color:rgba(230,192,104,.20)}
+  .top-item .tp-name{font-weight:600;font-size:13px}
+  .top-item .tp-code{color:var(--c-muted);font-size:12px;margin-top:2px}
+  .top-item .tp-right{text-align:right}
+  .top-item .tp-cnt{font-weight:800;font-size:15px}
+  .top-item .tp-rev{color:var(--c-muted);font-size:12px;margin-top:2px}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .dash-grid .full{grid-column:1/-1}
+  @media(max-width:768px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .stat-val{font-size:22px}
     .bars{height:110px;gap:2px}
-    .bar:hover::after,.bar:active::after{font-size:10px;padding:3px 5px}
+    .bar:hover::after,.bar:active::after{font-size:10px;padding:3px 6px}
+    .dash-grid{grid-template-columns:1fr}
   }
   @media(max-width:480px){
-    .dash-metrics{grid-template-columns:1fr 1fr}
-    .dash-metric{padding:10px}
-    .dash-metric .num{font-size:20px}
+    .stat{padding:12px 14px}
+    .stat-val{font-size:20px}
   }
 </style>
-<div class="dash-metrics">
-  <div class="dash-metric"><b>Tổng đơn</b><div class="num"><?= $totalOrders ?></div></div>
-  <div class="dash-metric"><b>Tỉ lệ thành công</b><div class="num"><?= htmlspecialchars((string)$successRate) ?>%</div></div>
-  <div class="dash-metric"><b>eSIM đã lưu</b><div class="num"><?= $totalEsims ?></div></div>
-  <div class="dash-metric"><b>Đơn nạp data</b><div class="num"><?= $totalTopups ?></div></div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">Tổng đơn</div><div class="stat-val"><?= $totalOrders ?></div></div>
+  <div class="stat"><div class="stat-label">Thành công</div><div class="stat-val green"><?= htmlspecialchars((string)$successRate) ?>%</div></div>
+  <div class="stat"><div class="stat-label">eSIM đã lưu</div><div class="stat-val"><?= $totalEsims ?></div></div>
+  <div class="stat"><div class="stat-label">Đơn nạp data</div><div class="stat-val"><?= $totalTopups ?></div></div>
 </div>
 
-<div class="grid">
+<div class="dash-grid">
   <div class="card">
     <h2>Đơn eSIM</h2>
-    <p>Tổng: <strong><?= $totalOrders ?></strong> · Thành công: <strong><?= $okOrders ?></strong> · Thất bại: <strong style="color:#dc2626"><?= $failOrders ?></strong></p>
-    <p>Đơn nạp data: <strong><?= $totalTopups ?></strong></p><p>eSIM đã lưu: <strong><?= $totalEsims ?></strong></p>
-    <div class="actions"><a class="btn" href="/ctv/create-esim.php">Tạo eSIM mới</a><a class="btn secondary" href="/ctv/topup-esim.php">Nạp data</a><a class="btn secondary" href="/ctv/export.php">Xuất CSV</a></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+      <div><span class="muted">Tổng</span><br><strong><?= $totalOrders ?></strong></div>
+      <div><span class="muted">Thành công</span><br><strong style="color:var(--c-green)"><?= $okOrders ?></strong></div>
+      <div><span class="muted">Thất bại</span><br><strong style="color:var(--c-red)"><?= $failOrders ?></strong></div>
+      <div><span class="muted">Nạp data</span><br><strong><?= $totalTopups ?></strong></div>
+    </div>
+    <div class="actions">
+      <a class="btn" href="/ctv/create-esim.php">Tạo eSIM mới</a>
+      <a class="btn secondary" href="/ctv/topup-esim.php">Nạp data</a>
+      <a class="btn secondary" href="/ctv/export.php">Xuất CSV</a>
+    </div>
   </div>
   <div class="card">
     <h2>Tài khoản</h2>
-    <p>Email: <strong><?= htmlspecialchars((string)$user['email']) ?></strong></p>
-    <p>Tên: <?= htmlspecialchars((string)($user['display_name'] ?? '')) ?></p>
-    <p>Chiết khấu hiệu lực: <strong><?= htmlspecialchars(format_vnd((new CtvPricingService())->effectiveDiscount($user))) ?></strong> / eSIM</p>
+    <div style="display:grid;gap:8px;font-size:14px">
+      <div><span class="muted">Email</span><br><strong><?= htmlspecialchars((string)$user['email']) ?></strong></div>
+      <?php if (!empty($user['display_name'])): ?>
+        <div><span class="muted">Tên hiển thị</span><br><?= htmlspecialchars((string)$user['display_name']) ?></div>
+      <?php endif; ?>
+      <div><span class="muted">Chiết khấu hiệu lực</span><br><strong style="color:var(--c-gold)"><?= htmlspecialchars(format_vnd((new CtvPricingService())->effectiveDiscount($user))) ?></strong> / eSIM</div>
+    </div>
   </div>
 </div>
 
-
-<div class="grid">
-  <div class="card chart-card">
+<div class="dash-grid">
+  <div class="card full">
     <h2>Doanh thu 30 ngày</h2>
     <div class="bars">
       <?php foreach ($chart as $r): $h=max(3,(int)round(((int)$r['revenue']/$maxRevenue)*150)); ?>
         <div class="bar" style="height:<?= $h ?>px" data-tip="<?= htmlspecialchars(date('d/m', strtotime($r['d'])).' · '.format_vnd((int)$r['revenue']).' · '.$r['orders'].' đơn') ?>"></div>
       <?php endforeach; ?>
     </div>
-    <p class="muted">Di chuột/chạm vào cột để xem ngày, doanh thu và số đơn.</p>
+    <p class="muted" style="margin-top:8px">Di chuột hoặc chạm vào cột để xem chi tiết ngày.</p>
   </div>
   <div class="card">
     <h2>Top sản phẩm</h2>
-    <?php if (!$topProducts): ?><div class="empty-state"><div class="icon">📊</div><p>Chưa có dữ liệu sản phẩm.</p></div><?php else: ?><div class="top-list">
-      <?php foreach ($topProducts as $p): ?><div class="top-item"><div><strong><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></strong><br><span><?= htmlspecialchars((string)$p['pack_code']) ?></span></div><div><strong><?= (int)$p['cnt'] ?></strong><br><span><?= htmlspecialchars(format_vnd((int)$p['revenue'])) ?></span></div></div><?php endforeach; ?>
-    </div><?php endif; ?>
+    <?php if (!$topProducts): ?>
+      <div class="empty-state"><div class="icon">📊</div><p>Chưa có dữ liệu sản phẩm.</p></div>
+    <?php else: ?>
+      <div class="top-list">
+        <?php foreach ($topProducts as $p): ?>
+        <div class="top-item">
+          <div><div class="tp-name"><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></div><div class="tp-code"><?= htmlspecialchars((string)$p['pack_code']) ?></div></div>
+          <div class="tp-right"><div class="tp-cnt"><?= (int)$p['cnt'] ?></div><div class="tp-rev"><?= htmlspecialchars(format_vnd((int)$p['revenue'])) ?></div></div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </div>
 </div>
 
