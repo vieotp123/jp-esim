@@ -31,6 +31,13 @@ function ctv_topup_data_text(array $current): string {
     return '—';
 }
 
+function ctv_topup_plan_data(string $name): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $name, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
+
 $user = CtvAuth::requireUser();
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
@@ -115,7 +122,6 @@ ctv_layout_header('Nạp data eSIM', $user);
     <h3 style="margin-bottom:12px">Thông tin eSIM</h3>
     <div class="kv">
       <b>ICCID</b><div><span class="kbd"><?= htmlspecialchars((string)$lookup['iccid']) ?></span></div>
-      <b>Gói hiện tại</b><div><?= htmlspecialchars((string)($current['planName'] ?? '—') ?: '—') ?></div>
       <b>Nhà mạng</b><div><?= htmlspecialchars((string)($current['carrier'] ?? '—') ?: '—') ?></div>
       <b>Data còn lại</b><div><?= htmlspecialchars(ctv_topup_data_text($current)) ?></div>
       <b>Số ngày còn lại</b><div><?= htmlspecialchars(ctv_topup_remaining_days($current['expiredAt'] ?? null)) ?></div>
@@ -138,7 +144,7 @@ ctv_layout_header('Nạp data eSIM', $user);
           <select name="plan_id" id="topup_plan" required>
             <option value="">Chọn gói nạp</option>
             <?php foreach ($plans as $p): ?>
-              <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['ctvPriceText']) ?></option>
+              <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.ctv_topup_plan_data((string)$p['name']).' · '.$p['ctvPriceText']) ?></option>
             <?php endforeach; ?>
           </select>
         </div>

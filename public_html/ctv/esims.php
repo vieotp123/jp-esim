@@ -18,7 +18,7 @@ $page = max(1, (int)($_GET['page'] ?? 1));
 $q = trim((string)($_GET['q'] ?? ''));
 $perPage = 50;
 $where = 'WHERE ctv_id=?'; $params=[(int)$user['id']];
-if ($q !== '') { $where .= ' AND (iccid LIKE ? OR ctv_order_id LIKE ? OR package_name LIKE ?)'; $params[]='%'.$q.'%'; $params[]='%'.$q.'%'; $params[]='%'.$q.'%'; }
+if ($q !== '') { $where .= ' AND (iccid LIKE ? OR ctv_order_id LIKE ? OR carrier LIKE ?)'; $params[]='%'.$q.'%'; $params[]='%'.$q.'%'; $params[]='%'.$q.'%'; }
 $st = db()->prepare('SELECT * FROM ctv_esims '.$where.' ORDER BY id DESC LIMIT '.(int)$perPage.' OFFSET '.(int)(($page-1)*$perPage));
 $st->execute($params);
 $rows = $st->fetchAll();
@@ -27,6 +27,29 @@ $rows = $st->fetchAll();
 $pStmt = db()->prepare('SELECT ctv_order_id, plan_name, carrier, updated_at FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT 20');
 $pStmt->execute([(int)$user['id']]);
 $pending = $pStmt->fetchAll();
+
+function ctv_esims_data_label($bytes): string {
+    $bytes = (float)$bytes;
+    if ($bytes <= 0) return 'Data';
+    return rtrim(rtrim(number_format($bytes / 1073741824, 2, '.', ''), '0'), '.') . ' GB';
+}
+
+function ctv_esims_days_label($days, $unit): string {
+    $days = (int)$days;
+    if ($days <= 0) return '';
+    $unit = strtoupper(trim((string)$unit));
+    return $days . ' ' . ($unit === 'DAY' || $unit === '' ? 'ngày' : strtolower($unit));
+}
+
+function ctv_esims_profile_label(array $row): string {
+    $parts = [];
+    $carrier = trim((string)($row['carrier'] ?? ''));
+    if ($carrier !== '') $parts[] = $carrier;
+    $parts[] = ctv_esims_data_label($row['total_volume'] ?? 0);
+    $days = ctv_esims_days_label($row['total_duration'] ?? 0, $row['duration_unit'] ?? '');
+    if ($days !== '') $parts[] = $days;
+    return implode(' · ', $parts);
+}
 
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('eSIM của CTV', $user);
@@ -38,7 +61,7 @@ ctv_layout_header('eSIM của CTV', $user);
 <div class="card">
   <h2>Danh sách eSIM</h2>
   <form method="get" class="row" style="margin-bottom:14px">
-    <div class="field"><label>Tìm ICCID / đơn / gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Nhập ICCID, mã đơn hoặc tên gói..."></div>
+    <div class="field"><label>Tìm ICCID / đơn / nhà mạng</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Nhập ICCID, mã đơn hoặc nhà mạng..."></div>
     <div class="field"><label>&nbsp;</label>
       <div class="actions" style="margin-top:0">
         <button class="btn">Lọc</button>
@@ -54,12 +77,12 @@ ctv_layout_header('eSIM của CTV', $user);
   </div>
   <div class="table-wrap" style="margin-bottom:16px">
   <table>
-    <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Cập nhật</th></tr></thead>
+    <thead><tr><th>Đơn CTV</th><th>Nhà mạng</th><th>Cập nhật</th></tr></thead>
     <tbody>
       <?php foreach ($pending as $p): ?>
       <tr>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>" class="kbd" style="text-decoration:none"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a></td>
-        <td><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></td>
+        <td><?= htmlspecialchars((string)$p['carrier']) ?></td>
         <td><span class="muted"><?= htmlspecialchars((string)$p['updated_at']) ?></span></td>
       </tr>
       <?php endforeach; ?>
@@ -89,7 +112,7 @@ ctv_layout_header('eSIM của CTV', $user);
         </label>
         <span class="muted" style="font-size:11px"><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></span>
       </div>
-      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></span></div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(ctv_esims_profile_label($r)) ?></span></div>
       <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></span></div>
       <div class="m-row"><span class="m-label">Hết hạn</span><span class="m-val muted"><?= htmlspecialchars((string)($r['expired_time'] ?? '—')) ?></span></div>
       <?php if ($qr !== ''): ?>
@@ -115,7 +138,7 @@ ctv_layout_header('eSIM của CTV', $user);
         </td>
         <td><span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>"><?= htmlspecialchars((string)$r['iccid']) ?></span></td>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></td>
-        <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['package_name']) ?></td>
+        <td><?= htmlspecialchars(ctv_esims_profile_label($r)) ?></td>
         <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)($r['expired_time'] ?? '')) ?></span></td>
         <td><?= htmlspecialchars((string)($r['esim_status'] ?? $r['smdp_status'] ?? '')) ?></td>
       </tr>

@@ -58,6 +58,21 @@ $where = $onlyFailed ? 'WHERE o.needs_admin=1 OR o.status=3' : 'WHERE 1';
 $rows = db()->query("SELECT o.*, u.email AS ctv_email FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id $where ORDER BY o.id DESC LIMIT 200")->fetchAll();
 $counts = db()->query('SELECT SUM(needs_admin=1) needs, SUM(status=3) failed, COUNT(*) total FROM ctv_orders')->fetch();
 
+function admin_orders_plan_data(string $plan): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
+
+function admin_orders_plan_label(array $r): string {
+    $parts = [];
+    $carrier = trim((string)($r['carrier'] ?? ''));
+    if ($carrier !== '') $parts[] = $carrier;
+    $parts[] = admin_orders_plan_data((string)($r['plan_name'] ?? ''));
+    return implode(' · ', $parts);
+}
+
 admin_layout_header('Đơn CTV', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
@@ -90,7 +105,7 @@ admin_layout_header('Đơn CTV', $admin);
         <span class="tag <?= $statusCls[$st] ?? '' ?>"><?= $statusMap[$st] ?? '?' ?></span>
       </div>
       <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
-      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['plan_name']) ?> ×<?= $qty ?><?php if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:10px"><?= $pc ?>/<?= $qty ?></span><?php endif; ?></span></div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_orders_plan_label($r)) ?> ×<?= $qty ?><?php if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:10px"><?= $pc ?>/<?= $qty ?></span><?php endif; ?></span></div>
       <div class="m-row"><span class="m-label">Phí</span><span class="m-val" style="font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></span></div>
       <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
       <?php if ((int)$r['needs_admin']): ?><div style="margin-top:4px"><span class="tag err">Cần xử lý</span></div><?php endif; ?>
@@ -137,7 +152,7 @@ admin_layout_header('Đơn CTV', $admin);
       <tr>
         <td><span class="kbd"><?= htmlspecialchars($oid) ?></span></td>
         <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
-        <td><?= htmlspecialchars((string)$r['carrier'].' '.(string)$r['plan_name']) ?> ×<?= (int)$r['quantity'] ?><?php
+        <td><?= htmlspecialchars(admin_orders_plan_label($r)) ?> ×<?= (int)$r['quantity'] ?><?php
           $qty=(int)$r['quantity'];
           $pcSt=db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');$pcSt->execute([$oid]);$pc=(int)$pcSt->fetchColumn();
           if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:11px"><?= $pc ?>/<?= $qty ?></span><?php endif;

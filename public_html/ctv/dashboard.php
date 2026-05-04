@@ -25,9 +25,26 @@ for ($i = 29; $i >= 0; $i--) {
     $chart[] = ['d'=>$d, 'orders'=>(int)$r['orders'], 'revenue'=>(int)$r['revenue']];
 }
 $maxRevenue = max(1, ...array_map(fn($r)=>(int)$r['revenue'], $chart));
-$st = $pdo->prepare('SELECT pack_code, plan_name, carrier, COUNT(*) cnt, SUM(total_charge) revenue FROM ctv_orders WHERE ctv_id=? AND status=2 GROUP BY pack_code, plan_name, carrier ORDER BY cnt DESC, revenue DESC LIMIT 5');
+$st = $pdo->prepare('SELECT o.plan_name, o.carrier, p.day, COUNT(*) cnt, SUM(o.total_charge) revenue FROM ctv_orders o LEFT JOIN plan p ON p.id=o.plan_id WHERE o.ctv_id=? AND o.status=2 GROUP BY o.plan_name, o.carrier, p.day ORDER BY cnt DESC, revenue DESC LIMIT 5');
 $st->execute([(int)$user['id']]);
 $topProducts = $st->fetchAll();
+
+function ctv_dash_plan_data(string $plan): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
+
+function ctv_dash_plan_label(array $row): string {
+    $parts = [];
+    $carrier = trim((string)($row['carrier'] ?? ''));
+    if ($carrier !== '') $parts[] = $carrier;
+    $parts[] = ctv_dash_plan_data((string)($row['plan_name'] ?? ''));
+    $days = (int)($row['day'] ?? 0);
+    if ($days > 0) $parts[] = $days . ' ngày';
+    return implode(' · ', $parts);
+}
 
 ctv_layout_header('Tổng quan', $user);
 ctv_flash_render();
@@ -150,7 +167,7 @@ ctv_flash_render();
       <div class="top-list">
         <?php foreach ($topProducts as $p): ?>
         <div class="top-item">
-          <div><div class="tp-name"><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></div><div class="tp-code"><?= htmlspecialchars((string)$p['pack_code']) ?></div></div>
+          <div><div class="tp-name"><?= htmlspecialchars(ctv_dash_plan_label($p)) ?></div></div>
           <div class="tp-right"><div class="tp-cnt"><?= (int)$p['cnt'] ?></div><div class="tp-rev"><?= htmlspecialchars(format_vnd((int)$p['revenue'])) ?></div></div>
         </div>
         <?php endforeach; ?>

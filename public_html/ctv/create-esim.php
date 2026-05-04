@@ -9,6 +9,12 @@ $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 $err = null; $createdResult = null;
 $plans = (new CtvPricingService())->listFor($user, 'esim')['plans'];
 $planMap = []; foreach ($plans as $p) { $planMap[(int)$p['id']] = (int)$p['ctvPrice']; }
+function ctv_create_plan_data(string $name): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $name, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
@@ -59,7 +65,7 @@ ctv_layout_header('Tạo eSIM', $user);
       <label>Gói eSIM</label>
       <select name="plan_id" id="plan_id" required>
         <?php foreach ($plans as $p): ?>
-          <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.$p['name'].' · '.$p['day'].' ngày · '.$p['ctvPriceText']) ?></option>
+          <option value="<?= (int)$p['id'] ?>" data-price="<?= (int)$p['ctvPrice'] ?>"><?= htmlspecialchars($p['telecom'].' · '.ctv_create_plan_data((string)$p['name']).' · '.$p['day'].' ngày · '.$p['ctvPriceText']) ?></option>
         <?php endforeach; ?>
       </select>
       <div class="helper">Chọn gói phù hợp nhu cầu khách hàng.</div>

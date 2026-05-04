@@ -95,12 +95,23 @@ final class CtvOrderService {
         $st = db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');
         $st->execute([$r['ctv_order_id']]);
         $provisioned = (int)$st->fetchColumn();
+        $days = 0;
+        try {
+            $daySt = db()->prepare('SELECT day FROM plan WHERE id=? LIMIT 1');
+            $daySt->execute([(int)$r['plan_id']]);
+            $days = (int)($daySt->fetchColumn() ?: 0);
+        } catch (Throwable $e) {
+            $days = 0;
+        }
+        $data = $this->planDataLabel((string)$r['plan_name']);
+        $planLabel = $this->planLabel((string)$r['carrier'], $data, $days);
         return [
             'orderId' => (string)$r['ctv_order_id'],
             'planId' => (int)$r['plan_id'],
-            'packCode' => (string)$r['pack_code'],
             'carrier' => (string)$r['carrier'],
-            'planName' => (string)$r['plan_name'],
+            'data' => $data,
+            'days' => $days,
+            'planLabel' => $planLabel,
             'retailPrice' => (int)$r['retail_price'],
             'discount' => (int)$r['discount'],
             'ctvPrice' => (int)$r['ctv_price'],
@@ -115,6 +126,22 @@ final class CtvOrderService {
             'createdAt' => $r['created_at'],
             'updatedAt' => $r['updated_at'],
         ];
+    }
+
+    private function planDataLabel(string $plan): string {
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+            return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+        }
+        return 'Data';
+    }
+
+    private function planLabel(string $carrier, string $data, int $days): string {
+        $parts = [];
+        $carrier = trim($carrier);
+        if ($carrier !== '') $parts[] = $carrier;
+        $parts[] = $data;
+        if ($days > 0) $parts[] = $days . ' ngày';
+        return implode(' · ', $parts);
     }
 
     private function newOrderId(): string {

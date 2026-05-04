@@ -8,6 +8,7 @@ final class CtvTopupService {
 
         $retail = (new TopupService())->lookup($iccid);
         $current = is_array($retail['current'] ?? null) ? $retail['current'] : [];
+        unset($current['planName'], $current['packageName'], $current['packageCode']);
         $carrier = trim((string)($current['carrier'] ?? ''));
         $plans = [];
         $message = '';
@@ -100,7 +101,7 @@ final class CtvTopupService {
             'topupId' => (string)$row['ctv_topup_id'],
             'iccid' => (string)$row['iccid'],
             'carrier' => (string)$row['carrier'],
-            'planName' => (string)$row['plan_name'],
+            'data' => $this->planDataLabel((string)$row['plan_name']),
             'retailPrice' => (int)$row['retail_price'],
             'discount' => (int)$row['discount'],
             'ctvPrice' => (int)$row['ctv_price'],
@@ -112,6 +113,13 @@ final class CtvTopupService {
             'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'],
         ];
+    }
+
+    private function planDataLabel(string $plan): string {
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+            return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+        }
+        return 'Data';
     }
 
     private function newTid(): string {

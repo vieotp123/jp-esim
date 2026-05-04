@@ -8,6 +8,12 @@ $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 $type = ($_GET['type'] ?? 'esim') === 'topup' ? 'topup' : 'esim';
 $telecom = trim((string)($_GET['telecom'] ?? '')) ?: null;
 $data = (new CtvPricingService())->listFor($user, $type, $telecom);
+function ctv_pricing_plan_data(string $name): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $name, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
 
 ctv_layout_header('Bảng giá CTV', $user);
 ?>
@@ -24,7 +30,7 @@ ctv_layout_header('Bảng giá CTV', $user);
     <?php foreach ($data['plans'] as $p): ?>
     <div class="m-card">
       <div class="m-head">
-        <strong><?= htmlspecialchars((string)$p['name']) ?></strong>
+        <strong><?= htmlspecialchars(ctv_pricing_plan_data((string)$p['name'])) ?></strong>
         <span class="tag gold"><?= htmlspecialchars((string)$p['telecom']) ?></span>
       </div>
       <div class="m-row"><span class="m-label">Số ngày</span><span class="m-val"><?= htmlspecialchars((string)$p['day']) ?></span></div>
@@ -36,12 +42,12 @@ ctv_layout_header('Bảng giá CTV', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Nhà mạng</th><th>Tên gói</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá CTV</th></tr></thead>
+    <thead><tr><th>Nhà mạng</th><th>Dung lượng</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá CTV</th></tr></thead>
     <tbody>
       <?php foreach ($data['plans'] as $p): ?>
       <tr>
         <td><?= htmlspecialchars((string)$p['telecom']) ?></td>
-        <td><strong><?= htmlspecialchars((string)$p['name']) ?></strong></td>
+        <td><strong><?= htmlspecialchars(ctv_pricing_plan_data((string)$p['name'])) ?></strong></td>
         <td><?= htmlspecialchars((string)$p['day']) ?></td>
         <td style="white-space:nowrap"><?= htmlspecialchars((string)$p['retailPriceText']) ?></td>
         <td style="color:var(--c-green);white-space:nowrap">-<?= htmlspecialchars(format_vnd((int)$p['discount'])) ?></td>

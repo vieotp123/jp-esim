@@ -62,6 +62,16 @@ function _bytes_to_gb($b): string {
     if ($b <= 0) return '0';
     return number_format($b / 1073741824, 2) . ' GB';
 }
+function ctv_order_plan_data(string $plan): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
+$planStmt = db()->prepare('SELECT day FROM plan WHERE id=? LIMIT 1');
+$planStmt->execute([(int)$order['plan_id']]);
+$planDays = (int)($planStmt->fetchColumn() ?: 0);
+$orderPlanLabel = trim((string)$order['carrier'] . ' · ' . ctv_order_plan_data((string)$order['plan_name']) . ($planDays > 0 ? (' · ' . $planDays . ' ngày') : ''));
 ?>
 <style>
   .order-grid { display:grid; grid-template-columns: 2fr 1fr; gap:16px; }
@@ -102,8 +112,7 @@ function _bytes_to_gb($b): string {
     <div>
       <h3>Thông tin đơn</h3>
       <div class="kv">
-        <b>Gói</b><div><?= htmlspecialchars((string)$order['carrier'].' '.(string)$order['plan_name']) ?></div>
-        <b>Mã gói</b><div><span class="kbd"><?= htmlspecialchars((string)$order['pack_code']) ?></span></div>
+        <b>Gói</b><div><?= htmlspecialchars($orderPlanLabel) ?></div>
         <b>Số lượng</b><div><?= (int)$order['quantity'] ?><?php
           $qty = (int)$order['quantity'];
           $provCount = count($esims);
@@ -171,7 +180,7 @@ if ($isPartial): ?>
       <div style="flex:1">
         <div class="kv">
           <b>ICCID</b><div><span class="kbd copy" data-copy="<?= htmlspecialchars((string)$e['iccid']) ?>"><?= htmlspecialchars((string)$e['iccid']) ?></span></div>
-          <b>Gói</b><div><?= htmlspecialchars((string)($e['package_name'] ?? $order['plan_name'])) ?></div>
+          <b>Nhà mạng</b><div><?= htmlspecialchars((string)($e['carrier'] ?? $order['carrier'] ?? '')) ?></div>
           <b>Dung lượng</b><div><?= htmlspecialchars(_bytes_to_gb($e['total_volume'])) ?></div>
           <b>Thời hạn</b><div><?= (int)($e['total_duration'] ?? 0) ?> <?= htmlspecialchars((string)($e['duration_unit'] ?? 'DAY')) ?></div>
           <b>Hết hạn</b><div><?= htmlspecialchars((string)($e['expired_time'] ?? '—')) ?></div>

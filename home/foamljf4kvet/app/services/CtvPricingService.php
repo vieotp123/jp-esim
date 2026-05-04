@@ -35,6 +35,10 @@ final class CtvPricingService {
         $base = (new PlanService())->list($type, $telecom);
         foreach ($base['plans'] as &$p) {
             $pricing = $this->priceFor($ctv, ['price' => $p['price']]);
+            $data = $this->planDataLabel((string)($p['name'] ?? ''));
+            unset($p['packCode'], $p['topupPackCode']);
+            $p['name'] = $data;
+            $p['data'] = $data;
             $p['retailPrice'] = $pricing['retailPrice'];
             $p['discount'] = $pricing['discount'];
             $p['ctvPrice'] = $pricing['ctvPrice'];
@@ -43,5 +47,12 @@ final class CtvPricingService {
         }
         unset($p);
         return $base;
+    }
+
+    private function planDataLabel(string $plan): string {
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+            return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+        }
+        return 'Data';
     }
 }

@@ -20,6 +20,19 @@ $orders=db()->prepare('SELECT * FROM ctv_orders WHERE ctv_id=? ORDER BY id DESC 
 $topups=db()->prepare('SELECT * FROM ctv_topup_orders WHERE ctv_id=? ORDER BY id DESC LIMIT 50'); $topups->execute([$id]); $topups=$topups->fetchAll();
 $api=db()->prepare('SELECT * FROM ctv_api_logs WHERE ctv_id=? ORDER BY id DESC LIMIT 80'); $api->execute([$id]); $api=$api->fetchAll();
 $provider=db()->prepare('SELECT * FROM ctv_provider_logs WHERE ctv_id=? ORDER BY id DESC LIMIT 80'); $provider->execute([$id]); $provider=$provider->fetchAll();
+function admin_ctv_plan_data(string $plan): string {
+    if (preg_match('/(\d+(?:[.,]\d+)?)\s*(GB|MB)\b/i', $plan, $m)) {
+        return str_replace(',', '.', $m[1]) . ' ' . strtoupper($m[2]);
+    }
+    return 'Data';
+}
+function admin_ctv_plan_label(array $r): string {
+    $parts = [];
+    $carrier = trim((string)($r['carrier'] ?? ''));
+    if ($carrier !== '') $parts[] = $carrier;
+    $parts[] = admin_ctv_plan_data((string)($r['plan_name'] ?? ''));
+    return implode(' · ', $parts);
+}
 admin_layout_header('CTV #'.$id, $admin); ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="card"><a class="btn secondary" href="/admin/ctv/index.php">← Danh sách</a><h2><?= htmlspecialchars((string)$ctv['email']) ?></h2><p>ID #<?= $id ?> · <span class="tag <?= (int)$ctv['status']?'ok':'err' ?>"><?= (int)$ctv['status']?'Hoạt động':'Đã khóa' ?></span> · Ví <?= htmlspecialchars(format_vnd((int)$ctv['balance'])) ?> · Chiết khấu <?= htmlspecialchars(format_vnd((int)$ctv['discount_per_esim'])) ?></p><p class="muted">Đăng nhập cuối: <?= htmlspecialchars((string)($ctv['last_login_at'] ?? '-')) ?> <?= htmlspecialchars((string)($ctv['last_login_ip'] ?? '')) ?></p></div>
@@ -83,7 +96,7 @@ admin_layout_header('CTV #'.$id, $admin); ?>
   <?php foreach($orders as $r): $os=(int)$r['status']; ?>
   <div class="m-card">
     <div class="m-head"><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></div>
-    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)$r['plan_name']) ?></span></div>
+    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_ctv_plan_label($r)) ?></span></div>
     <div class="m-row"><span class="m-label">Phí</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></span></div>
     <?php if (!empty($r['error_message'])): ?><div class="m-row"><span class="m-label">Lỗi</span><span class="m-val" style="font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)$r['error_message'],0,100,'…')) ?></span></div><?php endif; ?>
   </div>
@@ -91,7 +104,7 @@ admin_layout_header('CTV #'.$id, $admin); ?>
 </div>
 <div class="table-wrap">
 <table><thead><tr><th>Mã đơn</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th></tr></thead><tbody>
-<?php foreach($orders as $r): $os=(int)$r['status']; ?><tr><td><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span></td><td><?= htmlspecialchars((string)$r['plan_name']) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td><td><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></td><td style="max-width:200px;font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message']??''),0,150,'…')) ?></td></tr><?php endforeach; ?>
+<?php foreach($orders as $r): $os=(int)$r['status']; ?><tr><td><span class="kbd"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></span></td><td><?= htmlspecialchars(admin_ctv_plan_label($r)) ?></td><td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td><td><span class="tag <?= $osCls[$os]??'' ?>"><?= $osMap[$os]??'?' ?></span></td><td style="max-width:200px;font-size:12px"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message']??''),0,150,'…')) ?></td></tr><?php endforeach; ?>
 </tbody></table>
 </div>
 <?php endif; ?>

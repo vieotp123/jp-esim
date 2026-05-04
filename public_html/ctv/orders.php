@@ -11,7 +11,7 @@ $q = trim((string)($_GET['q'] ?? ''));
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 50;
 $rows = (new CtvOrderService())->listForCtv((int)$user['id'], $perPage, ($page - 1) * $perPage, $status ?: null);
-if ($q !== '') { $rows = array_values(array_filter($rows, fn($r) => stripos((string)$r['orderId'], $q) !== false || stripos((string)$r['carrier'].' '.(string)$r['planName'], $q) !== false)); }
+if ($q !== '') { $rows = array_values(array_filter($rows, fn($r) => stripos((string)$r['orderId'], $q) !== false || stripos((string)($r['planLabel'] ?? $r['carrier']), $q) !== false)); }
 
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Đơn eSIM', $user);
@@ -19,7 +19,7 @@ ctv_layout_header('Đơn eSIM', $user);
 <div class="card">
   <h2>Đơn eSIM của bạn</h2>
   <form method="get" class="row" style="margin-bottom:14px">
-    <div class="field"><label>Tìm đơn/gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Mã đơn hoặc tên gói..."></div>
+    <div class="field"><label>Tìm đơn/gói</label><input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Mã đơn, nhà mạng hoặc dung lượng..."></div>
     <div class="field"><label>Trạng thái</label><select name="status"><option value="">Tất cả</option><option value="success" <?= $status==='success'?'selected':'' ?>>Thành công</option><option value="processing" <?= $status==='processing'?'selected':'' ?>>Đang xử lý</option><option value="failed" <?= $status==='failed'?'selected':'' ?>>Thất bại</option></select></div>
     <div class="field"><label>&nbsp;</label><button class="btn">Lọc</button></div>
   </form>
@@ -42,7 +42,7 @@ ctv_layout_header('Đơn eSIM', $user);
         <span class="kbd"><?= htmlspecialchars($r['orderId']) ?></span>
         <span class="tag <?= $cls ?>"><?= $statusLabel ?></span>
       </div>
-      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars($r['carrier'].' '.$r['planName']) ?></span></div>
+      <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)($r['planLabel'] ?? $r['carrier'])) ?></span></div>
       <div class="m-row"><span class="m-label">SL</span><span class="m-val"><?= (int)$r['quantity'] ?><?php if ((int)$r['quantity'] > 1 && isset($r['provisionedCount'])): $pc = (int)$r['provisionedCount']; ?> <span class="tag <?= $pc >= (int)$r['quantity'] ? 'ok' : ($pc > 0 ? 'warn' : '') ?>" style="font-size:10px"><?= $pc ?>/<?= (int)$r['quantity'] ?></span><?php endif; ?></span></div>
       <div class="m-row"><span class="m-label">Phí CTV</span><span class="m-val" style="color:var(--c-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></span></div>
       <div class="m-row"><span class="m-label">Ngày tạo</span><span class="m-val muted"><?= htmlspecialchars((string)$r['createdAt']) ?></span></div>
@@ -57,7 +57,7 @@ ctv_layout_header('Đơn eSIM', $user);
       <?php foreach ($rows as $r): ?>
       <tr>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars($r['orderId']) ?>" class="kbd" style="text-decoration:none"><?= htmlspecialchars($r['orderId']) ?></a></td>
-        <td><?= htmlspecialchars($r['carrier'].' '.$r['planName']) ?></td>
+        <td><?= htmlspecialchars((string)($r['planLabel'] ?? $r['carrier'])) ?></td>
         <td><?= (int)$r['quantity'] ?><?php if ((int)$r['quantity'] > 1 && isset($r['provisionedCount'])): $pc = (int)$r['provisionedCount']; ?> <span class="tag <?= $pc >= (int)$r['quantity'] ? 'ok' : ($pc > 0 ? 'warn' : '') ?>" style="font-size:11px"><?= $pc ?>/<?= (int)$r['quantity'] ?></span><?php endif; ?></td>
         <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$r['totalCharge'])) ?></td>
         <td>

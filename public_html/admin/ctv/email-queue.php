@@ -11,11 +11,25 @@ elseif ($status === 'pending') $where .= ' AND e.email_sent_at IS NULL AND (e.em
 elseif ($status === 'error') $where .= ' AND e.email_sent_at IS NULL AND e.email_last_error IS NOT NULL AND e.email_last_error <> ""';
 
 $sum = db()->query("SELECT COUNT(*) total, SUM(email_sent_at IS NOT NULL) sent, SUM(email_sent_at IS NULL AND (email_last_error IS NULL OR email_last_error='')) pending, SUM(email_sent_at IS NULL AND email_last_error IS NOT NULL AND email_last_error<>'') failed FROM ctv_esims")->fetch();
-$st = db()->prepare("SELECT e.iccid,e.ctv_order_id,e.package_name,e.email_sent_at,e.email_attempts,e.email_last_error,e.created_at,o.email customer_email,u.email ctv_email FROM ctv_esims e LEFT JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id LEFT JOIN ctv_users u ON u.id=e.ctv_id $where ORDER BY COALESCE(e.email_sent_at,e.created_at) DESC LIMIT 300");
+$st = db()->prepare("SELECT e.iccid,e.ctv_order_id,e.carrier,e.total_volume,e.total_duration,e.duration_unit,e.email_sent_at,e.email_attempts,e.email_last_error,e.created_at,o.email customer_email,u.email ctv_email FROM ctv_esims e LEFT JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id LEFT JOIN ctv_users u ON u.id=e.ctv_id $where ORDER BY COALESCE(e.email_sent_at,e.created_at) DESC LIMIT 300");
 $st->execute($params); $rows = $st->fetchAll();
 
 admin_layout_header('Hàng đợi Email QR', $admin);
 function _pill(string $key, string $label, $count, string $active): void { $cls=$active===$key?'pill active':'pill'; echo '<a class="'.$cls.'" href="?status='.htmlspecialchars($key).'">'.htmlspecialchars($label).' <span class="count">'.(int)$count.'</span></a>'; }
+function admin_email_data_label($bytes): string {
+    $bytes = (float)$bytes;
+    if ($bytes <= 0) return 'Data';
+    return rtrim(rtrim(number_format($bytes / 1073741824, 2, '.', ''), '0'), '.') . ' GB';
+}
+function admin_email_profile_label(array $r): string {
+    $parts = [];
+    $carrier = trim((string)($r['carrier'] ?? ''));
+    if ($carrier !== '') $parts[] = $carrier;
+    $parts[] = admin_email_data_label($r['total_volume'] ?? 0);
+    $days = (int)($r['total_duration'] ?? 0);
+    if ($days > 0) $parts[] = $days . ' ngày';
+    return implode(' · ', $parts);
+}
 ?>
 <div class="summary">
   <div class="card"><b>Tổng eSIM</b><h2><?= (int)$sum['total'] ?></h2></div>
@@ -43,7 +57,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
     <div class="m-row"><span class="m-label">Đơn</span><span class="m-val"><a href="/admin/ctv/orders.php?q=<?= rawurlencode((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></span></div>
     <div class="m-row"><span class="m-label">CTV</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
     <div class="m-row"><span class="m-label">Khách</span><span class="m-val"><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></span></div>
-    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars((string)($r['package_name'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_email_profile_label($r)) ?></span></div>
     <?php if($err): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['email_last_error'],0,100,'...')) ?></div><?php endif; ?>
   </div>
   <?php endforeach; ?>
@@ -56,7 +70,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
     <td><a class="rowlink" href="/admin/ctv/orders.php?q=<?= rawurlencode((string)$r['ctv_order_id']) ?>"><?= htmlspecialchars((string)$r['ctv_order_id']) ?></a></td>
     <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
     <td><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></td>
-    <td><?= htmlspecialchars((string)($r['package_name'] ?? '')) ?></td>
+    <td><?= htmlspecialchars(admin_email_profile_label($r)) ?></td>
     <td><?php if($sent): ?><span class="tag ok">Đã gửi</span><br><span class="muted"><?= htmlspecialchars((string)$r['email_sent_at']) ?></span><?php elseif($err): ?><span class="tag err">Lỗi</span><?php else: ?><span class="tag warn">Chờ gửi</span><?php endif; ?></td>
     <td><?= (int)($r['email_attempts'] ?? 0) ?></td>
     <td style="max-width:360px"><?= htmlspecialchars(mb_strimwidth((string)($r['email_last_error'] ?? ''), 0, 220, '...')) ?></td>
