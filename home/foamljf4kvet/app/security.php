@@ -9,7 +9,7 @@ function security_headers(bool $html = false): void {
     header('Cross-Origin-Opener-Policy: same-origin');
     header('Cross-Origin-Resource-Policy: same-site');
     if ($html) {
-        header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src https://www.google.com/recaptcha/; connect-src 'self' https://www.google.com/recaptcha/; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'");
+        header("Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src https://www.google.com/recaptcha/; connect-src 'self' https://www.google.com/recaptcha/; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'");
         $script = (string)($_SERVER['SCRIPT_NAME'] ?? '');
         if (str_starts_with($script, '/admin/') || str_starts_with($script, '/ctv/')) {
             header('X-Robots-Tag: noindex, nofollow, noarchive');
