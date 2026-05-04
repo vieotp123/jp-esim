@@ -26,9 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $csrf = CtvAuth::csrfToken();
 ctv_layout_header('Đăng nhập CTV', null);
 ?>
+<script src="/assets/passkey.js?v=20260504"></script>
 <div class="card" style="max-width:480px;margin:auto;">
   <h2>Đăng nhập CTV</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
+  <div id="passkeyLoginWrap" style="display:none;margin-bottom:16px">
+    <button class="btn gold" style="width:100%;padding:14px;font-size:16px" id="passkeyLoginBtn" onclick="passkeyLogin()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-4px;margin-right:6px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Đăng nhập bằng Passkey
+    </button>
+    <div id="passkeyLoginMsg" style="margin-top:8px"></div>
+    <div style="text-align:center;margin:12px 0;color:var(--c-muted);font-size:13px">— hoặc dùng mật khẩu —</div>
+  </div>
   <form method="post" autocomplete="off">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
     <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
@@ -37,4 +46,26 @@ ctv_layout_header('Đăng nhập CTV', null);
     <p class="muted" style="margin-top:14px;">Chưa có tài khoản? <a href="/ctv/register.php">Đăng ký</a></p>
   </form>
 </div>
+<script>
+(function(){
+  if (!Passkey.isSupported()) return;
+  document.getElementById('passkeyLoginWrap').style.display = '';
+
+  window.passkeyLogin = async function() {
+    var btn = document.getElementById('passkeyLoginBtn');
+    var msg = document.getElementById('passkeyLoginMsg');
+    btn.disabled = true;
+    msg.innerHTML = '';
+    try {
+      await Passkey.login('/ctv/passkey-api.php');
+      window.location.href = '/ctv/dashboard.php';
+    } catch(e) {
+      var text = e.message || 'Đăng nhập passkey thất bại';
+      if (e.name === 'NotAllowedError') text = 'Đã huỷ xác thực passkey';
+      msg.innerHTML = '<div class="flash error">' + text + '</div>';
+      btn.disabled = false;
+    }
+  };
+})();
+</script>
 <?php ctv_layout_footer();
