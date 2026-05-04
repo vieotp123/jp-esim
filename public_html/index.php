@@ -23,6 +23,9 @@ $assetVer = time();
   <meta property="og:image" content="https://jp-esim.vip/assets/images/banner.webp">
   <meta name="twitter:card" content="summary_large_image">
   <title>eSIM Nhật Bản Docomo 4G / au 5G - Nhận QR tự động</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css?v=<?= $assetVer ?>">
   <script>window.RECAPTCHA_SITE = "<?= $siteKey ?>";</script>
   <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=explicit" defer></script><?php endif; ?>

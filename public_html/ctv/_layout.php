@@ -50,6 +50,9 @@ if (!function_exists('ctv_layout_header')) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?= htmlspecialchars($title) ?> · CTV jp-esim.vip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --c-bg:#070a13; --c-card:#11182b; --c-card-2:#172041;
@@ -64,7 +67,7 @@ if (!function_exists('ctv_layout_header')) {
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable","Segoe UI",Roboto,"Inter","Noto Sans JP",sans-serif;
+  font-family:'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:radial-gradient(1100px 540px at 12% -8%, rgba(91,140,255,.10), transparent 58%),
              radial-gradient(900px 480px at 108% 0%, rgba(230,192,104,.07), transparent 55%),
              var(--c-bg);

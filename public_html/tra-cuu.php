@@ -26,6 +26,9 @@ if ($orderId !== '') {
 <meta name="theme-color" content="#050607">
 <meta name="robots" content="noindex,nofollow">
 <title>Tra cứu đơn hàng · jp-esim.vip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/app.css?v=<?= $assetVer ?>">
 <style>
 .track-wrap{max-width:520px;margin:0 auto;padding:18px 16px 60px;min-height:100dvh}
