@@ -28,7 +28,7 @@ echo ""
 check_rg "CTV/admin HTML echoes package fields" "htmlspecialchars\\([^\\n]*(pack_code|package_code|package_name)" public_html/ctv public_html/admin/ctv --glob '*.php'
 check_rg "CTV/admin labels package code" "Mã gói" public_html/ctv public_html/admin/ctv --glob '*.php'
 check_rg "CSV package/plan headers" "fputcsv\\([^\\n]*('package'|'plan'|\"package\"|\"plan\"|package_code|pack_code|package_name)" public_html/ctv/export.php
-check_rg "CTV API package fields" "SELECT [^\\n]*package_name|'packCode'\\s*=>|\"packCode\"\\s*:|'packageName'\\s*=>|\"packageName\"\\s*:|'topupPackCode'\\s*=>" public_html/api/ctv home/foamljf4kvet/app/services/CtvOrderService.php home/foamljf4kvet/app/services/CtvPricingService.php home/foamljf4kvet/app/services/CtvTopupService.php --glob '*.php'
+check_rg "CTV API package fields" "SELECT [^\\n]*package_name|'packCode'\\s*=>|\"packCode\"\\s*:|'packageName'\\s*=>|\"packageName\"\\s*:|'topupPackCode'\\s*=>" public_html/api/ctv /home/foamljf4kvet/app/services/CtvOrderService.php /home/foamljf4kvet/app/services/CtvPricingService.php /home/foamljf4kvet/app/services/CtvTopupService.php --glob '*.php'
 
 echo ""
 if [ "$FOUND" -eq 0 ]; then

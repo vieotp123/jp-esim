@@ -83,30 +83,40 @@ $orderPlanLabel = trim((string)$order['carrier'] . ' · ' . ctv_order_plan_data(
   .esim-card img.qr { width:160px;height:160px;border-radius:8px;background:#fff;border:1px solid #2a2a2a; }
   .install-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   .lpa { font-family: ui-monospace, monospace; word-break: break-all; background:#1a1a1a; padding:6px 8px; border-radius:6px; font-size:12px; }
+  .section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .section-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; }
+  .section-title h2 { margin:0; }
+  .section-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   @media (max-width:760px){
     .kv{grid-template-columns:110px 1fr;gap:4px 8px;font-size:13px}
     .esim-card .row{flex-direction:column;align-items:center;gap:10px}
     .esim-card img.qr{width:140px;height:140px}
     .install-row{flex-direction:column}
     .install-row .btn{width:100%;text-align:center}
+    .section-head{flex-direction:column;align-items:stretch}
+    .section-actions{justify-content:stretch}
+    .section-actions .btn{flex:1}
   }
   @media (max-width:480px){
     .kv{grid-template-columns:1fr;gap:2px 0}
     .kv b{color:#888;font-size:11px;margin-top:6px}
     .esim-card img.qr{width:120px;height:120px}
     .esim-card{padding:12px 10px}
+    .section-actions .btn{width:100%}
   }
 </style>
 
 <div class="card">
-  <h2>
-    Đơn <span class="kbd"><?= htmlspecialchars($orderId) ?></span>
-    <span class="tag <?= $statusCls ?>" style="margin-left:8px"><?= htmlspecialchars($statusLabel) ?></span>
-    <span style="float:right;display:flex;gap:8px;flex-wrap:wrap">
+  <div class="section-head">
+    <div class="section-title">
+      <h2>Đơn <span class="kbd"><?= htmlspecialchars($orderId) ?></span></h2>
+      <span class="tag <?= $statusCls ?>"><?= htmlspecialchars($statusLabel) ?></span>
+    </div>
+    <div class="section-actions">
       <a class="btn secondary" href="/ctv/export.php?kind=esims&order_id=<?= rawurlencode($orderId) ?>&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a>
       <a class="btn secondary" href="/ctv/orders.php">← Danh sách đơn</a>
-    </span>
-  </h2>
+    </div>
+  </div>
 
   <div class="order-grid">
     <div>
@@ -143,17 +153,20 @@ $provCount = count($esims);
 $isPartial = (int)$order['status'] === 2 && $qty > 1 && $provCount > 0 && $provCount < $qty;
 if ($isPartial): ?>
 <div class="card" style="border:1px solid #e2a336;background:rgba(226,163,54,0.08)">
-  <p style="margin:0;color:#e2a336"><strong>⚠ Provisioned chưa đủ:</strong> <?= $provCount ?>/<?= $qty ?> eSIM đã sẵn sàng. Hệ thống đang tiếp tục lấy phần còn lại — admin đã được thông báo.</p>
+  <p style="margin:0;color:#e2a336"><strong>⚠ Chưa cấp đủ eSIM:</strong> <?= $provCount ?>/<?= $qty ?> eSIM đã sẵn sàng. Hệ thống đang tiếp tục lấy phần còn lại; admin đã được thông báo.</p>
 </div>
 <?php endif; ?>
 
 <div class="card">
-  <h2>eSIM (<?= count($esims) ?><?php if ($qty > 1): ?>/<?= $qty ?><?php endif; ?>)
-    <span style="float:right;display:flex;gap:8px;flex-wrap:wrap">
+  <div class="section-head">
+    <div class="section-title">
+      <h2>eSIM (<?= count($esims) ?><?php if ($qty > 1): ?>/<?= $qty ?><?php endif; ?>)</h2>
+    </div>
+    <div class="section-actions">
       <a class="btn secondary" href="/ctv/export.php?kind=esims&order_id=<?= rawurlencode($orderId) ?>&_csrf=<?= urlencode($csrf) ?>">Xuất CSV</a>
       <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>">Làm mới</a>
-    </span>
-  </h2>
+    </div>
+  </div>
   <?php if (!$esims): ?>
     <?php if ((int)$order['status'] === 2): ?>
       <p class="muted">Đơn đã thành công, đang chờ nhà cung cấp phát hành QR. Hệ thống tự sync mỗi 2 phút — refresh sau ít phút.</p>

@@ -57,6 +57,9 @@ ctv_layout_header('eSIM của CTV', $user);
 <style>
   .qr-thumb{height:44px;width:44px;border-radius:8px;border:1px solid var(--c-line-2);transition:transform .15s}
   .qr-thumb:hover{transform:scale(1.6);z-index:5;position:relative}
+  .select-label{display:flex;align-items:center;gap:8px;margin:0;min-height:34px}
+  .select-label .kbd{min-width:0;word-break:break-all}
+  .select-cell{text-align:center}
 </style>
 <div class="card">
   <h2>Danh sách eSIM</h2>
@@ -106,7 +109,7 @@ ctv_layout_header('eSIM của CTV', $user);
     ?>
     <div class="m-card">
       <div class="m-head">
-        <label style="display:flex;align-items:center;gap:8px;margin:0">
+        <label class="select-label">
           <input type="checkbox" name="ids[]" value="<?= (int)$r['id'] ?>" class="esim-select">
           <span class="kbd copy" data-copy="<?= htmlspecialchars((string)$r['iccid']) ?>" style="font-size:11px"><?= htmlspecialchars((string)$r['iccid']) ?></span>
         </label>
@@ -126,11 +129,11 @@ ctv_layout_header('eSIM của CTV', $user);
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th><input type="checkbox" id="selectAllEsims" aria-label="Chọn tất cả eSIM"></th><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
+    <thead><tr><th class="select-cell"><input type="checkbox" id="selectAllEsims" aria-label="Chọn tất cả eSIM"></th><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
     <tbody>
       <?php foreach ($rows as $r): ?>
       <tr>
-        <td><input type="checkbox" name="ids[]" value="<?= (int)$r['id'] ?>" class="esim-select"></td>
+        <td class="select-cell"><input type="checkbox" name="ids[]" value="<?= (int)$r['id'] ?>" class="esim-select" aria-label="Chọn eSIM <?= htmlspecialchars((string)$r['iccid']) ?>"></td>
         <td>
           <?php $qrIccid = (string)($r['iccid'] ?? ''); $qr = $qrIccid !== '' ? ('/ctv/qr.php?id=' . urlencode($qrIccid)) : ''; if ($qr !== ''): ?>
             <a href="<?= htmlspecialchars($qr) ?>" target="_blank" rel="noopener"><img src="<?= htmlspecialchars($qr) ?>" alt="QR" class="qr-thumb"></a>

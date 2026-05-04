@@ -182,6 +182,10 @@ input[type=text],input[type=email],input[type=password],input[type=number],input
   border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm);
   transition:border-color .2s,box-shadow .2s;
 }
+input[type=checkbox]{
+  width:18px;height:18px;accent-color:var(--c-gold);
+  cursor:pointer;vertical-align:middle;flex:0 0 auto;
+}
 input:focus,select:focus,textarea:focus{
   outline:none;border-color:var(--c-gold);
   box-shadow:0 0 0 3px rgba(230,192,104,.12);
@@ -382,6 +386,7 @@ tbody tr{transition:background .1s}
   .grid{grid-template-columns:1fr}
   .btn{padding:12px 16px;font-size:13px;min-height:44px}
   .btn.sm{min-height:36px;padding:8px 12px}
+  input[type=checkbox]{width:22px;height:22px}
   input,select,textarea{font-size:16px;padding:12px 12px;min-height:44px}
   .actions{gap:8px}
   .actions .btn{flex:1}
