@@ -306,17 +306,55 @@ tbody tr{transition:background .1s}
 .notif-item .ni-msg{font-size:12px;color:var(--c-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .notif-item .ni-time{font-size:11px;color:var(--c-muted);margin-top:4px}
 
+/* ===== HAMBURGER / DRAWER ===== */
+.hdr .hamburger{
+  display:none;width:36px;height:36px;border-radius:8px;
+  border:1px solid var(--c-line-2);background:transparent;
+  cursor:pointer;position:relative;flex-shrink:0;
+  align-items:center;justify-content:center;
+}
+.hdr .hamburger span,
+.hdr .hamburger span::before,
+.hdr .hamburger span::after{
+  display:block;width:18px;height:2px;background:var(--c-ink-2);
+  border-radius:2px;transition:all .25s;position:absolute;left:50%;transform:translateX(-50%);
+}
+.hdr .hamburger span{top:50%;margin-top:-1px}
+.hdr .hamburger span::before{content:'';top:-6px;left:0;width:18px;position:absolute}
+.hdr .hamburger span::after{content:'';top:6px;left:0;width:18px;position:absolute}
+.nav-overlay{
+  display:none;position:fixed;inset:0;z-index:90;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity .2s;
+}
+.nav-overlay.open{display:block;opacity:1}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
   .hdr{padding:0 12px}
-  .hdr-inner{height:50px;gap:10px}
+  .hdr-inner{height:54px;gap:10px}
   .hdr .brand{font-size:14px}
   .hdr .brand-mark{width:26px;height:26px;font-size:11px}
-  .hdr nav a{padding:6px 9px;font-size:12px}
+  .hdr .hamburger{display:flex}
+  .hdr nav{
+    position:fixed;top:0;left:0;width:280px;height:100vh;z-index:95;
+    background:var(--c-card);border-right:1px solid var(--c-line-2);
+    flex-direction:column;gap:0;padding:20px 0;
+    transform:translateX(-100%);transition:transform .25s ease;
+    overflow-y:auto;
+  }
+  .hdr nav.open{transform:translateX(0)}
+  .hdr nav a{
+    padding:14px 20px;font-size:14px;border-radius:0;
+    border-bottom:1px solid var(--c-line);
+    min-height:44px;display:flex;align-items:center;
+  }
+  .hdr nav a:last-child{border-bottom:0}
+  .hdr nav a.active{background:rgba(230,192,104,.08);border-left:3px solid var(--c-gold)}
   .hdr .hdr-right{gap:8px}
   .hdr .balance{font-size:11px;padding:3px 8px}
-  .hdr .avatar{width:28px;height:28px;font-size:11px}
-  .hdr .logout{padding:4px 8px;font-size:11px}
+  .hdr .avatar{width:30px;height:30px;font-size:11px}
+  .hdr .logout{padding:6px 10px;font-size:11px;min-height:32px}
   main{padding:16px 12px 32px}
   .page-head h1{font-size:19px}
   .card{padding:16px 14px;border-radius:12px}
@@ -324,30 +362,35 @@ tbody tr{transition:background .1s}
   .row{flex-direction:column;gap:10px}
   .row > *{flex:1 1 auto}
   .grid{grid-template-columns:1fr}
-  .btn{padding:11px 16px;font-size:13px;min-height:42px}
-  .btn.sm{min-height:auto}
-  input,select,textarea{font-size:16px;padding:11px 12px}
+  .btn{padding:12px 16px;font-size:13px;min-height:44px}
+  .btn.sm{min-height:36px;padding:8px 12px}
+  input,select,textarea{font-size:16px;padding:12px 12px;min-height:44px}
   .actions{gap:8px}
   .actions .btn{flex:1}
   .notif-dropdown{width:calc(100vw - 24px);right:12px}
+  .filter-row{gap:6px}
+  .pill{padding:8px 14px;font-size:12.5px;min-height:40px}
 }
 @media(max-width:480px){
-  .hdr nav a{padding:5px 7px;font-size:11px}
+  .hdr nav{width:260px}
   .card{padding:14px 12px}
   .btn{width:100%;justify-content:center}
   .btn.sm{width:auto}
   .metric{font-size:24px}
+  .pill{padding:7px 12px;font-size:12px}
 }
 </style>
 </head>
 <body>
+<div class="nav-overlay" id="navOverlay"></div>
 <header class="hdr">
   <div class="hdr-inner">
+    <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span></button>
     <a href="/ctv/dashboard.php" class="brand">
       <span class="brand-mark">JP</span>
       <span class="brand-name">jp-esim <em>CTV</em></span>
     </a>
-    <nav>
+    <nav id="mainNav">
       <?php if ($user): ?>
         <a href="/ctv/dashboard.php"<?= ctv_nav_active('/ctv/dashboard.php') ?>>Tổng quan</a>
         <a href="/ctv/create-esim.php"<?= ctv_nav_active('/ctv/create-esim.php') ?>>Tạo eSIM</a>
@@ -391,6 +434,14 @@ if (!function_exists('ctv_layout_footer')) {
         echo '</main>';
         ?>
 <script>
+(function(){
+  var btn=document.getElementById('menuBtn'),nav=document.getElementById('mainNav'),ov=document.getElementById('navOverlay');
+  if(btn&&nav){
+    btn.addEventListener('click',function(){nav.classList.toggle('open');ov.classList.toggle('open');});
+    ov.addEventListener('click',function(){nav.classList.remove('open');ov.classList.remove('open');});
+    nav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');ov.classList.remove('open');});});
+  }
+})();
 (function(){
   var bell=document.getElementById('notifBell'),dd=document.getElementById('notifDropdown'),
       cnt=document.getElementById('notifCount'),list=document.getElementById('notifList'),

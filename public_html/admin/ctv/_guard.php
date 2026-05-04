@@ -70,12 +70,14 @@ function admin_layout_header(string $title, array $admin): void {
 <link rel="stylesheet" href="/admin/ctv/admin_theme.css?v=<?= $assetVer ?>">
 </head>
 <body>
+<div class="nav-overlay" id="navOverlay"></div>
 <header class="admin-h">
+  <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span></button>
   <div class="brand">
     <span class="brand-mark">JP</span>
     <span class="brand-name">jp-esim <em>Admin</em></span>
   </div>
-  <nav>
+  <nav id="mainNav">
     <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Tổng quan</a>
     <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>CTV</a>
     <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn hàng</a>
@@ -95,4 +97,8 @@ function admin_layout_header(string $title, array $admin): void {
 <main>
 <div class="page-title"><h1><?= htmlspecialchars($title) ?></h1></div>
 <?php }
-function admin_layout_footer(): void { echo '</main></body></html>'; }
+function admin_layout_footer(): void {
+    echo '</main>';
+    echo '<script>(function(){var b=document.getElementById("menuBtn"),n=document.getElementById("mainNav"),o=document.getElementById("navOverlay");if(b&&n){b.addEventListener("click",function(){n.classList.toggle("open");o.classList.toggle("open");});o.addEventListener("click",function(){n.classList.remove("open");o.classList.remove("open");});n.querySelectorAll("a").forEach(function(a){a.addEventListener("click",function(){n.classList.remove("open");o.classList.remove("open");});});}})();</script>';
+    echo '</body></html>';
+}
