@@ -88,7 +88,6 @@ function _bytes_to_gb($b): string {
         <b>Gói</b><div><?= htmlspecialchars((string)$order['carrier'].' '.(string)$order['plan_name']) ?></div>
         <b>Mã gói</b><div><span class="kbd"><?= htmlspecialchars((string)$order['pack_code']) ?></span></div>
         <b>Số lượng</b><div><?= (int)$order['quantity'] ?></div>
-        <b>Mã đơn NCC</b><div><?= htmlspecialchars((string)($order['provider_order_no'] ?? '—')) ?></div>
         <b>Tạo lúc</b><div><?= htmlspecialchars((string)$order['created_at']) ?></div>
         <b>Cập nhật</b><div><?= htmlspecialchars((string)$order['updated_at']) ?></div>
         <b>Email khách</b><div><?= htmlspecialchars((string)($order['email'] ?? '—')) ?></div>

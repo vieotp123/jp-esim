@@ -24,7 +24,7 @@ $st->execute($params);
 $rows = $st->fetchAll();
 
 // Also surface any successful CTV orders still waiting for QR (provider preparing).
-$pStmt = db()->prepare('SELECT ctv_order_id, plan_name, carrier, provider_order_no, updated_at FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT 20');
+$pStmt = db()->prepare('SELECT ctv_order_id, plan_name, carrier, updated_at FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT 20');
 $pStmt->execute([(int)$user['id']]);
 $pending = $pStmt->fetchAll();
 
@@ -42,15 +42,14 @@ ctv_layout_header('eSIM của CTV', $user);
   </form>
 
   <?php if ($pending): ?>
-  <div class="muted" style="margin:8px 0">Đang chờ nhà cung cấp phát hành QR (<?= count($pending) ?> đơn). Tự refresh sẽ poll lại.</div>
+  <div class="muted" style="margin:8px 0">Đang chờ phát hành QR (<?= count($pending) ?> đơn). Refresh để cập nhật.</div>
   <table>
-    <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Mã đơn NCC</th><th>Cập nhật</th></tr></thead>
+    <thead><tr><th>Đơn CTV</th><th>Gói</th><th>Cập nhật</th></tr></thead>
     <tbody>
       <?php foreach ($pending as $p): ?>
       <tr>
         <td><a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a></td>
         <td><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></td>
-        <td><span class="kbd"><?= htmlspecialchars((string)$p['provider_order_no']) ?></span></td>
         <td><?= htmlspecialchars((string)$p['updated_at']) ?></td>
       </tr>
       <?php endforeach; ?>
