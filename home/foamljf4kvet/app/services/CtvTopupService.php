@@ -2,10 +2,48 @@
 declare(strict_types=1);
 
 final class CtvTopupService {
+    public function lookup(array $ctv, string $iccid): array {
+        $iccid = preg_replace('/\s+/', '', $iccid);
+        if (!preg_match('/^[0-9]{15,32}$/', (string)$iccid)) throw new InvalidArgumentException('ICCID không hợp lệ. Vui lòng nhập 15-32 chữ số.');
+
+        $retail = (new TopupService())->lookup($iccid);
+        $current = is_array($retail['current'] ?? null) ? $retail['current'] : [];
+        $carrier = trim((string)($current['carrier'] ?? ''));
+        $plans = [];
+        $message = '';
+
+        if ($carrier === '') {
+            $message = 'eSIM này chưa xác định được nhà mạng hỗ trợ nạp data. Vui lòng liên hệ admin để kiểm tra.';
+        } else {
+            $plans = (new CtvPricingService())->listFor($ctv, 'topup', $carrier)['plans'];
+            if (!$plans) {
+                $message = 'Hiện chưa có gói nạp data tương thích cho eSIM này.';
+            }
+        }
+
+        return [
+            'iccid' => (string)($retail['iccid'] ?? $iccid),
+            'current' => $current,
+            'plans' => $plans,
+            'compatiblePlanIds' => array_map(static fn(array $p): int => (int)$p['id'], $plans),
+            'message' => $message,
+        ];
+    }
+
     public function create(array $ctv, string $iccid, int $planId, string $source = 'panel', ?string $clientRef = null): array {
+        if ((string)app_config('TOPUP_LOCKED', '0') === '1') {
+            throw new RuntimeException('Chức năng nạp data đang tạm khoá. Vui lòng thử lại sau.');
+        }
+
         $ctvId = (int)$ctv['id'];
         $iccid = preg_replace('/\s+/', '', $iccid);
         if (!preg_match('/^[0-9]{15,32}$/', (string)$iccid)) throw new InvalidArgumentException('ICCID không hợp lệ');
+
+        $lookup = $this->lookup($ctv, $iccid);
+        if (!in_array($planId, $lookup['compatiblePlanIds'], true)) {
+            throw new InvalidArgumentException('Gói nạp không tương thích với ICCID này. Vui lòng tra cứu lại trước khi nạp.');
+        }
+
         $plan = (new PlanService())->findActive($planId);
         if (!$plan || empty($plan['topup_packcode'])) throw new InvalidArgumentException('Gói nạp không hợp lệ');
         $pricing = (new CtvPricingService())->priceFor($ctv, $plan);

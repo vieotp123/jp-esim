@@ -190,7 +190,7 @@ if ($isPartial): ?>
           <?php if ($topupLocked): ?>
             <button class="btn secondary" disabled title="TOPUP_LOCKED đang bật">Gia hạn (đang khoá)</button>
           <?php else: ?>
-            <a class="btn secondary" href="/ctv/topup.php?iccid=<?= rawurlencode((string)$e['iccid']) ?>">Gia hạn</a>
+            <a class="btn secondary" href="/ctv/topup-esim.php?iccid=<?= rawurlencode((string)$e['iccid']) ?>">Gia hạn</a>
           <?php endif; ?>
         </div>
       </div>

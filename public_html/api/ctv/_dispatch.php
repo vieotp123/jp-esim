@@ -116,6 +116,9 @@ function ctv_api_handle(string $endpoint, string $method, array $ctv, mixed $bod
                 'api',
                 isset($body['clientRef']) ? (string)$body['clientRef'] : null
             );
+        case 'topup.lookup':
+            if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
+            return (new CtvTopupService())->lookup($ctv, (string)($body['iccid'] ?? $body['id'] ?? ''));
         case 'esims.list':
             if ($method !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $limit = max(1, min((int)($body['limit'] ?? 50), 200));
