@@ -14,7 +14,7 @@ $sum = db()->query("SELECT COUNT(*) total, SUM(email_sent_at IS NOT NULL) sent, 
 $st = db()->prepare("SELECT e.iccid,e.ctv_order_id,e.package_name,e.email_sent_at,e.email_attempts,e.email_last_error,e.created_at,o.email customer_email,u.email ctv_email FROM ctv_esims e LEFT JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id LEFT JOIN ctv_users u ON u.id=e.ctv_id $where ORDER BY COALESCE(e.email_sent_at,e.created_at) DESC LIMIT 300");
 $st->execute($params); $rows = $st->fetchAll();
 
-admin_layout_header('CTV Email QR Queue', $admin);
+admin_layout_header('Hàng đợi Email QR', $admin);
 function _pill(string $key, string $label, $count, string $active): void { $cls=$active===$key?'pill active':'pill'; echo '<a class="'.$cls.'" href="?status='.htmlspecialchars($key).'">'.htmlspecialchars($label).' <span class="count">'.(int)$count.'</span></a>'; }
 ?>
 <div class="summary">
@@ -30,7 +30,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
   </div>
 </div>
 <div class="card"><h2>Email QR (<?= count($rows) ?>)</h2>
-  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Attempts</th><th>Lỗi cuối</th></tr></thead><tbody>
+  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>CTV</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
   <?php if (!$rows): ?><tr><td colspan="8" class="empty">Không có dữ liệu.</td></tr><?php endif; ?>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
   <tr>
@@ -39,7 +39,7 @@ function _pill(string $key, string $label, $count, string $active): void { $cls=
     <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
     <td><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></td>
     <td><?= htmlspecialchars((string)($r['package_name'] ?? '')) ?></td>
-    <td><?php if($sent): ?><span class="tag ok">sent</span><br><span class="muted"><?= htmlspecialchars((string)$r['email_sent_at']) ?></span><?php elseif($err): ?><span class="tag err">error</span><?php else: ?><span class="tag warn">pending</span><?php endif; ?></td>
+    <td><?php if($sent): ?><span class="tag ok">Đã gửi</span><br><span class="muted"><?= htmlspecialchars((string)$r['email_sent_at']) ?></span><?php elseif($err): ?><span class="tag err">Lỗi</span><?php else: ?><span class="tag warn">Chờ gửi</span><?php endif; ?></td>
     <td><?= (int)($r['email_attempts'] ?? 0) ?></td>
     <td style="max-width:360px"><?= htmlspecialchars(mb_strimwidth((string)($r['email_last_error'] ?? ''), 0, 220, '...')) ?></td>
   </tr>

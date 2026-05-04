@@ -34,7 +34,7 @@ $qs = function (array $extra) use ($filterAction, $filterSearch, $filterFrom, $f
     return '?' . http_build_query($p);
 };
 
-admin_layout_header('Audit Log', $admin);
+admin_layout_header('Nhật ký kiểm toán', $admin);
 ?>
 <div class="card">
   <form method="get" class="toolbar">
@@ -48,7 +48,7 @@ admin_layout_header('Audit Log', $admin);
     <input type="date" name="from" value="<?= htmlspecialchars($filterFrom) ?>">
     <input type="date" name="to" value="<?= htmlspecialchars($filterTo) ?>">
     <button class="btn">Lọc</button>
-    <a class="btn secondary" href="/admin/ctv/audit.php">Reset</a>
+    <a class="btn secondary" href="/admin/ctv/audit.php">Đặt lại</a>
     <span class="spacer"></span>
     <span class="muted"><?= $total ?> kết quả</span>
   </form>

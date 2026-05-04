@@ -160,41 +160,41 @@ $counts = db()->query("SELECT
 FROM order_admin_queue")->fetch();
 
 $kindLabel = [
-    'amount_mismatch' => ['Amount mismatch', 'warn'],
-    'provider_error'  => ['Provider error',  'err'],
-    'email_error'     => ['Email error',     'info'],
+    'amount_mismatch' => ['Sai số tiền', 'warn'],
+    'provider_error'  => ['Lỗi xử lý',  'err'],
+    'email_error'     => ['Lỗi email',   'info'],
 ];
 $qsBuild = function(array $extra) use ($status, $kind): string {
     $params = array_filter(array_merge(['status'=>$status, 'kind'=>$kind ?: null], $extra), fn($v)=> $v !== null && $v !== '');
     return '?' . http_build_query($params);
 };
 
-admin_layout_header('Failed Order Queue', $admin);
+admin_layout_header('Hàng đợi đơn lỗi', $admin);
 ?>
 <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 
 <div class="summary">
   <div class="card gold"><b>Đang chờ xử lý</b><h2><?= (int)($counts['open_n'] ?? 0) ?></h2><div class="sub">tất cả loại</div></div>
-  <div class="card"><b>Amount mismatch</b><h2><?= (int)($counts['amt_n'] ?? 0) ?></h2><div class="sub">webhook không khớp số tiền</div></div>
-  <div class="card danger"><b>Provider error</b><h2><?= (int)($counts['prv_n'] ?? 0) ?></h2><div class="sub">Lỗi nhà cung cấp eSIM</div></div>
-  <div class="card"><b>Email error</b><h2><?= (int)($counts['eml_n'] ?? 0) ?></h2><div class="sub">QR không gửi được</div></div>
+  <div class="card"><b>Sai số tiền</b><h2><?= (int)($counts['amt_n'] ?? 0) ?></h2><div class="sub">webhook không khớp số tiền</div></div>
+  <div class="card danger"><b>Lỗi xử lý</b><h2><?= (int)($counts['prv_n'] ?? 0) ?></h2><div class="sub">Lỗi nhà cung cấp eSIM</div></div>
+  <div class="card"><b>Lỗi email</b><h2><?= (int)($counts['eml_n'] ?? 0) ?></h2><div class="sub">QR không gửi được</div></div>
   <div class="card green"><b>Đã giải quyết</b><h2><?= (int)($counts['resolved_n'] ?? 0) ?></h2><div class="sub">tổng cộng</div></div>
 </div>
 
 <div class="card">
   <div class="filter-row">
     <span class="muted">Trạng thái:</span>
-    <a class="pill <?= $status==='open'?'active':'' ?>"     href="<?= htmlspecialchars($qsBuild(['status'=>'open'])) ?>">Open <span class="count"><?= (int)$counts['open_n'] ?></span></a>
-    <a class="pill <?= $status==='resolved'?'active':'' ?>" href="<?= htmlspecialchars($qsBuild(['status'=>'resolved'])) ?>">Resolved <span class="count"><?= (int)$counts['resolved_n'] ?></span></a>
-    <a class="pill <?= $status==='ignored'?'active':'' ?>"  href="<?= htmlspecialchars($qsBuild(['status'=>'ignored'])) ?>">Ignored <span class="count"><?= (int)$counts['ignored_n'] ?></span></a>
-    <a class="pill <?= $status==='all'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['status'=>'all'])) ?>">All <span class="count"><?= (int)$counts['total_n'] ?></span></a>
+    <a class="pill <?= $status==='open'?'active':'' ?>"     href="<?= htmlspecialchars($qsBuild(['status'=>'open'])) ?>">Đang mở <span class="count"><?= (int)$counts['open_n'] ?></span></a>
+    <a class="pill <?= $status==='resolved'?'active':'' ?>" href="<?= htmlspecialchars($qsBuild(['status'=>'resolved'])) ?>">Đã xử lý <span class="count"><?= (int)$counts['resolved_n'] ?></span></a>
+    <a class="pill <?= $status==='ignored'?'active':'' ?>"  href="<?= htmlspecialchars($qsBuild(['status'=>'ignored'])) ?>">Bỏ qua <span class="count"><?= (int)$counts['ignored_n'] ?></span></a>
+    <a class="pill <?= $status==='all'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['status'=>'all'])) ?>">Tất cả <span class="count"><?= (int)$counts['total_n'] ?></span></a>
   </div>
   <div class="filter-row">
     <span class="muted">Loại:</span>
     <a class="pill <?= $kind===''?'active':'' ?>"                 href="<?= htmlspecialchars($qsBuild(['kind'=>null])) ?>">Tất cả</a>
-    <a class="pill <?= $kind==='amount_mismatch'?'active':'' ?>"  href="<?= htmlspecialchars($qsBuild(['kind'=>'amount_mismatch'])) ?>">Amount mismatch</a>
-    <a class="pill <?= $kind==='provider_error'?'active':'' ?>"   href="<?= htmlspecialchars($qsBuild(['kind'=>'provider_error'])) ?>">Provider error</a>
-    <a class="pill <?= $kind==='email_error'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['kind'=>'email_error'])) ?>">Email error</a>
+    <a class="pill <?= $kind==='amount_mismatch'?'active':'' ?>"  href="<?= htmlspecialchars($qsBuild(['kind'=>'amount_mismatch'])) ?>">Sai số tiền</a>
+    <a class="pill <?= $kind==='provider_error'?'active':'' ?>"   href="<?= htmlspecialchars($qsBuild(['kind'=>'provider_error'])) ?>">Lỗi xử lý</a>
+    <a class="pill <?= $kind==='email_error'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['kind'=>'email_error'])) ?>">Lỗi email</a>
   </div>
 
   <?php if (!$rows): ?>
@@ -208,11 +208,11 @@ admin_layout_header('Failed Order Queue', $admin);
       <tr>
         <th style="width:60px">#</th>
         <th>Loại</th>
-        <th>Order ref</th>
+        <th>Mã đơn</th>
         <th>Tóm tắt lỗi</th>
         <th>Trạng thái</th>
         <th>Tạo lúc</th>
-        <th>Resolver</th>
+        <th>Người xử lý</th>
         <th style="width:280px">Hành động</th>
       </tr>
     </thead>
@@ -233,15 +233,15 @@ admin_layout_header('Failed Order Queue', $admin);
           <div><?= htmlspecialchars($errShort) ?></div>
           <?php if (!empty($r['payload_redacted'])): ?>
             <details style="margin-top:6px">
-              <summary>payload (redacted)</summary>
+              <summary>Dữ liệu (đã ẩn bớt)</summary>
               <pre style="white-space:pre-wrap;font-size:12px;color:var(--a-ink-2);background:#0a1020;padding:8px;border-radius:6px;border:1px solid var(--a-line);margin-top:6px;max-height:240px;overflow:auto"><?= htmlspecialchars(mb_strimwidth((string)$r['payload_redacted'], 0, 4000, '…')) ?></pre>
             </details>
           <?php endif; ?>
           <?php if (!empty($r['resolver_note'])): ?>
-            <div class="muted" style="margin-top:6px"><b>Note:</b> <?= htmlspecialchars((string)$r['resolver_note']) ?></div>
+            <div class="muted" style="margin-top:6px"><b>Ghi chú:</b> <?= htmlspecialchars((string)$r['resolver_note']) ?></div>
           <?php endif; ?>
         </td>
-        <td><span class="tag <?= $stCls ?>"><?= htmlspecialchars($st) ?></span></td>
+        <td><span class="tag <?= $stCls ?>"><?= match($st) { 'open'=>'Đang mở', 'resolved'=>'Đã xử lý', 'ignored'=>'Bỏ qua', default=>htmlspecialchars($st) } ?></span></td>
         <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span><?php if ($r['resolved_at']): ?><br><span class="muted">→ <?= htmlspecialchars((string)$r['resolved_at']) ?></span><?php endif; ?></td>
         <td><span class="muted"><?= htmlspecialchars((string)($r['resolver_note'] ? '' : '')) ?></span></td>
         <td>
@@ -252,19 +252,19 @@ admin_layout_header('Failed Order Queue', $admin);
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="retry">
-                <button class="btn gold sm" title="Gửi lại email qua Mailgun, không gọi provider">✉ Resend email</button>
+                <button class="btn gold sm" title="Gửi lại email qua Mailgun, không gọi nhà cung cấp">✉ Gửi lại email</button>
               </form>
               <?php else: ?>
               <form method="post" class="inline" style="display:inline-block;margin-bottom:6px" onsubmit="return confirm('Retry provider cho mục này?\nLưu ý: sẽ chỉ thực thi khi PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-*');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="retry">
-                <button class="btn gold sm" title="Gọi RetailFulfillmentService::fulfillPaidOrder hoặc fulfillPaidTopup">↻ Retry provider</button>
+                <button class="btn gold sm" title="Thử lại xử lý đơn">↻ Thử lại</button>
               </form>
               <?php endif; ?>
             <?php endif; ?>
             <details>
-              <summary>Cancel / Refund / Resolve</summary>
+              <summary>Huỷ / Hoàn tiền / Xử lý</summary>
               <form method="post" style="margin-top:8px" onsubmit="return confirm('HUỶ ĐƠN: Đặt status=3 (cancelled) cho đơn gốc.\nKhông gọi provider API.\nKhông hoàn tiền tự động — cần chuyển khoản thủ công nếu cần.');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
@@ -284,15 +284,15 @@ admin_layout_header('Failed Order Queue', $admin);
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="resolve">
-                <input type="text" name="note" placeholder="Ghi chú resolve (tuỳ chọn)" maxlength="500" style="width:100%;margin-bottom:6px">
-                <button class="btn gold sm">Mark resolved</button>
+                <input type="text" name="note" placeholder="Ghi chú xử lý (tuỳ chọn)" maxlength="500" style="width:100%;margin-bottom:6px">
+                <button class="btn gold sm">Đánh dấu đã xử lý</button>
               </form>
               <form method="post" style="margin-top:6px" onsubmit="return confirm('Bỏ qua mục này?');">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="ignore">
-                <input type="text" name="note" placeholder="Lý do ignore (tuỳ chọn)" maxlength="500" style="width:100%;margin-bottom:6px">
-                <button class="btn secondary sm">Ignore</button>
+                <input type="text" name="note" placeholder="Lý do bỏ qua (tuỳ chọn)" maxlength="500" style="width:100%;margin-bottom:6px">
+                <button class="btn secondary sm">Bỏ qua</button>
               </form>
             </details>
           <?php else: ?>
@@ -300,7 +300,7 @@ admin_layout_header('Failed Order Queue', $admin);
               <?php admin_csrf_field(); ?>
               <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
               <input type="hidden" name="action" value="reopen">
-              <button class="btn secondary sm">Reopen</button>
+              <button class="btn secondary sm">Mở lại</button>
             </form>
           <?php endif; ?>
         </td>

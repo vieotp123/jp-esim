@@ -180,12 +180,30 @@ details[open] summary{color:var(--a-gold)}
 .empty .icon{font-size:36px; margin-bottom:8px; opacity:.5}
 
 /* Responsive */
+@media (max-width:900px){
+  header.admin-h nav a{padding:7px 10px;font-size:12.5px}
+}
 @media (max-width:760px){
   header.admin-h{padding:10px 14px}
   header.admin-h .brand{font-size:14px}
-  main{padding:0 12px; margin:14px auto}
-  thead th{font-size:11px; padding:9px 8px}
-  tbody td{padding:9px 8px; font-size:12.5px}
-  .summary .card h2{font-size:24px}
-  .btn{padding:8px 13px; font-size:13px}
+  header.admin-h nav{gap:2px}
+  header.admin-h nav a{padding:5px 8px;font-size:11.5px}
+  header.admin-h .right{margin-left:0;width:100%;justify-content:flex-end;margin-top:6px}
+  main{padding:0 10px; margin:14px auto}
+  .page-title h1{font-size:18px}
+  .card{padding:14px 12px;border-radius:12px;overflow-x:auto}
+  .summary{grid-template-columns:repeat(2,1fr);gap:10px}
+  .summary .card h2{font-size:22px}
+  table{font-size:12px;min-width:600px}
+  thead th{font-size:10.5px; padding:8px 8px}
+  tbody td{padding:8px 8px; font-size:12px}
+  .toolbar{flex-direction:column;align-items:stretch;gap:6px}
+  .filter-row{gap:5px}
+  .pill{padding:5px 10px;font-size:12px}
+  .btn{padding:8px 12px; font-size:12.5px}
+}
+@media (max-width:480px){
+  .summary{grid-template-columns:1fr}
+  header.admin-h nav a{padding:4px 6px;font-size:11px}
+  table{min-width:500px}
 }
