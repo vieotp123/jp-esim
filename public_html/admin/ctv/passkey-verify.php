@@ -37,6 +37,13 @@ admin_layout_header('Xác thực Passkey', $admin);
 <script>
 (function(){
   function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  if (!Passkey.isSupported()) {
+    document.getElementById('verifyBtn').disabled = true;
+    document.getElementById('verifyMsg').innerHTML = '<div class="flash warn">Trình duyệt không hỗ trợ Passkey. Vui lòng dùng Safari, Chrome hoặc Edge phiên bản mới.</div>';
+    return;
+  }
+
   window.verifyPasskey = async function() {
     var btn = document.getElementById('verifyBtn');
     var msg = document.getElementById('verifyMsg');

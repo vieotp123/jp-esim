@@ -413,7 +413,7 @@ tbody tr{transition:background .1s}
     <button class="hamburger" id="menuBtn" aria-label="Menu"><span></span></button>
     <a href="/ctv/dashboard.php" class="brand">
       <span class="brand-mark">JP</span>
-      <span class="brand-name">jp-esim <em>Partner</em></span>
+      <span class="brand-name">jp-esim <em>Đối tác</em></span>
     </a>
     <nav id="mainNav">
       <?php if ($user): ?>
