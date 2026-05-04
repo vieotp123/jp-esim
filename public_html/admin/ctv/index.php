@@ -56,6 +56,24 @@ admin_layout_header('Danh sách CTV', $admin);
   </form>
 </div>
 <div class="card"><h2>CTV (<?= count($ctvs) ?>)</h2>
+<div class="m-cards">
+<?php foreach ($ctvs as $c): ?>
+<div class="m-card">
+  <div class="m-head">
+    <a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$c['id'] ?>">#<?= (int)$c['id'] ?> <?= htmlspecialchars((string)$c['email']) ?></a>
+    <span class="tag <?= (int)$c['status']===1?'ok':((int)$c['email_verified']?'err':'warn') ?>"><?= (int)$c['status']===1?'Hoạt động':((int)$c['email_verified']?'Đã khóa':'Chờ xác thực') ?></span>
+  </div>
+  <?php if (!empty($c['company_name'])): ?><div style="font-size:12px;color:var(--a-muted);margin-bottom:6px"><?= htmlspecialchars((string)$c['company_name']) ?></div><?php endif; ?>
+  <div class="m-row"><span class="m-label">Số dư</span><span class="m-val" style="color:var(--a-gold);font-weight:700"><?= htmlspecialchars(format_vnd((int)$c['balance'])) ?></span></div>
+  <div class="m-row"><span class="m-label">Chiết khấu</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$c['discount_per_esim'])) ?><?= $c['tier_id']?' / hạng '.(int)$c['tier_id']:'' ?></span></div>
+  <div class="m-row"><span class="m-label">Đơn / Doanh thu</span><span class="m-val"><?= (int)$c['total_orders'] ?> đơn / <?= htmlspecialchars(format_vnd((int)$c['total_spent'])) ?></span></div>
+  <div class="m-actions">
+    <a class="btn sm secondary" href="/admin/ctv/view.php?id=<?= (int)$c['id'] ?>">Chi tiết</a>
+    <form method="post" style="flex:1"><?php admin_csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="ctv_id" value="<?= (int)$c['id'] ?>"><input type="hidden" name="status" value="<?= (int)$c['status']===1?0:1 ?>"><button class="btn sm <?= (int)$c['status']===1?'danger':'' ?>" style="width:100%"><?= (int)$c['status']===1?'Khóa':'Mở khóa' ?></button></form>
+  </div>
+</div>
+<?php endforeach; ?>
+</div>
 <div class="table-wrap">
 <table><thead><tr><th>ID</th><th>Email / Công ty</th><th>Trạng thái</th><th>Số dư</th><th>Chiết khấu</th><th>Đơn / Doanh thu</th><th>Tạo lúc</th><th>Thao tác</th></tr></thead><tbody>
 <?php foreach ($ctvs as $c): ?><tr>

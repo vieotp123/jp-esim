@@ -20,6 +20,20 @@ ctv_layout_header('Bảng giá CTV', $user);
   <?php if (empty($data['plans'])): ?>
     <div class="empty-state"><div class="icon">📦</div><p>Hiện chưa có gói nào trong danh mục này.</p></div>
   <?php else: ?>
+  <div class="m-cards">
+    <?php foreach ($data['plans'] as $p): ?>
+    <div class="m-card">
+      <div class="m-head">
+        <strong><?= htmlspecialchars((string)$p['name']) ?></strong>
+        <span class="tag gold"><?= htmlspecialchars((string)$p['telecom']) ?></span>
+      </div>
+      <div class="m-row"><span class="m-label">Số ngày</span><span class="m-val"><?= htmlspecialchars((string)$p['day']) ?></span></div>
+      <div class="m-row"><span class="m-label">Giá lẻ</span><span class="m-val"><?= htmlspecialchars((string)$p['retailPriceText']) ?></span></div>
+      <div class="m-row"><span class="m-label">Chiết khấu</span><span class="m-val" style="color:var(--c-green)">-<?= htmlspecialchars(format_vnd((int)$p['discount'])) ?></span></div>
+      <div class="m-row"><span class="m-label">Giá CTV</span><span class="m-val" style="color:var(--c-gold);font-weight:700;font-size:15px"><?= htmlspecialchars((string)$p['ctvPriceText']) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Nhà mạng</th><th>Tên gói</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá CTV</th></tr></thead>
