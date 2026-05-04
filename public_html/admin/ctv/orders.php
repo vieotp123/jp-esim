@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ->execute([(string)($resp['obj']['orderNo'] ?? ''), (string)($resp['obj']['transactionId'] ?? $orderId), $orderId]);
                         $flash = ['ok', 'Retry thành công ' . $orderId];
                     } else {
-                        $err = (string)($resp['errorMsg'] ?? 'Provider failed');
+                        $err = (string)($resp['errorMsg'] ?? 'Xử lý thất bại');
                         db()->prepare('UPDATE ctv_orders SET status=3, needs_admin=1, error_message=? WHERE ctv_order_id=?')
                             ->execute([mb_substr($err, 0, 500), $orderId]);
                         (new CtvWalletService())->credit($ctvId, $totalCharge, 'order_refund', 'ctv_order', $orderId, 'Retry refund by ' . $admin['user'], $admin['user']);

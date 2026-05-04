@@ -15,7 +15,7 @@ $iccid = isset($_GET['id']) ? (string)$_GET['id'] : '';
 if ($iccid === '' || !preg_match('/^\d{18,22}$/', $iccid)) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'bad id';
+    echo 'Mã không hợp lệ';
     exit;
 }
 
@@ -26,16 +26,15 @@ $row = $st->fetch();
 if (!$row || empty($row['ac'])) {
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'not found';
+    echo 'Không tìm thấy';
     exit;
 }
 
 $lpa = trim((string)$row['ac']);
-// LPA must start with "LPA:" per GSMA SGP.22; reject otherwise.
 if (stripos($lpa, 'LPA:') !== 0) {
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'no lpa';
+    echo 'Không có dữ liệu';
     exit;
 }
 
@@ -45,7 +44,7 @@ try {
     if (function_exists('app_log')) app_log('QR render fail '.$iccid.' '.$e->getMessage(), 'ERROR');
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'qr error';
+    echo 'Lỗi tạo mã QR';
     exit;
 }
 

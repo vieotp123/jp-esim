@@ -8,7 +8,7 @@ header('Cache-Control: no-store');
 $user = CtvAuth::currentUser();
 if (!$user) {
     http_response_code(401);
-    echo json_encode(['ok' => false, 'error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['ok' => false, 'error' => 'Chưa xác thực'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -43,4 +43,4 @@ if ($action === 'read' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 http_response_code(400);
-echo json_encode(['ok' => false, 'error' => 'invalid action'], JSON_UNESCAPED_UNICODE);
+echo json_encode(['ok' => false, 'error' => 'Hành động không hợp lệ'], JSON_UNESCAPED_UNICODE);
