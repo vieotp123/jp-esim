@@ -78,6 +78,18 @@ ctv_layout_header('eSIM của Partner', $user);
   <div class="flash warn" style="margin-bottom:14px">
     Đang chờ phát hành QR (<?= count($pending) ?> đơn). Làm mới trang để cập nhật.
   </div>
+  <div class="m-cards">
+    <?php foreach ($pending as $p): ?>
+    <div class="m-card">
+      <div class="m-head">
+        <a href="/ctv/orders/view.php?id=<?= htmlspecialchars((string)$p['ctv_order_id']) ?>" class="kbd" style="text-decoration:none;font-size:11px"><?= htmlspecialchars((string)$p['ctv_order_id']) ?></a>
+        <span class="tag warn">Chờ QR</span>
+      </div>
+      <div class="m-row"><span class="m-label">Nhà mạng</span><span class="m-val"><?= htmlspecialchars((string)$p['carrier']) ?></span></div>
+      <div class="m-row"><span class="m-label">Cập nhật</span><span class="m-val muted"><?= htmlspecialchars((string)$p['updated_at']) ?></span></div>
+    </div>
+    <?php endforeach; ?>
+  </div>
   <div class="table-wrap" style="margin-bottom:16px">
   <table>
     <thead><tr><th>Đơn Partner</th><th>Nhà mạng</th><th>Cập nhật</th></tr></thead>
