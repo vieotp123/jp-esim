@@ -35,6 +35,8 @@ final class BankWebhookService {
         return ['matched' => $matched, 'processed' => $processed];
     }
 
+    private const OVERPAY_RATIO = 3;
+
     private function processOne($pdo, array $tx): array {
         $ref = (string)($tx['reference'] ?? $tx['tid'] ?? $tx['transaction_id'] ?? '');
         $desc = strtoupper((string)($tx['description'] ?? $tx['content'] ?? ''));
@@ -43,6 +45,11 @@ final class BankWebhookService {
 
         if ($ref === '') {
             $ref = hash('sha256', $desc . $amount . $datetime);
+        }
+
+        if ($amount <= 0) {
+            app_log('BankWebhook zero/negative amount ref=' . $ref . ' amount=' . $amount, 'WARN');
+            return ['ref' => $ref, 'skipped' => true, 'reason' => 'invalid_amount'];
         }
 
         // Layer 1: UNIQUE reference idempotency.
@@ -76,7 +83,11 @@ final class BankWebhookService {
             $st->execute([$code]);
             $o = $st->fetch();
             if ($o) {
-                if ($amount >= (int)$o['price']) {
+                $expected = (int)$o['price'];
+                if ($amount >= $expected) {
+                    if ($expected > 0 && $amount >= $expected * self::OVERPAY_RATIO) {
+                        $this->enqueueOverpay($code, $amount, $expected, 'topup');
+                    }
                     try {
                         $res = (new RetailFulfillmentService())->fulfillPaidTopup($code);
                         $done = !empty($res['success']);
@@ -87,7 +98,7 @@ final class BankWebhookService {
                     }
                 } else {
                     $reason = 'amount_mismatch';
-                    $this->enqueueMismatch($code, $amount, (int)$o['price'], 'topup');
+                    $this->enqueueMismatch($code, $amount, $expected, 'topup');
                 }
             } else {
                 $reason = 'no_pending_topup';
@@ -101,7 +112,11 @@ final class BankWebhookService {
             $st->execute([$code]);
             $o = $st->fetch();
             if ($o) {
-                if ($amount >= (int)$o['total']) {
+                $expected = (int)$o['total'];
+                if ($amount >= $expected) {
+                    if ($expected > 0 && $amount >= $expected * self::OVERPAY_RATIO) {
+                        $this->enqueueOverpay($code, $amount, $expected, 'order');
+                    }
                     try {
                         $res = (new RetailFulfillmentService())->fulfillPaidOrder($code);
                         $done = !empty($res['success']);
@@ -112,7 +127,7 @@ final class BankWebhookService {
                     }
                 } else {
                     $reason = 'amount_mismatch';
-                    $this->enqueueMismatch($code, $amount, (int)$o['total'], 'order');
+                    $this->enqueueMismatch($code, $amount, $expected, 'order');
                 }
             } else {
                 $reason = 'no_pending_order';
@@ -145,6 +160,21 @@ final class BankWebhookService {
             );
         } catch (Throwable $e) {
             app_log('BankWebhook mismatch enqueue fail ' . $code . ' ' . $e->getMessage(), 'ERROR');
+        }
+    }
+
+    private function enqueueOverpay(string $code, int $amount, int $expected, string $kind): void {
+        try {
+            $summary = sprintf('overpayment %s amount=%d expected=%d ratio=%.1fx kind=%s — fulfilled but flagged for review',
+                $code, $amount, $expected, $amount / max(1, $expected), $kind);
+            (new AdminFailedOrderQueue())->enqueue(
+                AdminFailedOrderQueue::KIND_AMOUNT_MISMATCH,
+                'OVERPAY-' . $code,
+                $summary,
+                null
+            );
+        } catch (Throwable $e) {
+            app_log('BankWebhook overpay enqueue fail ' . $code . ' ' . $e->getMessage(), 'ERROR');
         }
     }
 }
