@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /ctv/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /r/
+Disallow: /assets/
+
+Sitemap: https://jp-esim.vip/sitemap.xml
