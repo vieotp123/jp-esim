@@ -29,6 +29,28 @@ function admin_ctv_require(): array {
     if (empty($_SESSION['admin_authenticated'])) { session_regenerate_id(true); $_SESSION['admin_authenticated'] = 1; }
     return ['user' => $expectedUser];
 }
+function admin_passkey_required(): bool {
+    return (string)app_config('ADMIN_REQUIRE_PASSKEY', '0') === '1';
+}
+function admin_passkey_verified(): bool {
+    admin_session_start();
+    if (empty($_SESSION['admin_passkey_verified'])) return false;
+    $verifiedAt = (int)($_SESSION['admin_passkey_verified_at'] ?? 0);
+    if ($verifiedAt > 0 && (time() - $verifiedAt) > 28800) {
+        unset($_SESSION['admin_passkey_verified'], $_SESSION['admin_passkey_verified_at']);
+        return false;
+    }
+    return true;
+}
+function admin_require_passkey_if_enabled(): void {
+    if (!admin_passkey_required()) return;
+    if (admin_passkey_verified()) return;
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $exempt = ['/admin/ctv/passkey-api.php', '/admin/ctv/passkey-verify.php'];
+    if (in_array($script, $exempt, true)) return;
+    header('Location: /admin/ctv/passkey-verify.php');
+    exit;
+}
 function admin_nav_active(string $href): string {
     $cur = (string)($_SERVER['SCRIPT_NAME'] ?? '');
     return str_starts_with($cur, $href) ? ' class="active"' : '';
@@ -60,6 +82,7 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Notify</a>
     <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Logs</a>
     <a href="/admin/ctv/audit.php"<?= admin_nav_active('/admin/ctv/audit.php') ?>>Audit</a>
+    <a href="/admin/ctv/passkey-setup.php"<?= admin_nav_active('/admin/ctv/passkey-setup.php') ?>>Passkey</a>
   </nav>
   <span class="right">
     <span class="vip-tag">VIP</span>
