@@ -41,4 +41,4 @@ $target = 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' . raw
 header('Cache-Control: private, no-store');
 header('Referrer-Policy: no-referrer');
 header('Location: ' . $target, true, 302);
-echo "<!doctype html><meta charset=utf-8><title>Đang chuyển…</title><a href=\"" . htmlspecialchars($target, ENT_QUOTES) . "\">Tiếp tục</a>";
+echo '<!doctype html><meta charset=utf-8><title>Đang chuyển…</title><p>Đang chuyển hướng cài đặt eSIM…</p>';

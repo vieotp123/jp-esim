@@ -7,4 +7,4 @@ if ($method === 'GET') {
     if (isset($_GET['id']) && $_GET['id'] !== '') ctv_api_dispatch('orders.get');
     ctv_api_dispatch('orders.list');
 }
-ctv_api_response_error('METHOD_NOT_ALLOWED', 'Method not allowed', 405);
+ctv_api_response_error('METHOD_NOT_ALLOWED', 'Phương thức không hợp lệ', 405);

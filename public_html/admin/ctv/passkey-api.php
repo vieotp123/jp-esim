@@ -17,13 +17,13 @@ try {
 
     switch ($action) {
         case 'register_begin':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $options = $svc->registerBegin('admin', $adminId, $adminUser, $adminUser);
             echo json_encode(['ok' => true, 'data' => $options], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
 
         case 'register_finish':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $body = json_decode((string)file_get_contents('php://input'), true) ?: [];
             $clientDataJSON = base64_decode((string)($body['clientDataJSON'] ?? ''));
             $attestationObject = base64_decode((string)($body['attestationObject'] ?? ''));
@@ -37,13 +37,13 @@ try {
             exit;
 
         case 'authenticate_begin':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $options = $svc->authenticateBegin('admin', $adminId);
             echo json_encode(['ok' => true, 'data' => $options], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
 
         case 'authenticate_finish':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $body = json_decode((string)file_get_contents('php://input'), true) ?: [];
             $credentialIdB64 = (string)($body['credentialId'] ?? '');
             $clientDataJSON = base64_decode((string)($body['clientDataJSON'] ?? ''));
@@ -62,13 +62,13 @@ try {
             exit;
 
         case 'list':
-            if ($_SERVER['REQUEST_METHOD'] !== 'GET') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'GET') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $credentials = $svc->listCredentials('admin', $adminId);
             echo json_encode(['ok' => true, 'data' => ['passkeys' => $credentials]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
 
         case 'revoke':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Method not allowed');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new InvalidArgumentException('Phương thức không hợp lệ');
             $body = json_decode((string)file_get_contents('php://input'), true) ?: [];
             $passkeyId = (int)($body['id'] ?? 0);
             if ($passkeyId <= 0) throw new InvalidArgumentException('ID không hợp lệ');

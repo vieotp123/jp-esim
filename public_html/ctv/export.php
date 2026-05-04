@@ -7,7 +7,7 @@ $user = CtvAuth::requireUser();
 
 $kind = (string)($_GET['kind'] ?? '');
 if ($kind === 'orders' || $kind === 'topups' || $kind === 'wallet' || $kind === 'esims') {
-    if (!CtvAuth::checkCsrf($_GET['_csrf'] ?? null)) { http_response_code(400); echo 'Invalid export token'; exit; }
+    if (!CtvAuth::checkCsrf($_GET['_csrf'] ?? null)) { http_response_code(400); echo 'Mã xác thực không hợp lệ'; exit; }
     $from = (string)($_GET['from'] ?? '');
     $to = (string)($_GET['to'] ?? '');
     $dateWhere = '';
