@@ -110,6 +110,12 @@ After each milestone report:
 6. Owner inputs needed.
 
 ## Latest Autopilot Status
-- 2026-05-04: Retail/CTV QR leak hardening complete. Runtime smoke: lint OK, timer active, retail API leak=0, retail QR PNG OK, homepage leak=0, admin email queue 200, source runtime leaks=0.
-- New docs: `docs/CTV_API.md`.
-- Local/GitHub latest commit: `a1eeed7`.
+- 2026-05-04: Phase C retail/admin hardening complete:
+  - BankWebhookService: zero/negative amount guard, overpayment detection (>=3x flags admin queue)
+  - Admin queue: cancel-order and mark-refunded actions (status=3, no provider calls)
+  - PaymentService: removed orderNo from public SELECT query
+  - TopupService: sanitised provider error messages (generic user-facing, log original)
+  - install.php: Referrer-Policy:no-referrer + X-Content-Type-Options headers
+  - Admin queue: removed EsimAccess provider name from UI text
+  - Full smoke: lint OK, homepage 200, plans API 200, .env 403, admin auth 401, provider leaks=0 (HTML+JS)
+- Local latest commit: `d294077`.
