@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once '/home/foamljf4kvet/app/bootstrap.php';
 security_headers(true);
 $siteKey = htmlspecialchars((string)app_config('RECAPTCHA_SITE', app_config('RC_SITE','')), ENT_QUOTES, 'UTF-8');
-$assetVer = time();
+$assetVer = '20260504c';
 ?>
 <!doctype html>
 <html lang="vi">
@@ -32,7 +32,7 @@ $assetVer = time();
   <?php if ($siteKey): ?><script src="https://www.google.com/recaptcha/api.js?render=explicit" defer></script><?php endif; ?>
   <script src="/assets/app.js?v=<?= $assetVer ?>" defer></script>
 
-<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Organization","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["vi","ja"]}},{"@context":"https://schema.org","@type":"Product","name":"eSIM Nhật Bản","description":"eSIM du lịch Nhật Bản mạng Docomo 4G và au 5G, giao QR tự động sau thanh toán VietQR, hỗ trợ phát WiFi và nạp thêm data.","brand":{"@type":"Brand","name":"jp-esim.vip"},"offers":{"@type":"AggregateOffer","priceCurrency":"VND","availability":"https://schema.org/InStock","offerCount":"10+"}}]</script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Organization","name":"jp-esim.vip","url":"https://jp-esim.vip/","description":"Dịch vụ eSIM Nhật Bản Docomo 4G và au 5G, nhận QR tự động, hỗ trợ nạp thêm data.","areaServed":"JP","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["vi","ja"]}},{"@context":"https://schema.org","@type":"Product","name":"eSIM Nhật Bản","description":"eSIM du lịch Nhật Bản mạng Docomo 4G và au 5G, giao QR tự động sau thanh toán VietQR, hỗ trợ phát WiFi và nạp thêm data.","brand":{"@type":"Brand","name":"jp-esim.vip"},"offers":{"@type":"AggregateOffer","priceCurrency":"VND","lowPrice":"40000","availability":"https://schema.org/InStock","offerCount":"8"}}]</script>
 </head>
 <body>
 <div id="app" class="app-shell">

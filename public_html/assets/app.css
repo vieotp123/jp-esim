@@ -131,3 +131,12 @@ body.light .faq-item summary{color:#1a1a2e}
 .footer-links a:hover{color:var(--green)}
 .footer-copy{color:var(--muted2);font-size:12px;margin:0}
 /* === end VIP overlay === */
+
+/* Safe area for iPhones with home indicator */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .tabbar{bottom:calc(14px + env(safe-area-inset-bottom))}
+  .app-shell{padding-bottom:calc(102px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(98px + env(safe-area-inset-bottom))}
+  .toast.show{bottom:calc(112px + env(safe-area-inset-bottom))}
+  .chat-input-wrap{bottom:calc(88px + env(safe-area-inset-bottom))}
+}

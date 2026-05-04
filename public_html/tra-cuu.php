@@ -25,6 +25,7 @@ if ($orderId !== '') {
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050607">
 <meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="canonical" href="https://jp-esim.vip/tra-cuu.php">
 <title>Tra cứu đơn hàng · jp-esim.vip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,6 +54,15 @@ if ($orderId !== '') {
 .err-card{background:rgba(255,69,58,.10);border:1px solid rgba(255,69,58,.25);color:#fca5a5;border-radius:22px;padding:18px;margin:16px 0;font-weight:700}
 .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:700;font-size:14px;text-decoration:none;margin-top:16px}
 .back-link:hover{color:var(--green)}
+@media(max-width:400px){
+  .track-header h1{font-size:24px}
+  .search-form{flex-direction:column}
+  .search-form button{padding:14px;border-radius:17px;font-size:16px}
+  .progress-step .dot{width:28px;height:28px;font-size:12px}
+  .progress-step .label{font-size:10.5px}
+  .detail-label{font-size:12px}
+  .detail-value{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -106,7 +116,7 @@ if ($orderId !== '') {
     <p style="margin:0 0 6px;color:var(--muted);font-size:13px">Mã: <span style="font-weight:900;color:var(--text)"><?= htmlspecialchars((string)($order['id'] ?? '')) ?></span></p>
 
     <?php if ($expired): ?>
-      <span class="status-pill" style="background:rgba(255,69,58,.12);color:var(--danger);border-color:rgba(255,69,58,.25)">Đã h���t hạn</span>
+      <span class="status-pill" style="background:rgba(255,69,58,.12);color:var(--danger);border-color:rgba(255,69,58,.25)">Đã hết hạn</span>
     <?php elseif ($paid && ($type !== 'order' || $ful === 'esim_ready')): ?>
       <span class="status-pill ok">Hoàn tất</span>
     <?php elseif ($paid): ?>
@@ -164,7 +174,8 @@ if ($orderId !== '') {
 <?php elseif ($orderId === ''): ?>
   <div class="form-card" style="text-align:center;padding:30px 18px">
     <p style="font-size:42px;margin:0 0 10px">🔍</p>
-    <p style="margin:0;color:var(--muted);line-height:1.5">Nhập mã đơn hàng để tra cứu trạng thái.<br>Mã đơn được gửi qua email khi bạn đặt hàng.</p>
+    <p style="margin:0;color:var(--muted);line-height:1.5">Nhập mã đơn hàng để tra cứu trạng thái.<br>Mã đơn có dạng <b>Nxxxxxxx</b> và được gửi qua email khi bạn đặt hàng.</p>
+    <p style="margin:12px 0 0;font-size:13px;color:var(--muted2)">Không tìm thấy mã đơn? Kiểm tra hộp thư email hoặc <a href="/" style="color:var(--green)">liên hệ hỗ trợ</a>.</p>
   </div>
 <?php endif; ?>
 
