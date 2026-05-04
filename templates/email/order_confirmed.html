@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Xác nhận đơn hàng {{orderId}}</title>
+</head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f5f7fb;color:#111827;line-height:1.55;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7fb;">
+<tr><td align="center" style="padding:22px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:16px;border:1px solid #e5e7eb;padding:22px;">
+<tr><td>
+
+<h1 style="margin:0 0 8px;font-size:22px;font-weight:800;">Xác nhận đơn hàng</h1>
+<p style="margin:0 0 18px;font-size:15px;color:#64748b;">Cảm ơn bạn đã đặt hàng! Đơn <strong style="color:#111827;">{{orderId}}</strong> đã được tạo thành công.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5ff;border:1px solid #e5e7eb;padding:16px;border-radius:14px;margin-bottom:16px;">
+<tr><td>
+<div style="margin:0 0 10px;"><span style="color:#64748b;font-size:13px;min-width:110px;">Mã đơn:</span> <strong>{{orderId}}</strong></div>
+<div style="margin:0 0 10px;"><span style="color:#64748b;font-size:13px;min-width:110px;">Gói:</span> <strong>{{planName}}</strong></div>
+<div style="margin:0 0 10px;"><span style="color:#64748b;font-size:13px;min-width:110px;">Số tiền:</span> <strong>{{amount}}</strong></div>
+<div style="margin:0;"><span style="color:#64748b;font-size:13px;min-width:110px;">Ngày đặt:</span> <strong>{{createdAt}}</strong></div>
+</td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e1;border:1px solid #ffe082;padding:16px;border-radius:14px;margin-bottom:16px;">
+<tr><td>
+<p style="margin:0;font-size:14px;line-height:1.5;"><strong>Bước tiếp theo:</strong> Vui lòng thanh toán qua VietQR trong vòng 15 phút. Sau khi nhận tiền, hệ thống sẽ tự động tạo eSIM và gửi QR qua email này.</p>
+</td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+<tr><td align="center">
+<a href="https://jp-esim.vip/tra-cuu.php?id={{orderId}}" style="display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;font-weight:800;padding:14px 22px;border-radius:12px;font-size:16px;">Thanh toán & Tra cứu</a>
+</td></tr>
+</table>
+
+<p style="margin:18px 0 0;color:#64748b;">Trân trọng!<br><strong style="color:#111827;">Đội ngũ jp-esim.vip</strong></p>
+
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
