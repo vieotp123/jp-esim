@@ -30,24 +30,26 @@ admin_layout_header("Nhật ký CTV", $admin);
       $sql = 'SELECT * FROM ctv_provider_logs' . ($ctvFilter ? ' WHERE ctv_id=?' : '') . ' ORDER BY id DESC LIMIT 100';
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
+    <?php if (!$rows): ?><div class="empty"><div class="icon">📡</div><p>Chưa có nhật ký xử lý nào.</p></div><?php else: ?>
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>Mã trạng thái</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>CTV</th><th>Loại</th><th>Endpoint</th><th>HTTP</th><th>Kết quả</th><th>Lỗi</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
         <?php foreach ($rows as $r): ?>
         <tr>
-          <td><?= htmlspecialchars((string)$r['created_at']) ?></td>
-          <td><?= (int)$r['ctv_id'] ?></td>
-          <td><?= htmlspecialchars((string)$r['ref_type']) ?> <?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></td>
-          <td><?= htmlspecialchars((string)$r['endpoint']) ?></td>
+          <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
+          <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a></td>
+          <td><?= htmlspecialchars((string)$r['ref_type']) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></td>
+          <td><span class="muted"><?= htmlspecialchars((string)$r['endpoint']) ?></span></td>
           <td><?= (int)$r['http_status'] ?></td>
-          <td><?= (int)$r['success'] === 1 ? 'Có' : 'Không' ?></td>
-          <td><?= htmlspecialchars((string)($r['error_message'] ?? '')) ?></td>
-          <td style="max-width:280px;overflow:hidden;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['request_redacted'] ?? ''), 0, 220, '…')) ?></td>
-          <td style="max-width:280px;overflow:hidden;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['response_redacted'] ?? ''), 0, 220, '…')) ?></td>
+          <td><span class="tag <?= (int)$r['success'] === 1 ? 'ok' : 'err' ?>"><?= (int)$r['success'] === 1 ? 'OK' : 'Lỗi' ?></span></td>
+          <td style="max-width:200px"><?= htmlspecialchars(mb_strimwidth((string)($r['error_message'] ?? ''), 0, 150, '…')) ?></td>
+          <td style="max-width:240px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['request_redacted'] ?? ''), 0, 180, '…')) ?></td>
+          <td style="max-width:240px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['response_redacted'] ?? ''), 0, 180, '…')) ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
+    <?php endif; ?>
   <?php elseif ($kind === 'wallet'): ?>
     <?php
       $sql = 'SELECT t.*, u.email FROM ctv_wallet_transactions t LEFT JOIN ctv_users u ON u.id=t.ctv_id'
@@ -55,23 +57,26 @@ admin_layout_header("Nhật ký CTV", $admin);
            . ' ORDER BY t.id DESC LIMIT 200';
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
+    <?php if (!$rows): ?><div class="empty"><div class="icon">💰</div><p>Chưa có giao dịch ví nào.</p></div><?php else: ?>
+    <?php $reasonVi = ['admin_credit'=>'Admin nạp','admin_debit'=>'Admin trừ','order_charge'=>'Phí đơn','order_refund'=>'Hoàn tiền đơn','order_retry'=>'Thử lại đơn','topup_charge'=>'Phí nạp data','topup_refund'=>'Hoàn tiền nạp data','topup_request'=>'Yêu cầu nạp ví']; ?>
     <table>
       <thead><tr><th>Thời gian</th><th>CTV</th><th>Lý do</th><th>Số tiền</th><th>Số dư sau</th><th>Tham chiếu</th><th>Ghi chú</th><th>Admin</th></tr></thead>
       <tbody>
-        <?php foreach ($rows as $r): ?>
+        <?php foreach ($rows as $r): $amt = (int)$r['amount']; ?>
         <tr>
-          <td><?= htmlspecialchars((string)$r['created_at']) ?></td>
+          <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
           <td><?= htmlspecialchars((string)$r['email']) ?></td>
-          <td><?= htmlspecialchars((string)$r['reason']) ?></td>
-          <td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
+          <td><span class="tag <?= $amt >= 0 ? 'ok' : 'err' ?>"><?= htmlspecialchars($reasonVi[(string)$r['reason']] ?? (string)$r['reason']) ?></span></td>
+          <td style="color:<?= $amt >= 0 ? 'var(--a-green)' : 'var(--a-red)' ?>"><?= $amt >= 0 ? '+' : '' ?><?= htmlspecialchars(format_vnd($amt)) ?></td>
           <td><?= htmlspecialchars(format_vnd((int)$r['balance_after'])) ?></td>
-          <td><?= htmlspecialchars((string)($r['ref_type'] ?? '')) ?> <?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></td>
-          <td><?= htmlspecialchars((string)($r['note'] ?? '')) ?></td>
-          <td><?= htmlspecialchars((string)($r['admin_user'] ?? '')) ?></td>
+          <td><?= htmlspecialchars((string)($r['ref_type'] ?? '')) ?> <span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></td>
+          <td><span class="muted"><?= htmlspecialchars(mb_strimwidth((string)($r['note'] ?? ''), 0, 80, '…')) ?></span></td>
+          <td><span class="muted"><?= htmlspecialchars((string)($r['admin_user'] ?? '')) ?></span></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
+    <?php endif; ?>
   <?php else: ?>
     <?php
       $sql = 'SELECT l.*, u.email FROM ctv_api_logs l LEFT JOIN ctv_users u ON u.id=l.ctv_id'
@@ -79,24 +84,26 @@ admin_layout_header("Nhật ký CTV", $admin);
            . ' ORDER BY l.id DESC LIMIT 200';
       $st = db()->prepare($sql); $st->execute($ctvFilter ? [$ctvFilter] : []); $rows = $st->fetchAll();
     ?>
+    <?php if (!$rows): ?><div class="empty"><div class="icon">🔌</div><p>Chưa có nhật ký API nào.</p></div><?php else: ?>
     <table>
-      <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>Mã trạng thái</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
+      <thead><tr><th>Thời gian</th><th>CTV</th><th>IP</th><th>Endpoint</th><th>Phương thức</th><th>HTTP</th><th>Thời lượng</th><th>Yêu cầu</th><th>Phản hồi</th></tr></thead>
       <tbody>
-        <?php foreach ($rows as $r): ?>
+        <?php foreach ($rows as $r): $httpCode = (int)($r['response_status'] ?? 0); ?>
         <tr>
-          <td><?= htmlspecialchars((string)$r['created_at']) ?></td>
+          <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
           <td><?= htmlspecialchars((string)($r['email'] ?? '')) ?></td>
-          <td><?= htmlspecialchars((string)($r['ip'] ?? '')) ?></td>
-          <td><?= htmlspecialchars((string)$r['endpoint']) ?></td>
-          <td><?= htmlspecialchars((string)$r['method']) ?></td>
-          <td><?= (int)($r['response_status'] ?? 0) ?></td>
+          <td><span class="muted"><?= htmlspecialchars((string)($r['ip'] ?? '')) ?></span></td>
+          <td><span class="muted"><?= htmlspecialchars((string)$r['endpoint']) ?></span></td>
+          <td><span class="tag"><?= htmlspecialchars((string)$r['method']) ?></span></td>
+          <td><span class="tag <?= $httpCode >= 200 && $httpCode < 300 ? 'ok' : ($httpCode >= 400 ? 'err' : 'warn') ?>"><?= $httpCode ?></span></td>
           <td><?= (int)($r['duration_ms'] ?? 0) ?>ms</td>
-          <td style="max-width:260px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['request_summary'] ?? ''), 0, 200, '…')) ?></td>
-          <td style="max-width:260px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['response_summary'] ?? ''), 0, 200, '…')) ?></td>
+          <td style="max-width:220px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['request_summary'] ?? ''), 0, 180, '…')) ?></td>
+          <td style="max-width:220px;font-family:monospace;font-size:12px;"><?= htmlspecialchars(mb_strimwidth((string)($r['response_summary'] ?? ''), 0, 180, '…')) ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
+    <?php endif; ?>
   <?php endif; ?>
 </div>
 <?php admin_layout_footer();

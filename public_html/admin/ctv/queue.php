@@ -20,13 +20,13 @@ try {
         $st->execute([$id]); $row = $st->fetch();
         if (!$row) throw new RuntimeException('Không tìm thấy mục #' . $id);
         if ($action === 'resolve') {
-            $resolverNote = $note !== '' ? $note : ('Resolved by ' . $admin['user']);
+            $resolverNote = $note !== '' ? $note : ('Đã xử lý bởi ' . $admin['user']);
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $resolverNote, $id]);
             AuditLog::log($admin['user'], 'queue_resolve', 'queue', (string)$id, ['ref' => $row['ref_id'], 'kind' => $row['kind'], 'note' => $resolverNote]);
             $flash = ['ok', 'Đã đánh dấu giải quyết #' . $id];
         } elseif ($action === 'ignore') {
-            $resolverNote = $note !== '' ? $note : ('Ignored by ' . $admin['user']);
+            $resolverNote = $note !== '' ? $note : ('Bỏ qua bởi ' . $admin['user']);
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['ignored', $resolverNote, $id]);
             AuditLog::log($admin['user'], 'queue_ignore', 'queue', (string)$id, ['ref' => $row['ref_id'], 'kind' => $row['kind'], 'note' => $resolverNote]);
@@ -48,7 +48,7 @@ try {
                 db()->prepare('UPDATE topup_order SET status=3, updated_at=NOW() WHERE tid=? AND status IN (0,2)')
                     ->execute([$stripped]);
             }
-            $cancelNote = '[cancelled] ' . ($note !== '' ? $note : 'Admin cancel') . ' by ' . $admin['user'];
+            $cancelNote = '[đã huỷ] ' . ($note !== '' ? $note : 'Admin huỷ đơn') . ' bởi ' . $admin['user'];
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $cancelNote, $id]);
             AuditLog::log($admin['user'], 'queue_cancel', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $cancelNote]);
@@ -65,7 +65,7 @@ try {
                 db()->prepare('UPDATE topup_order SET status=3, updated_at=NOW() WHERE tid=? AND status IN (0,2)')
                     ->execute([$stripped]);
             }
-            $refundNote = '[refunded] ' . ($note !== '' ? $note : 'Manual bank refund confirmed') . ' by ' . $admin['user'];
+            $refundNote = '[hoàn tiền] ' . ($note !== '' ? $note : 'Xác nhận hoàn tiền thủ công') . ' bởi ' . $admin['user'];
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $refundNote, $id]);
             AuditLog::log($admin['user'], 'queue_refund', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $refundNote]);
@@ -91,10 +91,10 @@ try {
                 }
                 if ($ok) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                        ->execute(['resolved', '[email retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        ->execute(['resolved', '[email gửi lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
                     $flash = ['ok', 'Đã gửi lại email cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
                 } else {
-                    $flash = ['err', 'Resend email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra Mailgun/logs.'];
+                    $flash = ['err', 'Gửi lại email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra nhật ký.'];
                 }
             } else {
                 $providerTest = LegacyProviderClient::isTestMode();
@@ -105,25 +105,25 @@ try {
                 $result = null;
                 if ($isTestDemo) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                        ->execute(['resolved', '[demo retry] ' . ($note !== '' ? $note : 'Demo retry pass — admin: ' . $admin['user']), $id]);
-                    $flash = ['ok', 'Demo retry #' . $id . ' (ref ' . htmlspecialchars($refId) . ') — đã đánh dấu resolved (không gọi API thật).'];
+                        ->execute(['resolved', '[demo] ' . ($note !== '' ? $note : 'Demo thử lại — admin: ' . $admin['user']), $id]);
+                    $flash = ['ok', 'Demo thử lại #' . $id . ' (ref ' . htmlspecialchars($refId) . ') — đã đánh dấu đã xử lý (không gọi API thật).'];
                 } elseif ($first === 'N') {
                     $result = $svc->fulfillPaidOrder($stripped);
                     if (!empty($result['success'])) {
                         db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                            ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
-                        $flash = ['ok', 'Retry order ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        $flash = ['ok', 'Thử lại đơn ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
-                        $flash = ['err', 'Retry order ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                        $flash = ['err', 'Thử lại đơn ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];
                     }
                 } elseif ($first === 'T') {
                     $result = $svc->fulfillPaidTopup($stripped);
                     if (!empty($result['success'])) {
                         db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
-                            ->execute(['resolved', '[retry pass] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
-                        $flash = ['ok', 'Retry topup ' . $stripped . ' thành công — đã đánh dấu resolved.'];
+                            ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' by ' . $admin['user'], $id]);
+                        $flash = ['ok', 'Thử lại nạp data ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
-                        $flash = ['err', 'Retry topup ' . $stripped . ' vẫn fail: ' . htmlspecialchars((string)($result['reason'] ?? 'unknown'))];
+                        $flash = ['err', 'Thử lại nạp data ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];
                     }
                 } else {
                     throw new RuntimeException('Không nhận diện được loại ref (cần N* hoặc T*): ' . htmlspecialchars($refId));
