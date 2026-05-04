@@ -33,10 +33,28 @@ ctv_layout_header('Tổng quan', $user);
 ctv_flash_render();
 ?>
 <style>
-  .dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+  .dash-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px}
   .dash-metric{background:var(--c-card);border:1px solid var(--c-line);border-radius:12px;padding:14px}
-  .dash-metric b{display:block;color:var(--c-muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}.dash-metric .num{font-size:28px;font-weight:800;margin-top:6px}
-  .bars{display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:10px}.bar{flex:1;background:linear-gradient(180deg,var(--c-gold-2),var(--c-gold-deep));border-radius:6px 6px 2px 2px;min-height:3px;position:relative}.bar:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3}.top-list{display:grid;gap:8px}.top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--c-line);background:var(--c-card);border-radius:10px;padding:10px 12px}.top-item span{color:var(--c-muted)}
+  .dash-metric b{display:block;color:var(--c-muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .dash-metric .num{font-size:28px;font-weight:800;margin-top:6px}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:140px;padding-top:10px}
+  .bar{flex:1;background:linear-gradient(180deg,var(--c-gold-2),var(--c-gold-deep));border-radius:5px 5px 2px 2px;min-height:3px;position:relative;min-width:0}
+  .bar:hover::after,.bar:active::after{content:attr(data-tip);position:absolute;left:50%;bottom:105%;transform:translateX(-50%);white-space:nowrap;background:#fff;color:#111;padding:4px 7px;border-radius:6px;font-size:11px;z-index:3;pointer-events:none}
+  .top-list{display:grid;gap:8px}
+  .top-item{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--c-line);background:var(--c-card);border-radius:10px;padding:10px 12px}
+  .top-item span{color:var(--c-muted)}
+  .chart-card{grid-column:1/-1}
+  @media(max-width:760px){
+    .dash-metrics{grid-template-columns:repeat(2,1fr)}
+    .dash-metric .num{font-size:22px}
+    .bars{height:110px;gap:2px}
+    .bar:hover::after,.bar:active::after{font-size:10px;padding:3px 5px}
+  }
+  @media(max-width:480px){
+    .dash-metrics{grid-template-columns:1fr 1fr}
+    .dash-metric{padding:10px}
+    .dash-metric .num{font-size:20px}
+  }
 </style>
 <div class="dash-metrics">
   <div class="dash-metric"><b>Tổng đơn</b><div class="num"><?= $totalOrders ?></div></div>
@@ -62,7 +80,7 @@ ctv_flash_render();
 
 
 <div class="grid">
-  <div class="card" style="grid-column:span 2">
+  <div class="card chart-card">
     <h2>Doanh thu 30 ngày</h2>
     <div class="bars">
       <?php foreach ($chart as $r): $h=max(3,(int)round(((int)$r['revenue']/$maxRevenue)*150)); ?>
@@ -73,7 +91,7 @@ ctv_flash_render();
   </div>
   <div class="card">
     <h2>Top sản phẩm</h2>
-    <?php if (!$topProducts): ?><p class="muted">Chưa có dữ liệu.</p><?php else: ?><div class="top-list">
+    <?php if (!$topProducts): ?><div class="empty-state"><div class="icon">📊</div><p>Chưa có dữ liệu sản phẩm.</p></div><?php else: ?><div class="top-list">
       <?php foreach ($topProducts as $p): ?><div class="top-item"><div><strong><?= htmlspecialchars((string)$p['carrier'].' '.(string)$p['plan_name']) ?></strong><br><span><?= htmlspecialchars((string)$p['pack_code']) ?></span></div><div><strong><?= (int)$p['cnt'] ?></strong><br><span><?= htmlspecialchars(format_vnd((int)$p['revenue'])) ?></span></div></div><?php endforeach; ?>
     </div><?php endif; ?>
   </div>

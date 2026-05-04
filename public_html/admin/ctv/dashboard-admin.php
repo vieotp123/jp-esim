@@ -49,10 +49,10 @@ admin_layout_header('Tổng quan Admin', $admin);
   <div class="card"><b>Doanh thu 7 ngày</b><h2><?= htmlspecialchars(format_vnd($rev7d)) ?></h2></div>
   <div class="card"><b>Doanh thu 30 ngày</b><h2><?= htmlspecialchars(format_vnd($rev30d)) ?></h2></div>
   <div class="card"><b>CTV hoạt động</b><h2><?= $ctvActive ?></h2><div class="sub">Chờ xác minh: <?= $ctvPending ?> · Vô hiệu: <?= $ctvDisabled ?></div></div>
-  <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Đơn lỗi</b><h2><?= $queueTotal ?></h2><div class="sub"><?php foreach ($queueMap as $k => $v) echo htmlspecialchars($k) . ':' . $v . ' '; ?></div></div>
+  <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Đơn cần xử lý</b><h2><?= $queueTotal ?></h2><?php if ($queueMap): ?><div class="sub"><?php $kindVi=['amount_mismatch'=>'Sai số tiền','fulfillment_error'=>'Lỗi xử lý','email_error'=>'Lỗi email','payment_orphan'=>'Thiếu đơn']; foreach ($queueMap as $k => $v) echo '<span class="tag err" style="margin:2px">'.htmlspecialchars($kindVi[$k] ?? $k).': '.$v.'</span> '; ?></div><?php endif; ?></div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="dash-grid">
 <div class="card">
   <h2>Top 5 CTV (30 ngày)</h2>
   <?php if ($top5): ?>
@@ -65,7 +65,7 @@ admin_layout_header('Tổng quan Admin', $admin);
   </tr>
   <?php endforeach; ?>
   </tbody></table>
-  <?php else: ?><p class="muted">Chưa có dữ liệu.</p><?php endif; ?>
+  <?php else: ?><div class="empty"><div class="icon">📊</div><p>Chưa có dữ liệu 30 ngày.</p></div><?php endif; ?>
 </div>
 
 <div class="card">
