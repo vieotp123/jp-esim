@@ -15,7 +15,7 @@ try {
         $note = trim((string)($_POST['note'] ?? ''));
         if (mb_strlen($note) > 1000) $note = mb_substr($note, 0, 1000);
         if ($id <= 0) throw new RuntimeException('ID không hợp lệ');
-        if (!in_array($action, ['resolve','ignore','reopen','retry'], true)) throw new RuntimeException('Hành động không hỗ trợ');
+        if (!in_array($action, ['resolve','ignore','reopen','retry','cancel_order','mark_refunded'], true)) throw new RuntimeException('Hành động không hỗ trợ');
         $st = db()->prepare('SELECT id, kind, ref_id, status FROM order_admin_queue WHERE id=? LIMIT 1');
         $st->execute([$id]); $row = $st->fetch();
         if (!$row) throw new RuntimeException('Không tìm thấy mục #' . $id);
@@ -33,11 +33,43 @@ try {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NULL, resolver_note=? WHERE id=?')
                 ->execute(['open', $note !== '' ? $note : null, $id]);
             $flash = ['ok', 'Đã mở lại #' . $id];
+        } elseif ($action === 'cancel_order') {
+            $refId = (string)($row['ref_id'] ?? '');
+            $stripped = str_starts_with($refId, 'TEST-DEMO-') ? substr($refId, strlen('TEST-DEMO-')) : $refId;
+            $stripped = str_starts_with($stripped, 'OVERPAY-') ? substr($stripped, strlen('OVERPAY-')) : $stripped;
+            $first = strtoupper(substr($stripped, 0, 1));
+            if ($first === 'N') {
+                db()->prepare('UPDATE `order` SET status=3, updated_at=NOW() WHERE order_id=? AND status IN (0,2)')
+                    ->execute([$stripped]);
+            } elseif ($first === 'T') {
+                db()->prepare('UPDATE topup_order SET status=3, updated_at=NOW() WHERE tid=? AND status IN (0,2)')
+                    ->execute([$stripped]);
+            }
+            $cancelNote = '[cancelled] ' . ($note !== '' ? $note : 'Admin cancel') . ' by ' . $admin['user'];
+            db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
+                ->execute(['resolved', $cancelNote, $id]);
+            $flash = ['warn', 'Đã huỷ đơn ' . htmlspecialchars($stripped) . ' và đóng mục #' . $id . ' — không gọi provider.'];
+        } elseif ($action === 'mark_refunded') {
+            $refId = (string)($row['ref_id'] ?? '');
+            $stripped = str_starts_with($refId, 'TEST-DEMO-') ? substr($refId, strlen('TEST-DEMO-')) : $refId;
+            $stripped = str_starts_with($stripped, 'OVERPAY-') ? substr($stripped, strlen('OVERPAY-')) : $stripped;
+            $first = strtoupper(substr($stripped, 0, 1));
+            if ($first === 'N') {
+                db()->prepare('UPDATE `order` SET status=3, updated_at=NOW() WHERE order_id=? AND status IN (0,2)')
+                    ->execute([$stripped]);
+            } elseif ($first === 'T') {
+                db()->prepare('UPDATE topup_order SET status=3, updated_at=NOW() WHERE tid=? AND status IN (0,2)')
+                    ->execute([$stripped]);
+            }
+            $refundNote = '[refunded] ' . ($note !== '' ? $note : 'Manual bank refund confirmed') . ' by ' . $admin['user'];
+            db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
+                ->execute(['resolved', $refundNote, $id]);
+            $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . htmlspecialchars($stripped) . ' — không gọi provider/bank API.'];
         } elseif ($action === 'retry') {
             $refId = (string)($row['ref_id'] ?? '');
             $kind  = (string)($row['kind'] ?? '');
             if ($kind === 'amount_mismatch') {
-                throw new RuntimeException('amount_mismatch không retry tự động — cần Resolve/Ignore thủ công.');
+                throw new RuntimeException('amount_mismatch không retry tự động — dùng Cancel/Refund hoặc Resolve thủ công.');
             }
 
             $isTestDemo = str_starts_with($refId, 'TEST-DEMO-');
@@ -45,7 +77,6 @@ try {
             $first = strtoupper(substr($stripped, 0, 1));
 
             if ($kind === 'email_error') {
-                // Email retry must not call the provider again. It only resends the customer email.
                 if ($first === 'N') {
                     $ok = $isTestDemo ? true : (new MailService())->sendOrderIfNeeded($stripped);
                 } elseif ($first === 'T') {
@@ -61,7 +92,6 @@ try {
                     $flash = ['err', 'Resend email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra Mailgun/logs.'];
                 }
             } else {
-                // Provider retry. Tôn trọng test-mode + TEST-DEMO ref để tránh gọi API thật ngoài ý muốn.
                 $providerTest = LegacyProviderClient::isTestMode();
                 if (!$isTestDemo && !$providerTest) {
                     throw new RuntimeException('Provider retry bị chặn: cần PROVIDER_TEST_MODE=1 hoặc ref TEST-DEMO-* (an toàn). Bật env và refresh.');
@@ -229,8 +259,23 @@ admin_layout_header('Failed Order Queue', $admin);
               <?php endif; ?>
             <?php endif; ?>
             <details>
-              <summary>Resolve</summary>
-              <form method="post" style="margin-top:8px">
+              <summary>Cancel / Refund / Resolve</summary>
+              <form method="post" style="margin-top:8px" onsubmit="return confirm('HUỶ ĐƠN: Đặt status=3 (cancelled) cho đơn gốc.\nKhông gọi provider API.\nKhông hoàn tiền tự động — cần chuyển khoản thủ công nếu cần.');">
+                <?php admin_csrf_field(); ?>
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <input type="hidden" name="action" value="cancel_order">
+                <input type="text" name="note" placeholder="Lý do huỷ đơn (tuỳ chọn)" maxlength="500" style="width:100%;margin-bottom:6px">
+                <button class="btn danger sm">✕ Huỷ đơn</button>
+              </form>
+              <form method="post" style="margin-top:6px" onsubmit="return confirm('ĐÁNH DẤU HOÀN TIỀN: Đặt status=3 cho đơn gốc.\nKhông gọi bank/provider API — chỉ ghi nhận đã hoàn tiền thủ công.\nXác nhận đã chuyển khoản hoàn lại cho khách?');">
+                <?php admin_csrf_field(); ?>
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <input type="hidden" name="action" value="mark_refunded">
+                <input type="text" name="note" placeholder="Ghi chú hoàn tiền (số tiền, ref chuyển khoản...)" maxlength="500" style="width:100%;margin-bottom:6px">
+                <button class="btn gold sm">↩ Đánh dấu đã hoàn tiền</button>
+              </form>
+              <hr style="border-color:var(--a-line);margin:10px 0">
+              <form method="post" style="margin-top:6px">
                 <?php admin_csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="resolve">
@@ -265,9 +310,16 @@ admin_layout_header('Failed Order Queue', $admin);
   <h3>Hướng dẫn</h3>
   <p class="muted">Hàng đợi này được điền tự động bởi <span class="kbd">BankWebhookService</span> và <span class="kbd">RetailFulfillmentService</span> khi gặp:</p>
   <ul class="muted" style="margin:0;padding-left:20px;line-height:1.8">
-    <li><b>amount_mismatch</b> — webhook NH nhận tiền nhưng số tiền không khớp đơn → cần xác nhận thủ công và refund/bù.</li>
+    <li><b>amount_mismatch</b> — webhook NH nhận tiền nhưng số tiền không khớp đơn → dùng Huỷ đơn hoặc Đánh dấu hoàn tiền.</li>
     <li><b>provider_error</b> — gọi EsimAccess thất bại sau khi đã xác nhận thanh toán → cần retry hoặc refund.</li>
     <li><b>email_error</b> — eSIM đã tạo thành công nhưng gửi email QR thất bại → cần resend hoặc liên hệ khách.</li>
+  </ul>
+  <h4 style="margin-top:12px">Hành động:</h4>
+  <ul class="muted" style="margin:0;padding-left:20px;line-height:1.8">
+    <li><b>Huỷ đơn</b> — đặt order/topup status=3 (cancelled). Không gọi provider. Cần hoàn tiền thủ công.</li>
+    <li><b>Đánh dấu hoàn tiền</b> — đặt order/topup status=3 + ghi nhận đã hoàn tiền. Không gọi bank/provider API.</li>
+    <li><b>Retry</b> — chỉ hoạt động khi PROVIDER_TEST_MODE=1 hoặc email_error. Không dùng cho amount_mismatch.</li>
+    <li><b>Resolve/Ignore</b> — đóng mục mà không thay đổi trạng thái đơn gốc.</li>
   </ul>
 </div>
 <?php admin_layout_footer();
