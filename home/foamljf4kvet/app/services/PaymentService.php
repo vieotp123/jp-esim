@@ -42,7 +42,7 @@ final class PaymentService {
             return array_merge(vietqr_payload($id, (int)$r['price'], 'topup'), $base, $this->paymentExpiryFields((string)($r['created_at'] ?? '')));
         }
 
-        $sql = 'SELECT order_id,status,total,paid_at,muasim,getinfosim,emailsent,orderNo,iccid,created_at,plan_name,carrier FROM `order` WHERE order_id=? LIMIT 1';
+        $sql = 'SELECT order_id,status,total,paid_at,muasim,getinfosim,emailsent,iccid,created_at,plan_name,carrier FROM `order` WHERE order_id=? LIMIT 1';
         $st = $pdo->prepare($sql);
         $st->execute([$id]);
         $r = $st->fetch();

@@ -25,4 +25,6 @@ $base = $os === 'ios'
     : 'https://esimsetup.android.com/esim_qrcode_provisioning';
 header('Location: ' . $base . '?carddata=' . rawurlencode($ac), true, 302);
 header('Cache-Control: private, no-store');
+header('Referrer-Policy: no-referrer');
+header('X-Content-Type-Options: nosniff');
 exit;

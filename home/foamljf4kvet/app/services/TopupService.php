@@ -79,8 +79,8 @@ final class TopupService {
     private function queryRemoteByIccid(string $iccid): array {
         $api = (new EsimAccessClient())->queryOrder(null, null, $iccid);
         if (empty($api['success'])) {
-            $msg = (string)($api['errorMsg'] ?? $api['msg'] ?? 'Không lấy được thông tin eSIM từ nhà cung cấp');
-            throw new RuntimeException($msg);
+            app_log('TopupService queryRemoteByIccid failed iccid=' . substr($iccid, 0, 6) . '*** msg=' . ($api['errorMsg'] ?? $api['msg'] ?? ''), 'WARN');
+            throw new RuntimeException('Không lấy được thông tin eSIM. Vui lòng kiểm tra lại ICCID hoặc thử lại sau.');
         }
         $e = $api['obj']['esimList'][0] ?? null;
         if (!$e) throw new RuntimeException('Không tìm thấy eSIM theo ICCID này');
