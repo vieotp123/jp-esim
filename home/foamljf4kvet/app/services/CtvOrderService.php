@@ -105,7 +105,6 @@ final class CtvOrderService {
             'status' => $statusMap[(int)$r['status']] ?? 'unknown',
             'source' => (string)$r['source'],
             'iccid' => (string)($r['iccid'] ?? ''),
-            'providerOrderNo' => (string)($r['provider_order_no'] ?? ''),
             'errorMessage' => (string)($r['error_message'] ?? ''),
             'needsAdmin' => (int)$r['needs_admin'] === 1,
             'createdAt' => $r['created_at'],

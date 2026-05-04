@@ -2,19 +2,19 @@
 
 ## Project State
 - current_project: jpesim
-- current_task: Phase A - fix Google reCAPTCHA v2 invisible checkout flow
-- current_phase: Phase A
+- current_task: Phase B/C hardening - CTV/API/retail QR leak prevention and operational polish
+- current_phase: Phase B/C
 - web_url: https://jp-esim.vip
-- captcha_status: Phase A code updated for reCAPTCHA v2 invisible; needs real browser token test and matching secret confirmation
-- ctv_status: Phase B v1 scaffold landed (auth, wallet, pricing, orders, topup, api keys, admin foundation, migration 001_ctv_foundation.sql) — needs DB migration applied + Mailgun + admin password configured before go-live
+- captcha_status: v2 invisible code deployed; smoke passed (homepage 200, plans API 200, missing captcha returns CAPTCHA_FAILED, .env 403, PHP/JS syntax OK); still needs optional real browser token test if owner wants final Google key-pair confirmation
+- ctv_status: Phase B v1 live scaffold hardened: auth, wallet, pricing, orders, topup UI, API keys, QR proxy, email QR DRY_RUN, admin email queue, dashboard metrics, CTV API docs; provider-domain leak audit passed
 - admin_status: existing admin features must be read before extension
 - provider_api_status: use legacy provider URLs from env (`ESIM_ORDER_URL`, `ESIM_TOPUP_URL`, `ESIM_QUERY_URL`), not EsimAccess priority
-- github_status: unknown; check before commit/push
+- github_status: pushed main to GitHub via temporary GIT_ASKPASS; latest pushed commit a1eeed7
 - current_model: cx/gpt-5.5 via 9Router for Hermes brain
 - fallback_active: false; use cc/claude-opus-4-7 via 9Router if GPT-5.5 quota is exhausted
 - claude_cli_status: installed on VPS, but not logged in as of latest check (`claude -p` returned login required)
-- blocked_reason: none for local code inspection; Claude CLI coding is blocked until `/login` is completed
-- next_action: real browser checkout token test; if Google returns secret/key mismatch, owner must provide matching RECAPTCHA_SECRET
+- blocked_reason: none for current GPT-5.5/Hermes work; Claude CLI direct remains optional and must not use Anthropic direct for brain routing
+- next_action: optional real browser checkout token test; otherwise continue Phase C retail webhook/order retry/admin operations hardening
 
 ## Operating Rules
 - Read source, database schema, and env/config before large changes.
@@ -108,3 +108,8 @@ After each milestone report:
 4. Test results.
 5. Commit/push status.
 6. Owner inputs needed.
+
+## Latest Autopilot Status
+- 2026-05-04: Retail/CTV QR leak hardening complete. Runtime smoke: lint OK, timer active, retail API leak=0, retail QR PNG OK, homepage leak=0, admin email queue 200, source runtime leaks=0.
+- New docs: `docs/CTV_API.md`.
+- Local/GitHub latest commit: `a1eeed7`.
