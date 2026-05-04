@@ -1,0 +1,102 @@
+<?php
+declare(strict_types=1);
+require_once '/home/foamljf4kvet/app/bootstrap.php';
+require_once __DIR__ . '/_guard.php';
+$admin = admin_ctv_require();
+$pdo = db();
+
+$revenueRetail = function (string $interval) use ($pdo): int {
+    $st = $pdo->prepare("SELECT COALESCE(SUM(total),0) FROM `order` WHERE status >= 2 AND paid_at >= (NOW() - INTERVAL $interval)");
+    $st->execute();
+    return (int)$st->fetchColumn();
+};
+$revenueCtv = function (string $interval) use ($pdo): int {
+    $st = $pdo->prepare("SELECT COALESCE(SUM(total_charge),0) FROM ctv_orders WHERE status=2 AND created_at >= (NOW() - INTERVAL $interval)");
+    $st->execute();
+    return (int)$st->fetchColumn();
+};
+
+$revToday = $revenueRetail('1 DAY') + $revenueCtv('1 DAY');
+$rev7d = $revenueRetail('7 DAY') + $revenueCtv('7 DAY');
+$rev30d = $revenueRetail('30 DAY') + $revenueCtv('30 DAY');
+
+$ctvActive = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=1")->fetchColumn();
+$ctvPending = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=1 AND email_verified=0")->fetchColumn();
+$ctvDisabled = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=0")->fetchColumn();
+
+$top5 = $pdo->query("SELECT u.id, u.email, u.company_name, SUM(o.total_charge) rev, COUNT(*) cnt FROM ctv_orders o JOIN ctv_users u ON u.id=o.ctv_id WHERE o.status=2 AND o.created_at >= (CURDATE() - INTERVAL 30 DAY) GROUP BY u.id ORDER BY rev DESC LIMIT 5")->fetchAll();
+
+$orderStats = $pdo->query("SELECT 'retail' src, status, COUNT(*) cnt FROM `order` GROUP BY status UNION ALL SELECT 'ctv' src, status, COUNT(*) cnt FROM ctv_orders GROUP BY status")->fetchAll();
+$orderBreakdown = [];
+foreach ($orderStats as $r) {
+    $src = (string)$r['src'];
+    $s = (int)$r['status'];
+    $label = match ($s) { 0 => 'pending', 1 => 'expired', 2 => 'paid/success', 3 => 'failed', default => 'other' };
+    $orderBreakdown[$src][$label] = ($orderBreakdown[$src][$label] ?? 0) + (int)$r['cnt'];
+}
+
+$queueCounts = $pdo->query("SELECT kind, COUNT(*) cnt FROM order_admin_queue WHERE status='open' GROUP BY kind")->fetchAll();
+$queueMap = [];
+foreach ($queueCounts as $r) $queueMap[(string)$r['kind']] = (int)$r['cnt'];
+$queueTotal = array_sum($queueMap);
+
+$recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY id DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();
+
+admin_layout_header('Admin Dashboard', $admin);
+?>
+<div class="summary">
+  <div class="card gold"><b>Revenue hôm nay</b><h2><?= htmlspecialchars(format_vnd($revToday)) ?></h2><div class="sub">retail + CTV</div></div>
+  <div class="card"><b>Revenue 7 ngày</b><h2><?= htmlspecialchars(format_vnd($rev7d)) ?></h2></div>
+  <div class="card"><b>Revenue 30 ngày</b><h2><?= htmlspecialchars(format_vnd($rev30d)) ?></h2></div>
+  <div class="card"><b>CTV Active</b><h2><?= $ctvActive ?></h2><div class="sub">Pending: <?= $ctvPending ?> · Disabled: <?= $ctvDisabled ?></div></div>
+  <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Failed Queue</b><h2><?= $queueTotal ?></h2><div class="sub"><?php foreach ($queueMap as $k => $v) echo htmlspecialchars($k) . ':' . $v . ' '; ?></div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="card">
+  <h2>Top 5 CTV (30 ngày)</h2>
+  <?php if ($top5): ?>
+  <table><thead><tr><th>CTV</th><th>Đơn</th><th>Doanh thu</th></tr></thead><tbody>
+  <?php foreach ($top5 as $t): ?>
+  <tr>
+    <td><a class="rowlink" href="/admin/ctv/view.php?id=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?></a> <?= htmlspecialchars((string)($t['company_name'] ?: $t['email'])) ?></td>
+    <td><?= (int)$t['cnt'] ?></td>
+    <td><?= htmlspecialchars(format_vnd((int)$t['rev'])) ?></td>
+  </tr>
+  <?php endforeach; ?>
+  </tbody></table>
+  <?php else: ?><p class="muted">Chưa có dữ liệu.</p><?php endif; ?>
+</div>
+
+<div class="card">
+  <h2>Orders by Status</h2>
+  <?php foreach (['retail', 'ctv'] as $src): ?>
+  <h3><?= strtoupper($src) ?></h3>
+  <div class="filter-row">
+    <?php foreach ($orderBreakdown[$src] ?? [] as $label => $cnt): ?>
+      <span class="tag <?= $label === 'paid/success' ? 'ok' : ($label === 'failed' ? 'err' : ($label === 'pending' ? 'warn' : 'info')) ?>"><?= htmlspecialchars($label) ?>: <?= $cnt ?></span>
+    <?php endforeach; ?>
+  </div>
+  <?php endforeach; ?>
+</div>
+</div>
+
+<div class="card">
+  <h2>10 Đơn gần nhất (Retail + CTV)</h2>
+  <table><thead><tr><th>Nguồn</th><th>Mã đơn</th><th>Status</th><th>Số tiền</th><th>Thời gian</th></tr></thead><tbody>
+  <?php foreach ($recent as $r):
+    $s = (int)$r['status'];
+    $sLabel = match ($s) { 0 => 'pending', 1 => 'expired', 2 => 'success', 3 => 'failed', default => (string)$s };
+    $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
+  ?>
+  <tr>
+    <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= htmlspecialchars((string)$r['src']) ?></span></td>
+    <td><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></td>
+    <td><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></td>
+    <td><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
+    <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
+  </tr>
+  <?php endforeach; ?>
+  </tbody></table>
+</div>
+<?php admin_layout_footer();
