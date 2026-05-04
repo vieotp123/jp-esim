@@ -13,10 +13,10 @@ final class CtvProviderClient {
         return in_array(strtolower($v), ['1', 'true', 'yes', 'on'], true);
     }
 
-    public function createOrder(int $ctvId, string $refId, string $packCode, string $transactionId): array {
+    public function createOrder(int $ctvId, string $refId, string $packCode, string $transactionId, int $count = 1): array {
         $endpoint = 'order';
         $start = microtime(true);
-        $reqRedacted = self::redactJson(['transactionId' => $transactionId, 'packageCode' => $packCode]);
+        $reqRedacted = self::redactJson(['transactionId' => $transactionId, 'packageCode' => $packCode, 'count' => $count]);
 
         if (self::isTestMode()) {
             $resp = ['success' => true, 'obj' => ['orderNo' => 'TEST-' . substr(md5($refId), 0, 10), 'transactionId' => $transactionId], '_test' => true];
@@ -24,7 +24,7 @@ final class CtvProviderClient {
             return $resp;
         }
         try {
-            $resp = (new EsimAccessClient())->createOrder($packCode, $transactionId);
+            $resp = (new EsimAccessClient())->createOrder($packCode, $transactionId, $count);
             $ok = !empty($resp['success']);
             $err = $ok ? null : (string)($resp['errorMsg'] ?? $resp['msg'] ?? '');
             $this->logProvider($ctvId, 'ctv_order', $refId, $endpoint, $reqRedacted, self::redactJson($resp), $ok ? 200 : 502, $ok, $err, $start);

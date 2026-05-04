@@ -22,10 +22,10 @@ final class LegacyProviderClient {
      * Create eSIM at upstream provider.
      * Normalized response keys: success, provider_ref, iccid, qr, raw_summary, error_code, error_message, _raw
      */
-    public function createEsim(string $packCode, string $transactionId): array {
+    public function createEsim(string $packCode, string $transactionId, int $count = 1): array {
         $endpoint = 'order';
         $start = microtime(true);
-        $reqRedacted = CtvProviderClient::redactJson(['transactionId' => $transactionId, 'packageCode' => $packCode]);
+        $reqRedacted = CtvProviderClient::redactJson(['transactionId' => $transactionId, 'packageCode' => $packCode, 'count' => $count]);
 
         if (self::isTestMode()) {
             $raw = ['success' => true, 'obj' => [
@@ -36,7 +36,7 @@ final class LegacyProviderClient {
             return $this->normalize($raw);
         }
         try {
-            $raw = (new EsimAccessClient())->createOrder($packCode, $transactionId);
+            $raw = (new EsimAccessClient())->createOrder($packCode, $transactionId, $count);
             $ok = !empty($raw['success']);
             $err = $ok ? null : (string)($raw['errorMsg'] ?? $raw['msg'] ?? '');
             $this->logProvider('retail_order', $transactionId, $endpoint, $reqRedacted, CtvProviderClient::redactJson($raw), $ok ? 200 : 502, $ok, $err, $start);

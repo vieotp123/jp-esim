@@ -38,35 +38,39 @@ final class CtvFulfillmentService {
         }
 
         // Already populated? skip
-        $cnt = (int)$pdo->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?')->execute([$ctvOrderId])
-            // NOTE: PDOStatement::execute() returns bool — fetch separately below.
-            ;
         $st2 = $pdo->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');
         $st2->execute([$ctvOrderId]);
         if ((int)$st2->fetchColumn() > 0) {
             return ['status'=>'ready', 'count'=>0, 'message'=>'already synced'];
         }
 
-        // TEST mode short-circuit: synthesise a fake esim row so panel UX works in test.
+        $requestedQty = max(1, (int)($o['quantity'] ?? 1));
+
+        // TEST mode short-circuit: synthesise fake esim rows matching requested quantity.
         if (CtvProviderClient::isTestMode()) {
-            $fakeIccid = 'TEST' . substr(strtoupper(md5($ctvOrderId)), 0, 16);
-            $pdo->prepare('INSERT INTO ctv_esims(ctv_id,ctv_order_id,iccid,qr_code_url,short_url,ac,apn,total_volume,total_duration,duration_unit,expired_time,package_code,package_name,carrier,smdp_status,esim_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                ->execute([
+            $ins = $pdo->prepare('INSERT INTO ctv_esims(ctv_id,ctv_order_id,iccid,qr_code_url,short_url,ac,apn,total_volume,total_duration,duration_unit,expired_time,package_code,package_name,carrier,smdp_status,esim_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+            $firstIccid = null;
+            for ($n = 0; $n < $requestedQty; $n++) {
+                $fakeIccid = 'TEST' . substr(strtoupper(md5($ctvOrderId . '-' . $n)), 0, 16);
+                if ($firstIccid === null) $firstIccid = $fakeIccid;
+                $ins->execute([
                     (int)$o['ctv_id'], $ctvOrderId, $fakeIccid,
-                    'https://example.com/test.png', 'https://example.com/test', 'LPA:TEST', 'internet',
+                    'https://example.com/test.png', 'https://example.com/test', 'LPA:TEST-' . ($n + 1), 'internet',
                     1073741824 * 5, 7, 'DAY', date('Y-m-d H:i:s', time()+86400*30),
                     (string)$o['pack_code'], (string)$o['plan_name'],
                     (string)$o['carrier'], 'INSTALLED', 'NEW',
                 ]);
+            }
             $pdo->prepare('UPDATE ctv_orders SET iccid=?, updated_at=NOW() WHERE ctv_order_id=?')
-                ->execute([$fakeIccid, $ctvOrderId]);
-            return ['status'=>'ready', 'count'=>1, 'message'=>'test mode'];
+                ->execute([$firstIccid, $ctvOrderId]);
+            return ['status'=>'ready', 'count'=>$requestedQty, 'message'=>'test mode'];
         }
 
         // Real provider call (uses RT_ACCESSCODE under the hood).
         $start = microtime(true);
+        $pageSize = max(50, $requestedQty);
         try {
-            $api = (new EsimAccessClient())->queryOrder($orderNo, $tranId);
+            $api = (new EsimAccessClient())->queryOrder($orderNo, $tranId, null, $pageSize);
         } catch (Throwable $e) {
             $this->logProvider((int)$o['ctv_id'], 'ctv_query', $ctvOrderId, 'query', null, null, 0, false, $e->getMessage(), $start);
             return ['status'=>'processing', 'count'=>0, 'message'=>'query exception: '.$e->getMessage()];
@@ -113,8 +117,21 @@ final class CtvFulfillmentService {
             $pdo->prepare('UPDATE ctv_orders SET iccid=?, updated_at=NOW() WHERE ctv_order_id=?')
                 ->execute([$first, $ctvOrderId]);
         }
+
+        $partial = $count > 0 && $count < $requestedQty;
+        if ($partial) {
+            $pdo->prepare('UPDATE ctv_orders SET needs_admin=1, updated_at=NOW() WHERE ctv_order_id=?')
+                ->execute([$ctvOrderId]);
+            try {
+                $pdo->prepare('INSERT INTO order_admin_queue(order_id,reason,detail,created_at) VALUES(?,?,?,NOW())')
+                    ->execute([$ctvOrderId, 'partial_provision', 'Provisioned '.$count.'/'.$requestedQty.' eSIMs']);
+            } catch (Throwable $qE) {
+                app_log('admin queue insert fail '.$ctvOrderId.' '.$qE->getMessage(), 'ERROR');
+            }
+        }
+
         // Best-effort: notify the customer email, never fail the sync if mail breaks.
-        if ($count > 0) {
+        if ($count > 0 && !$partial) {
             try {
                 (new CtvMailService)->sendForOrderIfNeeded($ctvOrderId);
             } catch (Throwable $mailE) {
@@ -123,7 +140,8 @@ final class CtvFulfillmentService {
                 }
             }
         }
-        return ['status'=>'ready', 'count'=>$count, 'message'=>'synced'];
+        $status = $partial ? 'partial' : 'ready';
+        return ['status'=>$status, 'count'=>$count, 'message'=>$partial ? 'partial: '.$count.'/'.$requestedQty : 'synced'];
     }
 
     /**
@@ -135,7 +153,7 @@ final class CtvFulfillmentService {
         $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE ctv_id=? AND status=2 AND (iccid IS NULL OR iccid=\'\') ORDER BY id DESC LIMIT '.(int)$limit);
         $st->execute([$ctvId]);
         $ids = $st->fetchAll(PDO::FETCH_COLUMN);
-        $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0, 'orders'=>[]];
+        $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0, 'partial'=>0, 'orders'=>[]];
         foreach ($ids as $oid) {
             $r = $this->syncOrderEsims((string)$oid);
             $out[$r['status']] = ($out[$r['status']] ?? 0) + 1;
@@ -150,7 +168,7 @@ final class CtvFulfillmentService {
         $st = db()->prepare('SELECT ctv_order_id FROM ctv_orders WHERE status=2 AND (iccid IS NULL OR iccid=\'\') AND provider_order_no IS NOT NULL AND provider_order_no<>\'\' AND updated_at >= (NOW() - INTERVAL ? MINUTE) ORDER BY id ASC LIMIT '.(int)$limit);
         $st->execute([$maxAgeMinutes]);
         $ids = $st->fetchAll(PDO::FETCH_COLUMN);
-        $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0];
+        $out = ['ready'=>0, 'processing'=>0, 'skipped'=>0, 'failed'=>0, 'partial'=>0];
         foreach ($ids as $oid) {
             $r = $this->syncOrderEsims((string)$oid);
             $out[$r['status']] = ($out[$r['status']] ?? 0) + 1;

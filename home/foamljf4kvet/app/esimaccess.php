@@ -13,11 +13,12 @@ final class EsimAccessClient {
         if (!is_array($json)) return ['success'=>false,'errorMsg'=>'Invalid API JSON','raw'=>$raw];
         return $json;
     }
-    public function createOrder(string $packageCode, string $transactionId): array {
-        return $this->post((string)app_config('ESIM_ORDER_URL', 'https://api.esimaccess.com/api/v1/open/esim/order'), ['transactionId'=>$transactionId, 'packageInfoList'=>[['packageCode'=>$packageCode, 'count'=>1, 'periodNum'=>1]]], 30);
+    public function createOrder(string $packageCode, string $transactionId, int $count = 1): array {
+        $count = max(1, min($count, 100));
+        return $this->post((string)app_config('ESIM_ORDER_URL', 'https://api.esimaccess.com/api/v1/open/esim/order'), ['transactionId'=>$transactionId, 'packageInfoList'=>[['packageCode'=>$packageCode, 'count'=>$count, 'periodNum'=>1]]], 30);
     }
-    public function queryOrder(?string $orderNo = null, ?string $transactionId = null, ?string $iccid = null): array {
-        $body = ['pager'=>['pageNum'=>1,'pageSize'=>20]];
+    public function queryOrder(?string $orderNo = null, ?string $transactionId = null, ?string $iccid = null, int $pageSize = 50): array {
+        $body = ['pager'=>['pageNum'=>1,'pageSize'=>max(20, min($pageSize, 200))]];
         if ($orderNo) $body['orderNo'] = $orderNo;
         if ($transactionId) $body['transactionId'] = $transactionId;
         if ($iccid) $body['iccid'] = $iccid;

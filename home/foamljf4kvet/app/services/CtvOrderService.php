@@ -34,7 +34,7 @@ final class CtvOrderService {
         // Call provider via service boundary.
         $provider = new CtvProviderClient();
         try {
-            $resp = $provider->createOrder($ctvId, $orderId, (string)$plan['pack_code'], $orderId);
+            $resp = $provider->createOrder($ctvId, $orderId, (string)$plan['pack_code'], $orderId, $quantity);
         } catch (Throwable $e) {
             $this->markFailedAndRefund($ctvId, $orderId, $totalCharge, $e->getMessage());
             throw new RuntimeException('Lỗi gọi nhà cung cấp: ' . $e->getMessage());
@@ -91,6 +91,10 @@ final class CtvOrderService {
 
     private function format(array $r): array {
         $statusMap = [0=>'pending',1=>'processing',2=>'success',3=>'failed'];
+        $qty = (int)$r['quantity'];
+        $st = db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');
+        $st->execute([$r['ctv_order_id']]);
+        $provisioned = (int)$st->fetchColumn();
         return [
             'orderId' => (string)$r['ctv_order_id'],
             'planId' => (int)$r['plan_id'],
@@ -100,8 +104,9 @@ final class CtvOrderService {
             'retailPrice' => (int)$r['retail_price'],
             'discount' => (int)$r['discount'],
             'ctvPrice' => (int)$r['ctv_price'],
-            'quantity' => (int)$r['quantity'],
+            'quantity' => $qty,
             'totalCharge' => (int)$r['total_charge'],
+            'provisionedCount' => $provisioned,
             'status' => $statusMap[(int)$r['status']] ?? 'unknown',
             'source' => (string)$r['source'],
             'iccid' => (string)($r['iccid'] ?? ''),
