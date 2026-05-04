@@ -37,8 +37,9 @@ ctv_layout_header('Nạp data eSIM', $user);
   <h2>Nạp data cho eSIM</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($result): ?>
+    <?php $statusVi = ['success'=>'Thành công','failed'=>'Thất bại','pending'=>'Đang xử lý','processing'=>'Đang xử lý']; ?>
     <div class="flash <?= $result['status']==='success' ? 'ok' : ($result['status']==='failed' ? 'error' : 'warn') ?>">
-      Đơn nạp <strong><?= htmlspecialchars($result['topupId']) ?></strong>: <?= htmlspecialchars($result['status']) ?>
+      Đơn nạp <strong><?= htmlspecialchars($result['topupId']) ?></strong>: <?= htmlspecialchars($statusVi[$result['status']] ?? $result['status']) ?>
       <?php if (!empty($result['errorMessage'])): ?> · <?= htmlspecialchars($result['errorMessage']) ?><?php endif; ?>
     </div>
   <?php endif; ?>

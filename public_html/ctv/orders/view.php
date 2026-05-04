@@ -42,8 +42,8 @@ $esStmt->execute([$orderId, (int)$user['id']]);
 $esims = $esStmt->fetchAll();
 
 // Map status code → label/class
-$statusMap = [0=>['pending','warn'], 1=>['processing','warn'], 2=>['success','ok'], 3=>['failed','err']];
-[$statusLabel, $statusCls] = $statusMap[(int)$order['status']] ?? ['unknown', ''];
+$statusMap = [0=>['Chờ xử lý','warn'], 1=>['Đang xử lý','warn'], 2=>['Thành công','ok'], 3=>['Thất bại','err']];
+[$statusLabel, $statusCls] = $statusMap[(int)$order['status']] ?? ['Không rõ', ''];
 
 // Topup eligibility — code-locked while TOPUP_LOCKED=1
 $topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
@@ -72,6 +72,19 @@ function _bytes_to_gb($b): string {
   .esim-card img.qr { width:160px;height:160px;border-radius:8px;background:#fff;border:1px solid #2a2a2a; }
   .install-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   .lpa { font-family: ui-monospace, monospace; word-break: break-all; background:#1a1a1a; padding:6px 8px; border-radius:6px; font-size:12px; }
+  @media (max-width:760px){
+    .kv{grid-template-columns:110px 1fr;gap:4px 8px;font-size:13px}
+    .esim-card .row{flex-direction:column;align-items:center;gap:10px}
+    .esim-card img.qr{width:140px;height:140px}
+    .install-row{flex-direction:column}
+    .install-row .btn{width:100%;text-align:center}
+  }
+  @media (max-width:480px){
+    .kv{grid-template-columns:1fr;gap:2px 0}
+    .kv b{color:#888;font-size:11px;margin-top:6px}
+    .esim-card img.qr{width:120px;height:120px}
+    .esim-card{padding:12px 10px}
+  }
 </style>
 
 <div class="card">
@@ -110,7 +123,7 @@ function _bytes_to_gb($b): string {
 
 <div class="card">
   <h2>eSIM (<?= count($esims) ?>)
-    <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>" style="float:right">Refresh</a>
+    <a class="btn secondary" href="/ctv/orders/view.php?id=<?= htmlspecialchars($orderId) ?>" style="float:right">Làm mới</a>
   </h2>
   <?php if (!$esims): ?>
     <?php if ((int)$order['status'] === 2): ?>
@@ -143,7 +156,7 @@ function _bytes_to_gb($b): string {
           <b>Thời hạn</b><div><?= (int)($e['total_duration'] ?? 0) ?> <?= htmlspecialchars((string)($e['duration_unit'] ?? 'DAY')) ?></div>
           <b>Hết hạn</b><div><?= htmlspecialchars((string)($e['expired_time'] ?? '—')) ?></div>
           <b>SMDP</b><div><?= htmlspecialchars((string)($e['smdp_status'] ?? '—')) ?></div>
-          <b>eSIM status</b><div><?= htmlspecialchars((string)($e['esim_status'] ?? '—')) ?></div>
+          <b>Trạng thái eSIM</b><div><?= htmlspecialchars((string)($e['esim_status'] ?? '—')) ?></div>
           <b>APN</b><div><span class="kbd"><?= htmlspecialchars((string)($e['apn'] ?? '')) ?></span></div>
           <?php if (!empty($e['email_sent_at'])): ?>
           <b>Email QR</b><div class="muted">đã gửi <?= htmlspecialchars((string)$e['email_sent_at']) ?></div>

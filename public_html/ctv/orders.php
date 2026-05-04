@@ -24,7 +24,7 @@ ctv_layout_header('Đơn eSIM', $user);
     <a href="?status=failed" class="tag err">Thất bại</a>
   </p>
   <?php if (!$rows): ?>
-    <p class="muted">Chưa có đơn nào.</p>
+    <div class="empty-state"><div class="icon">📋</div><p>Chưa có đơn nào.</p><p>Đơn sẽ hiển thị ở đây sau khi bạn tạo eSIM.</p></div>
   <?php else: ?>
   <table>
     <thead><tr><th>Mã</th><th>Gói</th><th>Số lượng</th><th>Phí CTV</th><th>Trạng thái</th><th>Ngày</th></tr></thead>

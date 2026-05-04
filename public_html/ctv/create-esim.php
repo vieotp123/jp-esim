@@ -41,8 +41,9 @@ ctv_layout_header('Tạo eSIM', $user);
   <h2>Tạo eSIM mới</h2>
   <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
   <?php if ($createdResult): ?>
+    <?php $statusVi = ['success'=>'Thành công','failed'=>'Thất bại','pending'=>'Đang xử lý','processing'=>'Đang xử lý']; ?>
     <div class="flash <?= $createdResult['status']==='success' ? 'ok' : ($createdResult['status']==='failed' ? 'error' : 'warn') ?>">
-      Đơn <strong><?= htmlspecialchars($createdResult['orderId']) ?></strong>: <?= htmlspecialchars($createdResult['status']) ?>
+      Đơn <strong><?= htmlspecialchars($createdResult['orderId']) ?></strong>: <?= htmlspecialchars($statusVi[$createdResult['status']] ?? $createdResult['status']) ?>
       <?php if (!empty($createdResult['errorMessage'])): ?> · <?= htmlspecialchars($createdResult['errorMessage']) ?><?php endif; ?>
     </div>
   <?php endif; ?>

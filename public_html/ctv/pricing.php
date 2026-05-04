@@ -18,7 +18,7 @@ ctv_layout_header('Bảng giá CTV', $user);
     <a href="?type=topup" class="btn <?= $type==='topup'?'':'secondary' ?>">Nạp data</a>
   </p>
   <?php if (empty($data['plans'])): ?>
-    <p class="muted">Hiện chưa có gói nào.</p>
+    <div class="empty-state"><div class="icon">📦</div><p>Hiện chưa có gói nào trong danh mục này.</p></div>
   <?php else: ?>
   <table>
     <thead><tr><th>Nhà mạng</th><th>Tên gói</th><th>Số ngày</th><th>Giá lẻ</th><th>Chiết khấu</th><th>Giá CTV</th></tr></thead>

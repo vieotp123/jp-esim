@@ -72,7 +72,7 @@ admin_layout_header('Đơn CTV', $admin);
     <a href="?" class="btn <?= !$onlyFailed?'':'secondary' ?>" style="float:right;margin-right:6px">Tất cả</a>
   </h2>
   <?php if (!$rows): ?>
-    <p class="muted">Không có đơn nào.</p>
+    <div class="empty"><div class="icon">📋</div><p>Không có đơn nào.</p></div>
   <?php else: ?>
   <table>
     <thead><tr><th>Mã</th><th>CTV</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Lỗi</th><th>Tạo lúc</th><th></th></tr></thead>

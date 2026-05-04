@@ -58,7 +58,7 @@ ctv_flash_render();
 <div class="card">
   <h2>Danh sách key</h2>
   <?php if (!$keys): ?>
-    <p class="muted">Chưa có key nào.</p>
+    <div class="empty-state"><div class="icon">🔑</div><p>Chưa có API key nào.</p><p>Tạo key để tích hợp API vào hệ thống của bạn.</p></div>
   <?php else: ?>
   <table>
     <thead><tr><th>Tên</th><th>Prefix</th><th>Trạng thái</th><th>Tạo lúc</th><th>Lần dùng cuối</th><th></th></tr></thead>

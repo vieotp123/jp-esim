@@ -179,13 +179,18 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
 .tag.err{background:rgba(248,113,113,.13);color:#fca5a5;border-color:rgba(248,113,113,.30)}
 .tag.gold{background:rgba(230,192,104,.14);color:var(--c-gold);border-color:rgba(230,192,104,.32)}
 
+.empty-state{padding:32px 20px;text-align:center;color:var(--c-muted)}
+.empty-state .icon{font-size:32px;margin-bottom:8px;opacity:.5}
+.empty-state p{margin:6px 0;font-size:13px}
+
 @media (max-width:760px){
   header.ctv-h{padding:10px 14px}
   header.ctv-h nav{gap:2px}
-  header.ctv-h nav a{padding:6px 8px;font-size:12px}
+  header.ctv-h nav a{padding:6px 8px;font-size:12px;min-height:36px;display:inline-flex;align-items:center}
   header.ctv-h .right{margin-left:0;width:100%;justify-content:flex-end}
   main{padding:0 10px}
   .card{padding:14px 12px;border-radius:12px;overflow-x:auto}
+  .card h2{font-size:16px}
   .row{flex-direction:column;gap:8px}
   .row > *{flex:1 1 auto}
   .grid{grid-template-columns:1fr}
@@ -195,12 +200,16 @@ tbody tr:hover{background:rgba(91,140,255,.05)}
   .metric{font-size:22px}
   .page-title h1{font-size:18px}
   .actions{gap:6px}
-  .btn{padding:8px 12px;font-size:13px}
+  .btn{padding:10px 14px;font-size:13px;min-height:40px}
+  input,select,textarea{font-size:16px;padding:10px 12px}
+  .field{margin-bottom:10px}
+  .field label{font-size:13px;margin-bottom:4px}
 }
 @media (max-width:480px){
   header.ctv-h nav a{padding:5px 7px;font-size:11.5px}
   .card{padding:12px 10px}
   table{min-width:480px}
+  .btn{padding:10px 12px;font-size:12.5px;width:100%}
 }
 
 .notif-bell{position:relative;cursor:pointer;color:var(--c-ink-2);transition:color .15s}

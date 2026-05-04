@@ -58,7 +58,7 @@ ctv_layout_header('eSIM của CTV', $user);
   <?php endif; ?>
 
   <?php if (!$rows): ?>
-    <p class="muted">Chưa có eSIM nào. eSIM sẽ được lưu sau khi đơn thành công và đồng bộ từ nhà cung cấp.</p>
+    <div class="empty-state"><div class="icon">📱</div><p>Chưa có eSIM nào.</p><p>eSIM sẽ hiển thị sau khi đơn thành công và hệ thống đồng bộ.</p></div>
   <?php else: ?>
   <table>
     <thead><tr><th>QR</th><th>ICCID</th><th>Đơn CTV</th><th>Gói</th><th>Hết hạn</th><th>Trạng thái</th></tr></thead>
