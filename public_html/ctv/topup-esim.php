@@ -7,9 +7,11 @@ $user = CtvAuth::requireUser();
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
 $err = null; $result = null;
-$plans = (new CtvPricingService())->listFor($user, 'topup')['plans'];
+$topupLocked = ((string)app_config('TOPUP_LOCKED', '0') === '1');
+$plans = $topupLocked ? [] : (new CtvPricingService())->listFor($user, 'topup')['plans'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($topupLocked) { $err = 'Chức năng nạp data đang tạm khoá. Vui lòng thử lại sau.'; } else
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
         $err = 'Phiên không hợp lệ.';
     } else {
@@ -43,7 +45,9 @@ ctv_layout_header('Nạp data eSIM', $user);
       <?php if (!empty($result['errorMessage'])): ?> · <?= htmlspecialchars($result['errorMessage']) ?><?php endif; ?>
     </div>
   <?php endif; ?>
-  <?php if (empty($plans)): ?>
+  <?php if ($topupLocked): ?>
+    <div class="flash warn">Chức năng nạp data đang tạm khoá. Vui lòng thử lại sau hoặc liên hệ admin.</div>
+  <?php elseif (empty($plans)): ?>
     <div class="empty-state"><div class="icon">📦</div><p>Chưa có gói nạp data nào khả dụng.</p><p>Vui lòng liên hệ admin.</p></div>
   <?php else: ?>
   <form method="post" autocomplete="off" id="topupForm">
