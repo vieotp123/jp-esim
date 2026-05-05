@@ -223,7 +223,7 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
       <span><span class="kbd">#<?= (int)$r['id'] ?></span> <span class="tag <?= $kCls2 ?>"><?= htmlspecialchars($kLabel2) ?></span></span>
       <span class="tag <?= $stCls2 ?>"><?= match($st2) { 'open'=>'Mở', 'resolved'=>'Xong', 'ignored'=>'Qua', default=>$st2 } ?></span>
     </div>
-    <div class="m-row"><span class="m-label">Mã đơn</span><span class="m-val kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></div>
+    <div class="m-row"><span class="m-label">Mã đơn</span><span class="m-val"><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode((string)($r['ref_id'] ?? ''))) ?>" style="text-decoration:none"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></a></span></div>
     <div class="m-row"><span class="m-label">Tạo lúc</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
     <?php $err2 = mb_strimwidth((string)($r['error_summary'] ?? ''),0,120,'…'); if ($err2): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars($err2) ?></div><?php endif; ?>
     <?php if ($st2 === 'open'): ?>
@@ -265,7 +265,7 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
       <tr>
         <td><span class="kbd">#<?= (int)$r['id'] ?></span></td>
         <td><span class="tag <?= $kCls ?>"><?= htmlspecialchars($kLabel) ?></span></td>
-        <td><span class="kbd"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></span></td>
+        <td><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode((string)($r['ref_id'] ?? ''))) ?>" style="text-decoration:none"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></a></td>
         <td style="max-width:380px">
           <div><?= htmlspecialchars($errShort) ?></div>
           <?php if (!empty($r['payload_redacted'])): ?>

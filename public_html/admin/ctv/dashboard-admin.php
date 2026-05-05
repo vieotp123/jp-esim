@@ -104,7 +104,7 @@ admin_layout_header('Tổng quan Admin', $admin);
       $sCls = match ($s) { 2 => 'ok', 3 => 'err', 0 => 'warn', default => 'info' };
     ?>
     <div class="m-card">
-      <div class="m-head"><span><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'Đối tác' : 'Lẻ' ?></span> <span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></span><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></div>
+      <div class="m-head"><span><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'Đối tác' : 'Lẻ' ?></span> <?php if ($r['src'] === 'ctv'): ?><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode((string)$r['ref'])) ?>" style="text-decoration:none"><?= htmlspecialchars((string)$r['ref']) ?></a><?php else: ?><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span><?php endif; ?></span><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></div>
       <div class="m-row"><span class="m-label">Số tiền</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></span></div>
       <div class="m-row"><span class="m-label">Thời gian</span><span class="m-val muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></div>
     </div>
@@ -119,7 +119,7 @@ admin_layout_header('Tổng quan Admin', $admin);
   ?>
   <tr>
     <td><span class="tag <?= $r['src'] === 'ctv' ? 'gold' : 'info' ?>"><?= $r['src'] === 'ctv' ? 'Đối tác' : 'Lẻ' ?></span></td>
-    <td><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span></td>
+    <td><?php if ($r['src'] === 'ctv'): ?><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode((string)$r['ref'])) ?>" style="text-decoration:none"><?= htmlspecialchars((string)$r['ref']) ?></a><?php else: ?><span class="kbd"><?= htmlspecialchars((string)$r['ref']) ?></span><?php endif; ?></td>
     <td><span class="tag <?= $sCls ?>"><?= $sLabel ?></span></td>
     <td style="white-space:nowrap"><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></td>
     <td style="white-space:nowrap"><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
