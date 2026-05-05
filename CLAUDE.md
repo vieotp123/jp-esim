@@ -72,12 +72,40 @@
   - Mobile responsive CSS for CTV and admin panels (760px/480px breakpoints, table horizontal scroll)
   - SEO: noarchive on all protected pages, cleaned sitemap (removed noindex pages, added lastmod)
   - Smoke test script: scripts/smoke_test.sh (11 checks, no secrets needed)
-- Phase G (production v1 go-live, 2026-05-05):
-  - Unified `/auth` entry: `public_html/auth/index.php` landing (admin/partner cards) + `?role=admin|partner` shortcuts
-  - `/admin` redirect: bare `/admin` and `/admin/` now redirect to `/admin/ctv/login.php` (was 403)
-  - Admin Passkey-only enforced: `ADMIN_REQUIRE_PASSKEY=1` set in db_config.php; `_guard.php` default flipped to '1'; `login.php` hides password form when admin has passkey + enforce on; basic-auth fallback rejected. Bootstrap path (no passkey yet) still allows password.
-  - Topup unlock: `TOPUP_LOCKED=0` (db_config.php + .env). Real provider calls active. Backup at `/home/foamljf4kvet/db_config.php.bak.unlock.20260505_130904`.
-- Next: monitoring/alerting on provider error rate, webhook replay testing, post-go-live audit (~T+24h)
+- Phase G (production v1 go-live, 2026-05-05): **DONE**
+  - Unified `/auth` entry: `public_html/auth/index.php` landing (admin/partner cards) + `?role=admin|partner` shortcuts. All UI links to old `/admin/ctv/login.php` and `/ctv/login.php` migrated.
+  - `/admin` redirect: bare `/admin` and `/admin/` redirect to `/auth?role=admin` (was 403)
+  - Admin Passkey-only enforced: `ADMIN_REQUIRE_PASSKEY=1` in db_config.php; `_guard.php` default flipped to '1'; `login.php` hides password form when admin has passkey; basic-auth fallback rejected; bootstrap path preserved.
+  - Admin idle timeout: 1h default via `ADMIN_IDLE_MAX_SECONDS`. Idle → `/auth?role=admin&idle=1` with notice.
+  - Topup unlock: `TOPUP_LOCKED=0`, `PROVIDER_TEST_MODE=0`, `CTV_PROVIDER_TEST_MODE=0`. Real provider calls live.
+  - Bug fixes from full panel audit: dashboard `ORDER BY id` on `order` table (no id col) → `created_at`; missing `ctv_users.company_name` column → coalesce to `display_name`; missing `password_reset_*` columns gracefully handled until migration 006/007 applied.
+  - LOG_PATH repointed to `/var/log/jpesim/app.log` (was unwritable).
+  - **Health endpoint** `/api/health.php` extended: db ping, disk free, queue depth, provider error 1h/24h, failed topups, pending+failed emails, current safety flags.
+  - **Admin health UI** `/admin/ctv/health.php` (linked as "Sức khoẻ" in nav): card grid + flag table + systemd timer status + 10 most recent queue errors. Auto-reload 60s.
+  - **systemd timers** snapshot in `systemd/`:
+    - `jpesim-ctv-fulfillment-poll.timer` (2m) — sync QR/ICCID for paid CTV orders
+    - `jpesim-email-retry.timer` (15m) — retry failed eSIM delivery emails
+    - `jpesim-provider-alert.timer` (10m) — email alert when provider error rate breaches threshold (no-op until `ALERT_EMAIL` set)
+    - `jpesim-db-backup.timer` (24h, 04:00 UTC) — `mysqldump` → gzip → `/home/levanrin2404/db_backups/`, 7-day retention
+  - **Logrotate** `/etc/logrotate.d/jpesim`: weekly, 4 rotations, compress, maxsize 100M.
+  - **Diagnostic tooling** in `scripts/`:
+    - `admin_query_audit_v2.php` — SQL extractor + EXPLAIN per file
+    - `admin_ui_render_test.php` / `ctv_ui_render_test.php` — fake-session render of every panel page
+    - `admin_post_mutation_test.php` — POSTs invalid CSRF to mutation handlers, verifies 400 (no 500)
+    - `db_index_audit.php` — EXPLAIN on hot queries, flag full scans
+- Verified end-to-end (after Phase G):
+  - 30/30 smoke
+  - 24/24 admin pages render 200 (incl. detail + filtered)
+  - 16/16 CTV pages render 200
+  - 13/13 admin mutation handlers reject invalid CSRF with 400
+  - Webhooks (`/webhook/bank.php`, `/webhook/facebook.php`) require token + signature; UNIQUE constraint dedupe
+  - 4 systemd timers active, last-run all `success`
+  - Security headers (HSTS, CSP, X-Frame, COOP/CORP, Permissions-Policy) present on all pages
+- Next (post go-live operability):
+  - Apply migrations 006 + 007 manually (schema migrations require explicit user authorization)
+  - Set `ALERT_EMAIL` in db_config.php to enable provider-error email alerts
+  - Re-run `db_index_audit.php` once row counts grow 10× to evaluate composite-index needs
+  - Review `app.log` daily for first week; adjust logrotate rules if size > 10MB/day
 
 ## Reporting
 After each task: list files changed, tests run, results, commit hash.
