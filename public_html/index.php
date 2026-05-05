@@ -1,6 +1,61 @@
 <?php
 declare(strict_types=1);
 require_once '/home/foamljf4kvet/app/bootstrap.php';
+
+// Custom 404: if user requested a path that's not the homepage and not handled
+// elsewhere, show a branded 404 page (default nginx try_files routed every
+// miss back to /index.php).
+$reqPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+$reqPath = $reqPath === '' ? '/' : $reqPath;
+$normPath = rtrim($reqPath, '/') ?: '/';
+if ($normPath !== '/' && $normPath !== '/index.php') {
+    http_response_code(404);
+    security_headers(true);
+    $safePath = htmlspecialchars($normPath, ENT_QUOTES, 'UTF-8');
+    ?>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>404 — Không tìm thấy · jp-esim.vip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f15;--ink:#e9ecf3;--muted:#7a8094;--gold:#e6c068}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.box{max-width:520px;text-align:center}
+.code{font-size:120px;font-weight:900;line-height:1;background:linear-gradient(180deg,#f4d684,#b8902e);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-3px}
+h1{font-size:22px;font-weight:800;margin:6px 0 10px}
+p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 8px}
+code.path{display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:4px 10px;border-radius:6px;font-size:12px;color:var(--ink);margin:8px 0 18px;word-break:break-all}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.btn{display:inline-block;padding:11px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px}
+.btn.gold{background:linear-gradient(180deg,#f4d684,#b8902e);color:#241804}
+.btn.outline{border:1px solid rgba(255,255,255,.18);color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="code">404</div>
+  <h1>Trang không tồn tại</h1>
+  <p>Đường dẫn bạn truy cập không có trên jp-esim.vip.</p>
+  <code class="path"><?= $safePath ?></code>
+  <div class="actions">
+    <a class="btn gold" href="/">Về trang chủ</a>
+    <a class="btn outline" href="/tra-cuu.php">Tra cứu đơn</a>
+    <a class="btn outline" href="/#support">Hỗ trợ</a>
+  </div>
+</div>
+</body>
+</html>
+    <?php
+    exit;
+}
+
 security_headers(true);
 $siteKey = htmlspecialchars((string)app_config('RECAPTCHA_SITE', app_config('RC_SITE','')), ENT_QUOTES, 'UTF-8');
 $assetVer = '20260504c';

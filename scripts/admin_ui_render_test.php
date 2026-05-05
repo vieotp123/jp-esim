@@ -51,6 +51,7 @@ $pages = [
     '/admin/ctv/export.php' => 'Xuất CSV',
     '/admin/ctv/passkey-setup.php' => 'Passkey setup',
     '/admin/ctv/health.php' => 'Sức khoẻ',
+    '/admin/ctv/activity.php' => 'Hoạt động',
     '/admin/ctv/search.php' => 'Tìm kiếm',
     '/admin/ctv/search.php?q=NM8RTTL1' => 'Tìm theo retail order',
     '/admin/ctv/search.php?q=CWPLYSA7' => 'Tìm theo CTV order',
