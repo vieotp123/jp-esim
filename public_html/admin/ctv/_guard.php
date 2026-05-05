@@ -38,6 +38,7 @@ function admin_flash_render(): void {
 }
 function admin_redirect_self(): void {
     $uri = (string)($_SERVER['REQUEST_URI'] ?? ($_SERVER['SCRIPT_NAME'] ?? '/admin/ctv/dashboard-admin.php'));
+    if (!str_starts_with($uri, '/')) $uri = '/admin/ctv/dashboard-admin.php';
     header('Location: ' . $uri);
     exit;
 }
