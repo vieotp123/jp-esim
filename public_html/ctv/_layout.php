@@ -427,6 +427,7 @@ tbody tr{transition:background .1s}
         <a href="/ctv/topup-request.php"<?= ctv_nav_active('/ctv/topup-request.php') ?>>Nạp ví</a>
         <a href="/ctv/api-keys.php"<?= ctv_nav_active('/ctv/api-keys.php') ?>>API</a>
         <a href="/ctv/activity.php"<?= ctv_nav_active('/ctv/activity.php') ?>>Hoạt động</a>
+        <a href="/ctv/profile.php"<?= ctv_nav_active('/ctv/profile.php') ?>>Hồ sơ</a>
         <a href="/ctv/security.php"<?= ctv_nav_active('/ctv/security.php') ?>>Bảo mật</a>
         <a href="/ctv/export.php"<?= ctv_nav_active('/ctv/export.php') ?>>Xuất CSV</a>
       <?php else: ?>

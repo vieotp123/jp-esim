@@ -32,6 +32,7 @@ $pages = [
     '/ctv/pricing.php' => 'Bảng giá',
     '/ctv/export.php' => 'Xuất CSV',
     '/ctv/activity.php' => 'Hoạt động CTV',
+    '/ctv/profile.php' => 'Hồ sơ CTV',
     '/ctv/install.php' => 'Hướng dẫn cài đặt',
     '/ctv/orders.php?status=2' => 'Orders thành công',
     '/ctv/orders.php?status=3' => 'Orders thất bại',
