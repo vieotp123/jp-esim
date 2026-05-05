@@ -5,11 +5,10 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 $svc = new CtvTopupRequestService();
 
-try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
         $action = (string)($_POST['action'] ?? '');
         $note = trim((string)($_POST['note'] ?? ''));
         if ($action === 'bulk_approve' || $action === 'bulk_reject') {
@@ -36,7 +35,7 @@ try {
             $verb = $action === 'bulk_approve' ? 'duyệt' : 'từ chối';
             $msg = 'Đã ' . $verb . ' ' . $ok . '/' . count($ids) . ' yêu cầu';
             if ($errs) $msg .= ' — Lỗi: ' . implode('; ', array_slice($errs, 0, 3));
-            $flash = [$errs ? 'warn' : 'ok', $msg];
+            admin_flash_set($errs ? 'warn' : 'ok', $msg);
         } else {
             $reqId = (int)($_POST['request_id'] ?? 0);
             if ($reqId <= 0) throw new RuntimeException('ID không hợp lệ');
@@ -44,16 +43,17 @@ try {
             if ($action === 'approve') {
                 $svc->approve($reqId, $admin['user'], $note ?: null);
                 AuditLog::log($admin['user'], 'topup_request_approve', 'topup_request', (string)$reqId, ['note' => $note]);
-                $flash = ['ok', 'Đã duyệt yêu cầu #' . $reqId . ' và nạp ví'];
+                admin_flash_set('ok', 'Đã duyệt yêu cầu #' . $reqId . ' và nạp ví');
             } elseif ($action === 'reject') {
                 $svc->reject($reqId, $admin['user'], $note ?: null);
                 AuditLog::log($admin['user'], 'topup_request_reject', 'topup_request', (string)$reqId, ['note' => $note]);
-                $flash = ['ok', 'Đã từ chối yêu cầu #' . $reqId];
+                admin_flash_set('ok', 'Đã từ chối yêu cầu #' . $reqId);
             }
         }
+    } catch (Throwable $e) {
+        admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
     }
-} catch (Throwable $e) {
-    $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+    admin_redirect_self();
 }
 
 $filterStatus = (string)($_GET['status'] ?? '');
@@ -62,7 +62,7 @@ $pendingCount = count(array_filter($rows, fn($r) => $r['status'] === 'pending'))
 
 admin_layout_header('Yêu cầu nạp ví', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 
 <div class="summary">
   <div class="card <?= $pendingCount > 0 ? 'danger' : 'green' ?>"><b>Chờ duyệt</b><h2><?= $pendingCount ?></h2></div>

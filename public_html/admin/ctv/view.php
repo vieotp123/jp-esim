@@ -6,14 +6,16 @@ $admin = admin_ctv_require();
 admin_require_post();
 $id = max(0, (int)($_GET['id'] ?? $_POST['ctv_id'] ?? 0));
 if ($id <= 0) { http_response_code(400); echo 'Mã đối tác không hợp lệ'; exit; }
-$flash=null;
 function load_ctv(int $id): array { $st=db()->prepare('SELECT * FROM ctv_users WHERE id=? LIMIT 1'); $st->execute([$id]); $r=$st->fetch(); if(!$r) { http_response_code(404); echo 'Không tìm thấy đối tác'; exit; } return $r; }
-try { if ($_SERVER['REQUEST_METHOD']==='POST') {
-    $action=(string)($_POST['action']??''); $ctv=load_ctv($id);
-    if ($action==='set_status') { $newSt=(int)($_POST['status']??0)?1:0; db()->prepare('UPDATE ctv_users SET status=? WHERE id=?')->execute([$newSt,$id]); AuditLog::log($admin['user'], $newSt?'ctv_activate':'ctv_deactivate', 'ctv', (string)$id); $flash=['ok','Đã cập nhật trạng thái']; }
-    elseif ($action==='set_discount') { $d=(int)($_POST['discount']??0); if($d<0||$d>500000) throw new RuntimeException('Chiết khấu không hợp lệ'); db()->prepare('UPDATE ctv_users SET discount_per_esim=? WHERE id=?')->execute([$d,$id]); AuditLog::log($admin['user'], 'ctv_discount_update', 'ctv', (string)$id, ['discount'=>$d]); $flash=['ok','Đã cập nhật chiết khấu']; }
-    elseif ($action==='wallet_credit'||$action==='wallet_debit') { $amount=(int)($_POST['amount']??0); $note=trim((string)($_POST['note']??'')); $cap=(int)app_config('CTV_ADMIN_WALLET_CAP',100000000); if($amount<=0||$amount>$cap) throw new RuntimeException('Số tiền không hợp lệ'); if($note==='') throw new RuntimeException('Ghi chú là bắt buộc'); $svc=new CtvWalletService(); if($action==='wallet_credit') $svc->credit($id,$amount,'admin_credit','manual',null,$note,$admin['user']); else $svc->debit($id,$amount,'admin_debit','manual',null,$note,$admin['user']); AuditLog::log($admin['user'], $action==='wallet_credit'?'wallet_credit':'wallet_debit', 'ctv', (string)$id, ['amount'=>$amount,'note'=>$note]); $flash=['ok','Đã cập nhật ví']; }
-} } catch(Throwable $e) { $flash=['err','Lỗi: '.$e->getMessage()]; }
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    try {
+        $action=(string)($_POST['action']??''); $ctv=load_ctv($id);
+        if ($action==='set_status') { $newSt=(int)($_POST['status']??0)?1:0; db()->prepare('UPDATE ctv_users SET status=? WHERE id=?')->execute([$newSt,$id]); AuditLog::log($admin['user'], $newSt?'ctv_activate':'ctv_deactivate', 'ctv', (string)$id); admin_flash_set('ok','Đã cập nhật trạng thái'); }
+        elseif ($action==='set_discount') { $d=(int)($_POST['discount']??0); if($d<0||$d>500000) throw new RuntimeException('Chiết khấu không hợp lệ'); db()->prepare('UPDATE ctv_users SET discount_per_esim=? WHERE id=?')->execute([$d,$id]); AuditLog::log($admin['user'], 'ctv_discount_update', 'ctv', (string)$id, ['discount'=>$d]); admin_flash_set('ok','Đã cập nhật chiết khấu'); }
+        elseif ($action==='wallet_credit'||$action==='wallet_debit') { $amount=(int)($_POST['amount']??0); $note=trim((string)($_POST['note']??'')); $cap=(int)app_config('CTV_ADMIN_WALLET_CAP',100000000); if($amount<=0||$amount>$cap) throw new RuntimeException('Số tiền không hợp lệ'); if($note==='') throw new RuntimeException('Ghi chú là bắt buộc'); $svc=new CtvWalletService(); if($action==='wallet_credit') $svc->credit($id,$amount,'admin_credit','manual',null,$note,$admin['user']); else $svc->debit($id,$amount,'admin_debit','manual',null,$note,$admin['user']); AuditLog::log($admin['user'], $action==='wallet_credit'?'wallet_credit':'wallet_debit', 'ctv', (string)$id, ['amount'=>$amount,'note'=>$note]); admin_flash_set('ok','Đã cập nhật ví'); }
+    } catch(Throwable $e) { admin_flash_set('err','Lỗi: '.$e->getMessage()); }
+    admin_redirect_self();
+}
 $ctv=load_ctv($id);
 $tx=(new CtvWalletService())->transactions($id,80);
 $orders=db()->prepare('SELECT * FROM ctv_orders WHERE ctv_id=? ORDER BY id DESC LIMIT 50'); $orders->execute([$id]); $orders=$orders->fetchAll();
@@ -34,7 +36,7 @@ function admin_ctv_plan_label(array $r): string {
     return implode(' · ', $parts);
 }
 admin_layout_header('Đối tác #'. $id, $admin); ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 <div class="card"><a class="btn secondary" href="/admin/ctv/index.php">← Danh sách</a><h2><?= htmlspecialchars((string)$ctv['email']) ?></h2><p>ID #<?= $id ?> · <span class="tag <?= (int)$ctv['status']?'ok':'err' ?>"><?= (int)$ctv['status']?'Hoạt động':'Đã khóa' ?></span> · Ví <?= htmlspecialchars(format_vnd((int)$ctv['balance'])) ?> · Chiết khấu <?= htmlspecialchars(format_vnd((int)$ctv['discount_per_esim'])) ?></p><p class="muted">Đăng nhập cuối: <?= htmlspecialchars((string)($ctv['last_login_at'] ?? '-')) ?> <?= htmlspecialchars((string)($ctv['last_login_ip'] ?? '')) ?></p></div>
 <div class="card">
   <h3>Thao tác</h3>

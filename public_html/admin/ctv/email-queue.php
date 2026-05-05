@@ -5,7 +5,6 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     $orderId = trim((string)($_POST['order_id'] ?? ''));
@@ -14,14 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = (new CtvMailService())->sendForOrderIfNeeded($orderId);
             AuditLog::log($admin['user'], 'email_retry', 'ctv_order', $orderId, $result);
             if ($result['sent'] > 0) {
-                $flash = ['ok', 'Đã gửi lại ' . $result['sent'] . ' email cho đơn ' . $orderId];
+                admin_flash_set('ok', 'Đã gửi lại ' . $result['sent'] . ' email cho đơn ' . $orderId);
             } else {
-                $flash = ['warn', 'Không có email nào cần gửi lại cho đơn ' . $orderId . ' (' . ($result['reason'] ?? 'đã gửi hoặc thiếu dữ liệu') . ')'];
+                admin_flash_set('warn', 'Không có email nào cần gửi lại cho đơn ' . $orderId . ' (' . ($result['reason'] ?? 'đã gửi hoặc thiếu dữ liệu') . ')');
             }
         }
     } catch (Throwable $e) {
-        $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+        admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
     }
+    admin_redirect_self();
 }
 
 $status = (string)($_GET['status'] ?? 'all');
@@ -51,7 +51,7 @@ function admin_email_profile_label(array $r): string {
     return implode(' · ', $parts);
 }
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 <div class="summary">
   <div class="card"><b>Tổng eSIM</b><h2><?= (int)$sum['total'] ?></h2></div>
   <div class="card green"><b>Đã gửi</b><h2><?= (int)$sum['sent'] ?></h2></div>

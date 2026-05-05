@@ -14,18 +14,17 @@ if ($orderId === '' || !preg_match('/^[A-Z0-9\-]{2,20}$/', $orderId)) {
     exit;
 }
 
-$flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     try {
         if ($action === 'sync_esim') {
             $r = (new CtvFulfillmentService())->syncOrderEsims($orderId);
             AuditLog::log($admin['user'], 'order_sync_esim', 'ctv_order', $orderId, ['result' => $r['status']]);
-            $flash = [$r['status'] === 'ready' ? 'ok' : 'warn', 'Đồng bộ: ' . ($r['message'] ?? $r['status'])];
+            admin_flash_set($r['status'] === 'ready' ? 'ok' : 'warn', 'Đồng bộ: ' . ($r['message'] ?? $r['status']));
         } elseif ($action === 'mark_resolved') {
             db()->prepare('UPDATE ctv_orders SET needs_admin=0 WHERE ctv_order_id=?')->execute([$orderId]);
             AuditLog::log($admin['user'], 'order_mark_resolved', 'ctv_order', $orderId);
-            $flash = ['ok', 'Đã đánh dấu đã xử lý'];
+            admin_flash_set('ok', 'Đã đánh dấu đã xử lý');
         } elseif ($action === 'refund') {
             $st = db()->prepare('SELECT * FROM ctv_orders WHERE ctv_order_id=? LIMIT 1');
             $st->execute([$orderId]);
@@ -38,15 +37,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare('UPDATE ctv_orders SET needs_admin=0 WHERE ctv_order_id=?')->execute([$orderId]);
             AuditLog::log($admin['user'], 'order_refund', 'ctv_order', $orderId, ['ctv_id' => $ctvId, 'amount' => $totalCharge, 'note' => $note]);
             (new CtvNotificationService())->create($ctvId, 'Đơn đã được hoàn tiền', 'Đơn ' . $orderId . ' được hoàn ' . format_vnd($totalCharge) . ' vào ví.', 'order');
-            $flash = ['ok', 'Đã hoàn ' . format_vnd($totalCharge) . ' vào ví đối tác'];
+            admin_flash_set('ok', 'Đã hoàn ' . format_vnd($totalCharge) . ' vào ví đối tác');
         } elseif ($action === 'retry_email') {
             $result = (new CtvMailService())->sendForOrderIfNeeded($orderId);
             AuditLog::log($admin['user'], 'email_retry', 'ctv_order', $orderId, $result);
-            $flash = [$result['sent'] > 0 ? 'ok' : 'warn', $result['sent'] > 0 ? 'Đã gửi ' . $result['sent'] . ' email' : 'Không cần gửi lại'];
+            admin_flash_set($result['sent'] > 0 ? 'ok' : 'warn', $result['sent'] > 0 ? 'Đã gửi ' . $result['sent'] . ' email' : 'Không cần gửi lại');
         }
     } catch (Throwable $e) {
-        $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+        admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
     }
+    admin_redirect_self();
 }
 
 $st = db()->prepare('SELECT o.*, u.email AS ctv_email, u.display_name AS company_name, u.display_name FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id WHERE o.ctv_order_id=? LIMIT 1');
@@ -81,7 +81,7 @@ $orderPlanLabel = trim((string)$order['carrier'] . ' · ' . admin_ov_plan_data((
 
 admin_layout_header('Đơn ' . $orderId, $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 <style>
 .ov-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
 .ov-kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:14px}

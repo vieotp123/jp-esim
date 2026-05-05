@@ -5,22 +5,21 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     $orderId = trim((string)($_POST['order_id'] ?? ''));
     if ($orderId === '' || strlen($orderId) > 64) {
-        $flash = ['err', 'Mã đơn không hợp lệ'];
+        admin_flash_set('err', 'Mã đơn không hợp lệ');
     } else {
         try {
             if ($action === 'sync_esim') {
                 $r = (new CtvFulfillmentService())->syncOrderEsims($orderId);
                 AuditLog::log($admin['user'], 'order_sync_esim', 'ctv_order', $orderId, ['result' => $r['status']]);
-                $flash = [$r['status']==='ready'?'ok':'err', 'Đồng bộ '.$orderId.': '.$r['status'].' - '.($r['message'] ?? '')];
+                admin_flash_set($r['status']==='ready'?'ok':'err', 'Đồng bộ '.$orderId.': '.$r['status'].' - '.($r['message'] ?? ''));
             } elseif ($action === 'mark_resolved') {
                 db()->prepare('UPDATE ctv_orders SET needs_admin=0 WHERE ctv_order_id=?')->execute([$orderId]);
                 AuditLog::log($admin['user'], 'order_mark_resolved', 'ctv_order', $orderId);
-                $flash = ['ok', 'Đã đánh dấu đã xử lý ' . $orderId];
+                admin_flash_set('ok', 'Đã đánh dấu đã xử lý ' . $orderId);
             } elseif ($action === 'retry') {
                 $st = db()->prepare('SELECT * FROM ctv_orders WHERE ctv_order_id=? LIMIT 1');
                 $st->execute([$orderId]);
@@ -37,14 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         db()->prepare('UPDATE ctv_orders SET status=2, provider_order_no=?, provider_transaction_id=?, updated_at=NOW() WHERE ctv_order_id=?')
                             ->execute([(string)($resp['obj']['orderNo'] ?? ''), (string)($resp['obj']['transactionId'] ?? $orderId), $orderId]);
                         AuditLog::log($admin['user'], 'order_retry_success', 'ctv_order', $orderId, ['ctv_id' => $ctvId, 'charge' => $totalCharge]);
-                        $flash = ['ok', 'Thử lại thành công ' . $orderId];
+                        admin_flash_set('ok', 'Thử lại thành công ' . $orderId);
                     } else {
                         $err = (string)($resp['errorMsg'] ?? 'Xử lý thất bại');
                         db()->prepare('UPDATE ctv_orders SET status=3, needs_admin=1, error_message=? WHERE ctv_order_id=?')
                             ->execute([mb_substr($err, 0, 500), $orderId]);
                         (new CtvWalletService())->credit($ctvId, $totalCharge, 'order_refund', 'ctv_order', $orderId, 'Hoàn tiền thử lại bởi ' . $admin['user'], $admin['user']);
                         AuditLog::log($admin['user'], 'order_retry_failed', 'ctv_order', $orderId, ['ctv_id' => $ctvId, 'error' => mb_substr($err, 0, 200)]);
-                        $flash = ['err', 'Thử lại vẫn thất bại: ' . $err];
+                        admin_flash_set('err', 'Thử lại vẫn thất bại: ' . $err);
                     }
                 } catch (Throwable $e) {
                     db()->prepare('UPDATE ctv_orders SET status=3, needs_admin=1, error_message=? WHERE ctv_order_id=?')
@@ -53,8 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw $e;
                 }
             }
-        } catch (Throwable $e) { $flash = ['err', 'Lỗi: ' . $e->getMessage()]; }
+        } catch (Throwable $e) { admin_flash_set('err', 'Lỗi: ' . $e->getMessage()); }
     }
+    admin_redirect_self();
 }
 
 $onlyFailed = !empty($_GET['failed']);
@@ -87,7 +87,7 @@ function admin_orders_plan_label(array $r): string {
 
 admin_layout_header('Đơn đối tác', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 <div class="summary">
   <div class="card"><b>Tổng đơn</b><h2><?= (int)($counts['total'] ?? 0) ?></h2></div>
   <div class="card"><b>Thất bại</b><h2><?= (int)($counts['failed'] ?? 0) ?></h2></div>

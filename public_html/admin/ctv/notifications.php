@@ -5,10 +5,9 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 $svc = new CtvNotificationService();
-try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'send') {
             $ctvId = (int)($_POST['ctv_id'] ?? 0);
@@ -19,23 +18,24 @@ try {
             if ($ctvId > 0) {
                 $svc->create($ctvId, $title, $message ?: null, $type);
                 AuditLog::log($admin['user'], 'notification_send', 'ctv', (string)$ctvId, ['title' => $title]);
-                $flash = ['ok', 'Đã gửi thông báo cho đối tác #' . $ctvId];
+                admin_flash_set('ok', 'Đã gửi thông báo cho đối tác #' . $ctvId);
             } else {
                 $count = $svc->broadcast($title, $message ?: null, $type);
                 AuditLog::log($admin['user'], 'notification_broadcast', null, null, ['title' => $title, 'count' => $count]);
-                $flash = ['ok', 'Đã gửi thông báo tới ' . $count . ' đối tác'];
+                admin_flash_set('ok', 'Đã gửi thông báo tới ' . $count . ' đối tác');
             }
         }
+    } catch (Throwable $e) {
+        admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
     }
-} catch (Throwable $e) {
-    $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+    admin_redirect_self();
 }
 
 $recent = db()->query('SELECT n.id, n.ctv_id, n.type, n.title, n.is_read, n.created_at, u.email FROM ctv_notifications n LEFT JOIN ctv_users u ON u.id = n.ctv_id ORDER BY n.id DESC LIMIT 50')->fetchAll();
 
 admin_layout_header('Thông báo đối tác', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 
 <div class="dash-grid">
 <div class="card">

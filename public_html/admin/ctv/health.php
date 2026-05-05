@@ -6,17 +6,16 @@ $admin = admin_ctv_require();
 admin_require_post();
 $pdo = db();
 
-$testEmailFlash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'test_email') {
     $alertEmail = trim((string)app_config('ALERT_EMAIL', ''));
     if ($alertEmail === '' || !filter_var($alertEmail, FILTER_VALIDATE_EMAIL)) {
-        $testEmailFlash = ['err', 'ALERT_EMAIL chưa được cấu hình hoặc không hợp lệ. Cập nhật trong db_config.php.'];
+        admin_flash_set('err', 'ALERT_EMAIL chưa được cấu hình hoặc không hợp lệ. Cập nhật trong db_config.php.');
     } else {
         $domain = trim((string)app_config('MAILGUN_DOMAIN', ''));
         $apiKey = trim((string)app_config('MAILGUN_API_KEY', ''));
         $region = strtolower((string)app_config('MAILGUN_REGION', 'us'));
         if ($domain === '' || $apiKey === '') {
-            $testEmailFlash = ['err', 'Mailgun chưa được cấu hình.'];
+            admin_flash_set('err', 'Mailgun chưa được cấu hình.');
         } else {
             $endpoint = $region === 'eu' ? 'https://api.eu.mailgun.net/v3/' : 'https://api.mailgun.net/v3/';
             $url = $endpoint . rawurlencode($domain) . '/messages';
@@ -41,12 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'test_
             curl_close($ch);
             if ($code >= 200 && $code < 300) {
                 AuditLog::log($admin['user'], 'alert_test_email', 'mailgun', $alertEmail);
-                $testEmailFlash = ['ok', 'Đã gửi email test tới ' . htmlspecialchars($alertEmail) . '. Kiểm tra hộp thư trong vài phút.'];
+                admin_flash_set('ok', 'Đã gửi email test tới ' . $alertEmail . '. Kiểm tra hộp thư trong vài phút.');
             } else {
-                $testEmailFlash = ['err', 'Mailgun trả về mã ' . $code . '. Kiểm tra MAILGUN_DOMAIN và MAILGUN_API_KEY.'];
+                admin_flash_set('err', 'Mailgun trả về mã ' . $code . '. Kiểm tra MAILGUN_DOMAIN và MAILGUN_API_KEY.');
             }
         }
     }
+    admin_redirect_self();
 }
 
 $flags = [
@@ -221,9 +221,7 @@ admin_layout_header('Tình trạng hệ thống', $admin);
   <div class="card">
     <p class="muted" style="margin-bottom:10px">Tích hợp giám sát ngoài (Uptime Robot, Pingdom, Datadog…) qua URL:</p>
     <p style="margin-bottom:14px"><a href="/api/health.php" style="color:var(--a-gold)" target="_blank"><code>/api/health.php</code></a> — JSON, 200/503</p>
-    <?php if ($testEmailFlash): ?>
-    <div class="flash <?= htmlspecialchars($testEmailFlash[0]) ?>" style="margin-bottom:10px"><?= htmlspecialchars($testEmailFlash[1]) ?></div>
-    <?php endif; ?>
+    <?php admin_flash_render(); ?>
     <form method="post" onsubmit="return confirm('Gửi email test đến ALERT_EMAIL?')">
       <?php admin_csrf_field(); ?>
       <input type="hidden" name="action" value="test_email">

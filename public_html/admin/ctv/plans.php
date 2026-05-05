@@ -5,7 +5,6 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = (string)($_POST['action'] ?? '');
@@ -15,18 +14,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newStatus = (int)($_POST['status'] ?? 0) ? 1 : 0;
             db()->prepare('UPDATE plan SET status=?, updated_at=NOW() WHERE id=?')->execute([$newStatus, $id]);
             AuditLog::log($admin['user'], 'plan_toggle_status', 'plan', (string)$id, ['status' => $newStatus]);
-            $flash = ['ok', 'Đã ' . ($newStatus ? 'kích hoạt' : 'tạm tắt') . ' gói #' . $id];
+            admin_flash_set('ok', 'Đã ' . ($newStatus ? 'kích hoạt' : 'tạm tắt') . ' gói #' . $id);
         } elseif ($action === 'update_price') {
             $price = max(0, (int)($_POST['price'] ?? 0));
             $cost = max(0, (int)($_POST['cost'] ?? 0));
             if ($price > 100000000) throw new RuntimeException('Giá không hợp lệ');
             db()->prepare('UPDATE plan SET price=?, cost=?, updated_at=NOW() WHERE id=?')->execute([$price, $cost, $id]);
             AuditLog::log($admin['user'], 'plan_update_price', 'plan', (string)$id, ['price' => $price, 'cost' => $cost]);
-            $flash = ['ok', 'Đã cập nhật giá gói #' . $id . ' (giá lẻ ' . format_vnd($price) . ', vốn ' . format_vnd($cost) . ')'];
+            admin_flash_set('ok', 'Đã cập nhật giá gói #' . $id . ' (giá lẻ ' . format_vnd($price) . ', vốn ' . format_vnd($cost) . ')');
         }
     } catch (Throwable $e) {
-        $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+        admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
     }
+    admin_redirect_self();
 }
 
 $pdo = db();
@@ -36,7 +36,7 @@ $inactive = array_filter($plans, fn($p) => (int)($p['status'] ?? 0) !== 1);
 
 admin_layout_header('Quản lý gói cước', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 
 <div class="summary">
   <div class="card"><b>Tổng số gói</b><h2><?= count($plans) ?></h2></div>

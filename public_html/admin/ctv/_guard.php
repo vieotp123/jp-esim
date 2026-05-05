@@ -19,6 +19,32 @@ function admin_require_post(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
     if (!hash_equals(admin_csrf_token(), (string)($_POST['csrf'] ?? ''))) { http_response_code(400); echo 'Mã CSRF không hợp lệ.'; exit; }
 }
+function admin_flash_set(string $type, string $msg): void {
+    admin_session_start();
+    $_SESSION['admin_flash'][] = ['type' => $type, 'msg' => $msg];
+}
+function admin_flash_get(): array {
+    admin_session_start();
+    $f = $_SESSION['admin_flash'] ?? [];
+    unset($_SESSION['admin_flash']);
+    return is_array($f) ? $f : [];
+}
+function admin_flash_render(): void {
+    foreach (admin_flash_get() as $f) {
+        $t = (string)($f['type'] ?? 'ok');
+        $cls = in_array($t, ['ok','warn','err'], true) ? $t : 'ok';
+        echo '<div class="flash '.htmlspecialchars($cls).'">'.htmlspecialchars((string)($f['msg'] ?? '')).'</div>';
+    }
+}
+function admin_redirect_self(): void {
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? ($_SERVER['SCRIPT_NAME'] ?? '/admin/ctv/dashboard-admin.php'));
+    header('Location: ' . $uri);
+    exit;
+}
+function admin_redirect(string $url): void {
+    header('Location: ' . $url);
+    exit;
+}
 function admin_ctv_require(): array {
     $expectedUser = (string)app_config('ADMIN_USER', 'admin');
     $expectedPass = (string)app_config('ADMIN_PASS', '');

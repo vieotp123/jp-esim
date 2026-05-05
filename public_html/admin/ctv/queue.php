@@ -69,7 +69,7 @@ try {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $cancelNote, $id]);
             AuditLog::log($admin['user'], 'queue_cancel', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $cancelNote]);
-            $flash = ['warn', 'Đã huỷ đơn ' . htmlspecialchars($stripped) . ' và đóng mục #' . $id . ' — không gọi hệ thống ngoài.'];
+            $flash = ['warn', 'Đã huỷ đơn ' . $stripped . ' và đóng mục #' . $id . ' — không gọi hệ thống ngoài.'];
         } elseif ($action === 'mark_refunded') {
             $refId = (string)($row['ref_id'] ?? '');
             $stripped = str_starts_with($refId, 'TEST-DEMO-') ? substr($refId, strlen('TEST-DEMO-')) : $refId;
@@ -86,7 +86,7 @@ try {
             db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                 ->execute(['resolved', $refundNote, $id]);
             AuditLog::log($admin['user'], 'queue_refund', 'queue', (string)$id, ['ref' => $row['ref_id'], 'order' => $stripped, 'note' => $refundNote]);
-            $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
+            $flash = ['ok', 'Đã đánh dấu hoàn tiền cho ' . $stripped . ' — không gọi hệ thống ngoài.'];
         } elseif ($action === 'retry') {
             $refId = (string)($row['ref_id'] ?? '');
             $kind  = (string)($row['kind'] ?? '');
@@ -104,14 +104,14 @@ try {
                 } elseif ($first === 'T') {
                     $ok = $isTestDemo ? true : (new MailService())->sendTopupIfNeeded($stripped);
                 } else {
-                    throw new RuntimeException('Không nhận diện được loại ref để resend email (cần N* hoặc T*): ' . htmlspecialchars($refId));
+                    throw new RuntimeException('Không nhận diện được loại ref để resend email (cần N* hoặc T*): ' . $refId);
                 }
                 if ($ok) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                         ->execute(['resolved', '[email gửi lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
-                    $flash = ['ok', 'Đã gửi lại email cho ' . htmlspecialchars($stripped) . ' — không gọi hệ thống ngoài.'];
+                    $flash = ['ok', 'Đã gửi lại email cho ' . $stripped . ' — không gọi hệ thống ngoài.'];
                 } else {
-                    $flash = ['err', 'Gửi lại email cho ' . htmlspecialchars($stripped) . ' chưa thành công. Kiểm tra nhật ký.'];
+                    $flash = ['err', 'Gửi lại email cho ' . $stripped . ' chưa thành công. Kiểm tra nhật ký.'];
                 }
             } else {
                 $providerTest = LegacyProviderClient::isTestMode();
@@ -123,7 +123,7 @@ try {
                 if ($isTestDemo) {
                     db()->prepare('UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id=?')
                         ->execute(['resolved', '[demo] ' . ($note !== '' ? $note : 'Demo thử lại — admin: ' . $admin['user']), $id]);
-                    $flash = ['ok', 'Demo thử lại #' . $id . ' (ref ' . htmlspecialchars($refId) . ') — đã đánh dấu đã xử lý (không gọi API thật).'];
+                    $flash = ['ok', 'Demo thử lại #' . $id . ' (ref ' . $refId . ') — đã đánh dấu đã xử lý (không gọi API thật).'];
                 } elseif ($first === 'N') {
                     $result = $svc->fulfillPaidOrder($stripped);
                     if (!empty($result['success'])) {
@@ -131,7 +131,7 @@ try {
                             ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
                         $flash = ['ok', 'Thử lại đơn ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
-                        $flash = ['err', 'Thử lại đơn ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];
+                        $flash = ['err', 'Thử lại đơn ' . $stripped . ' vẫn thất bại: ' . (string)($result['reason'] ?? 'không rõ')];
                     }
                 } elseif ($first === 'T') {
                     $result = $svc->fulfillPaidTopup($stripped);
@@ -140,17 +140,20 @@ try {
                             ->execute(['resolved', '[thử lại OK] ' . ($note !== '' ? $note : '') . ' bởi ' . $admin['user'], $id]);
                         $flash = ['ok', 'Thử lại nạp data ' . $stripped . ' thành công — đã đánh dấu đã xử lý.'];
                     } else {
-                        $flash = ['err', 'Thử lại nạp data ' . $stripped . ' vẫn thất bại: ' . htmlspecialchars((string)($result['reason'] ?? 'không rõ'))];
+                        $flash = ['err', 'Thử lại nạp data ' . $stripped . ' vẫn thất bại: ' . (string)($result['reason'] ?? 'không rõ')];
                     }
                 } else {
-                    throw new RuntimeException('Không nhận diện được loại ref (cần N* hoặc T*): ' . htmlspecialchars($refId));
+                    throw new RuntimeException('Không nhận diện được loại ref (cần N* hoặc T*): ' . $refId);
                 }
             }
         }
         post_done:
+        if ($flash) admin_flash_set($flash[0], $flash[1]);
+        admin_redirect_self();
     }
 } catch (Throwable $e) {
-    $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+    admin_flash_set('err', 'Lỗi: ' . $e->getMessage());
+    admin_redirect_self();
 }
 
 $status = (string)($_GET['status'] ?? 'open');
@@ -193,7 +196,7 @@ $qsBuild = function(array $extra) use ($status, $kind): string {
 
 admin_layout_header('Hàng đợi đơn lỗi', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 
 <div class="summary">
   <div class="card gold"><b>Đang chờ xử lý</b><h2><?= (int)($counts['open_n'] ?? 0) ?></h2><div class="sub">tất cả loại</div></div>

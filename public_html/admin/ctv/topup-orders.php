@@ -5,30 +5,29 @@ require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
 admin_require_post();
 
-$flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
     $tid = (string)($_POST['tid'] ?? '');
-    if ($tid === '') { $flash = ['err', 'Thiếu mã nạp']; }
+    if ($tid === '') { admin_flash_set('err', 'Thiếu mã nạp'); }
     elseif ($action === 'refund') {
         $st = db()->prepare('SELECT * FROM ctv_topup_orders WHERE ctv_topup_id=? LIMIT 1');
         $st->execute([$tid]);
         $row = $st->fetch();
-        if (!$row) { $flash = ['err', 'Không tìm thấy đơn nạp']; }
-        elseif ((int)$row['status'] === 3) { $flash = ['warn', 'Đơn đã ở trạng thái thất bại/đã hoàn']; }
+        if (!$row) { admin_flash_set('err', 'Không tìm thấy đơn nạp'); }
+        elseif ((int)$row['status'] === 3) { admin_flash_set('warn', 'Đơn đã ở trạng thái thất bại/đã hoàn'); }
         else {
             $charge = (int)$row['total_charge'];
             $ctvId = (int)$row['ctv_id'];
             db()->prepare('UPDATE ctv_topup_orders SET status=3, needs_admin=0, error_message=CONCAT(IFNULL(error_message,""), ?), updated_at=NOW() WHERE ctv_topup_id=?')
                 ->execute([' [Admin hoàn: ' . $admin['user'] . ']', $tid]);
-            try { (new CtvWalletService())->credit($ctvId, $charge, 'topup_refund', 'ctv_topup', $tid, 'Admin refund by ' . $admin['user']); }
-            catch (Throwable $e) { $flash = ['err', 'Hoàn ví lỗi: ' . $e->getMessage()]; }
-            if (!$flash) {
+            try {
+                (new CtvWalletService())->credit($ctvId, $charge, 'topup_refund', 'ctv_topup', $tid, 'Admin refund by ' . $admin['user']);
                 AuditLog::log($admin['user'], 'topup_refund', 'ctv_topup', $tid, ['ctv_id' => $ctvId, 'amount' => $charge]);
-                $flash = ['ok', 'Đã hoàn ' . format_vnd($charge) . ' cho CTV #' . $ctvId . ' (đơn ' . $tid . ')'];
-            }
+                admin_flash_set('ok', 'Đã hoàn ' . format_vnd($charge) . ' cho CTV #' . $ctvId . ' (đơn ' . $tid . ')');
+            } catch (Throwable $e) { admin_flash_set('err', 'Hoàn ví lỗi: ' . $e->getMessage()); }
         }
     }
+    admin_redirect_self();
 }
 
 $status = (string)($_GET['status'] ?? '');
@@ -67,7 +66,7 @@ FROM ctv_topup_orders")->fetch();
 
 admin_layout_header('Đơn nạp data', $admin);
 ?>
-<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+<?php admin_flash_render(); ?>
 
 <div class="summary">
   <div class="card"><b>Tổng</b><h2><?= (int)($counts['total'] ?? 0) ?></h2></div>
