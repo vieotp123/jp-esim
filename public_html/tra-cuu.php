@@ -9,12 +9,18 @@ $order = null;
 $error = null;
 
 if ($orderId !== '') {
-    try {
-        $orderId = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $orderId));
-        if ($orderId === '') throw new InvalidArgumentException('Mã đơn không hợp lệ');
-        $order = (new PaymentService())->status($orderId, strlen($orderId) > 10 ? 'order' : ($_GET['type'] ?? 'order'));
-    } catch (Throwable $e) {
-        $error = $e->getMessage();
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $rl = new RateLimiter();
+    if (!$rl->check('tracuu_ip:' . $ip, 20, 300)) {
+        $error = 'Quá nhiều yêu cầu tra cứu. Vui lòng thử lại sau.';
+    } else {
+        try {
+            $orderId = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $orderId));
+            if ($orderId === '') throw new InvalidArgumentException('Mã đơn không hợp lệ');
+            $order = (new PaymentService())->status($orderId, strlen($orderId) > 10 ? 'order' : ($_GET['type'] ?? 'order'));
+        } catch (Throwable $e) {
+            $error = $e->getMessage();
+        }
     }
 }
 ?>

@@ -82,7 +82,7 @@ admin_layout_header('Tổng quan Admin', $admin);
 <div class="card">
   <h2>Đơn hàng theo trạng thái</h2>
   <?php foreach (['retail', 'ctv'] as $src): ?>
-  <h3><?= $src === 'retail' ? 'KHÁCH LẺ' : 'Đối tác' ?></h3>
+  <h3><?= $src === 'retail' ? 'Khách lẻ' : 'Đối tác' ?></h3>
   <div class="filter-row">
     <?php foreach ($orderBreakdown[$src] ?? [] as $label => $cnt): ?>
       <span class="tag <?= $label === 'Thành công' ? 'ok' : ($label === 'Thất bại' ? 'err' : ($label === 'Chờ TT' ? 'warn' : 'info')) ?>"><?= htmlspecialchars($label) ?>: <?= $cnt ?></span>
