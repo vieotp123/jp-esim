@@ -12,7 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
         $err = 'Phiên không hợp lệ, vui lòng thử lại.';
     } else {
-        try {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $rl = new RateLimiter();
+        if (!$rl->check('ctv_register_ip:' . $ip, 5, 3600)) {
+            $err = 'Quá nhiều lần đăng ký. Vui lòng thử lại sau.';
+        } else try {
             $res = CtvAuth::register(
                 (string)($_POST['email'] ?? ''),
                 (string)($_POST['password'] ?? ''),

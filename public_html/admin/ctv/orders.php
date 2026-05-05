@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $onlyFailed = !empty($_GET['failed']);
 $where = $onlyFailed ? 'WHERE o.needs_admin=1 OR o.status=3' : 'WHERE 1';
-$rows = db()->query("SELECT o.*, u.email AS ctv_email FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id $where ORDER BY o.id DESC LIMIT 200")->fetchAll();
+$rows = db()->query("SELECT o.*, u.email AS ctv_email, (SELECT COUNT(*) FROM ctv_esims e WHERE e.ctv_order_id=o.ctv_order_id) AS esim_count FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id $where ORDER BY o.id DESC LIMIT 200")->fetchAll();
 $counts = db()->query('SELECT SUM(needs_admin=1) needs, SUM(status=3) failed, COUNT(*) total FROM ctv_orders')->fetch();
 
 function admin_orders_plan_data(string $plan): string {
@@ -97,7 +97,7 @@ admin_layout_header('Đơn đối tác', $admin);
       $st=(int)$r['status'];
       $oid=(string)$r['ctv_order_id'];
       $qty=(int)$r['quantity'];
-      $pcSt=db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');$pcSt->execute([$oid]);$pc=(int)$pcSt->fetchColumn();
+      $pc=(int)$r['esim_count'];
     ?>
     <div class="m-card">
       <div class="m-head">
@@ -153,8 +153,7 @@ admin_layout_header('Đơn đối tác', $admin);
         <td><span class="kbd"><?= htmlspecialchars($oid) ?></span></td>
         <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
         <td><?= htmlspecialchars(admin_orders_plan_label($r)) ?> ×<?= (int)$r['quantity'] ?><?php
-          $qty=(int)$r['quantity'];
-          $pcSt=db()->prepare('SELECT COUNT(*) FROM ctv_esims WHERE ctv_order_id=?');$pcSt->execute([$oid]);$pc=(int)$pcSt->fetchColumn();
+          $qty=(int)$r['quantity']; $pc=(int)$r['esim_count'];
           if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>" style="font-size:11px"><?= $pc ?>/<?= $qty ?></span><?php endif;
         ?></td>
         <td><?= htmlspecialchars(format_vnd((int)$r['total_charge'])) ?></td>
