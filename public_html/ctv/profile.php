@@ -6,36 +6,34 @@ require_once __DIR__ . '/_layout.php';
 $user = CtvAuth::requireUser();
 $user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
 
-$flash = null;
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
-        $flash = ['error', 'Phiên không hợp lệ. Tải lại trang.'];
+        ctv_flash_set('error', 'Phiên không hợp lệ. Tải lại trang.');
     } else {
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         $rl = new RateLimiter();
         if (!$rl->check('ctv_profile_edit:' . (int)$user['id'], 20, 600)) {
-            $flash = ['error', 'Quá nhiều thay đổi. Vui lòng đợi.'];
+            ctv_flash_set('error', 'Quá nhiều thay đổi. Vui lòng đợi.');
         } else {
             $name = trim((string)($_POST['display_name'] ?? ''));
             $phone = trim((string)($_POST['phone'] ?? ''));
-            if (mb_strlen($name) > 100) { $flash = ['error', 'Tên hiển thị tối đa 100 ký tự.']; }
-            elseif (mb_strlen($phone) > 30) { $flash = ['error', 'SĐT tối đa 30 ký tự.']; }
-            elseif ($phone !== '' && !preg_match('/^[\d\s+().-]+$/', $phone)) { $flash = ['error', 'Số điện thoại không hợp lệ.']; }
+            if (mb_strlen($name) > 100) { ctv_flash_set('error', 'Tên hiển thị tối đa 100 ký tự.'); }
+            elseif (mb_strlen($phone) > 30) { ctv_flash_set('error', 'SĐT tối đa 30 ký tự.'); }
+            elseif ($phone !== '' && !preg_match('/^[\d\s+().-]+$/', $phone)) { ctv_flash_set('error', 'Số điện thoại không hợp lệ.'); }
             else {
                 try {
                     db()->prepare('UPDATE ctv_users SET display_name=?, phone=?, updated_at=NOW() WHERE id=?')
                         ->execute([$name !== '' ? $name : null, $phone !== '' ? $phone : null, (int)$user['id']]);
-                    $flash = ['ok', 'Đã cập nhật hồ sơ.'];
-                    $user['display_name'] = $name;
-                    $user['phone'] = $phone;
+                    ctv_flash_set('ok', 'Đã cập nhật hồ sơ.');
                 } catch (Throwable $e) {
                     app_log('CTV profile update fail: ' . $e->getMessage(), 'ERROR');
-                    $flash = ['error', 'Lỗi hệ thống. Thử lại.'];
+                    ctv_flash_set('error', 'Lỗi hệ thống. Thử lại.');
                 }
             }
         }
     }
+    header('Location: /ctv/profile.php');
+    exit;
 }
 
 $csrf = CtvAuth::csrfToken();
@@ -43,7 +41,7 @@ ctv_layout_header('Hồ sơ', $user);
 ?>
 <div class="card" style="max-width:520px;margin:0 auto">
   <h2>Hồ sơ đối tác</h2>
-  <?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
+  <?php ctv_flash_render(); ?>
 
   <form method="post" autocomplete="off">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">

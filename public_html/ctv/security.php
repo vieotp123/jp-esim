@@ -12,63 +12,64 @@ if ((int)($user['email_verified'] ?? 0) !== 1) {
     exit;
 }
 
-$pwFlash = null;
-$sessFlash = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'revoke_session') {
-    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
-        $sessFlash = ['error', 'Phiên không hợp lệ.'];
-    } else {
-        $sid = (string)($_POST['session_id'] ?? '');
-        if ($sid !== '' && strlen($sid) <= 64) {
-            $currentSid = $_COOKIE['ctv_session'] ?? '';
-            if ($sid === $currentSid) {
-                $sessFlash = ['error', 'Không thể thu hồi phiên hiện tại. Dùng Đăng xuất.'];
-            } else {
-                db()->prepare('DELETE FROM ctv_sessions WHERE id=? AND ctv_id=?')->execute([$sid, (int)$user['id']]);
-                $sessFlash = ['ok', 'Đã thu hồi phiên đăng nhập.'];
-            }
-        }
-    }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'revoke_all_sessions') {
-    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
-        $sessFlash = ['error', 'Phiên không hợp lệ.'];
-    } else {
-        $currentSid = $_COOKIE['ctv_session'] ?? '';
-        db()->prepare('DELETE FROM ctv_sessions WHERE ctv_id=? AND id<>?')->execute([(int)$user['id'], $currentSid]);
-        $sessFlash = ['ok', 'Đã thu hồi tất cả phiên khác.'];
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
-    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
-        $pwFlash = ['error', 'Phiên làm việc hết hạn. Vui lòng tải lại trang.'];
-    } else {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $rl = new RateLimiter();
-        if (!$rl->check('ctv_pw_change:' . (int)$user['id'], 5, 900)) {
-            $pwFlash = ['error', 'Quá nhiều lần thử. Vui lòng đợi 15 phút.'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = (string)($_POST['action'] ?? '');
+    if ($action === 'revoke_session') {
+        if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+            ctv_flash_set('error', 'Phiên không hợp lệ.');
         } else {
-            $currentPw = (string)($_POST['current_password'] ?? '');
-            $newPw = (string)($_POST['new_password'] ?? '');
-            $confirmPw = (string)($_POST['confirm_password'] ?? '');
-            $st = db()->prepare('SELECT password_hash FROM ctv_users WHERE id=? LIMIT 1');
-            $st->execute([(int)$user['id']]);
-            $hash = (string)$st->fetchColumn();
-            if (!password_verify($currentPw, $hash)) {
-                $pwFlash = ['error', 'Mật khẩu hiện tại không đúng.'];
-            } elseif (strlen($newPw) < 8) {
-                $pwFlash = ['error', 'Mật khẩu mới tối thiểu 8 ký tự.'];
-            } elseif ($newPw !== $confirmPw) {
-                $pwFlash = ['error', 'Mật khẩu xác nhận không khớp.'];
-            } elseif ($currentPw === $newPw) {
-                $pwFlash = ['error', 'Mật khẩu mới phải khác mật khẩu hiện tại.'];
+            $sid = (string)($_POST['session_id'] ?? '');
+            if ($sid !== '' && strlen($sid) <= 64) {
+                $currentSid = $_COOKIE['ctv_session'] ?? '';
+                if ($sid === $currentSid) {
+                    ctv_flash_set('error', 'Không thể thu hồi phiên hiện tại. Dùng Đăng xuất.');
+                } else {
+                    db()->prepare('DELETE FROM ctv_sessions WHERE id=? AND ctv_id=?')->execute([$sid, (int)$user['id']]);
+                    ctv_flash_set('ok', 'Đã thu hồi phiên đăng nhập.');
+                }
+            }
+        }
+    } elseif ($action === 'revoke_all_sessions') {
+        if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+            ctv_flash_set('error', 'Phiên không hợp lệ.');
+        } else {
+            $currentSid = $_COOKIE['ctv_session'] ?? '';
+            db()->prepare('DELETE FROM ctv_sessions WHERE ctv_id=? AND id<>?')->execute([(int)$user['id'], $currentSid]);
+            ctv_flash_set('ok', 'Đã thu hồi tất cả phiên khác.');
+        }
+    } elseif ($action === 'change_password') {
+        if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+            ctv_flash_set('error', 'Phiên làm việc hết hạn. Vui lòng tải lại trang.');
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $rl = new RateLimiter();
+            if (!$rl->check('ctv_pw_change:' . (int)$user['id'], 5, 900)) {
+                ctv_flash_set('error', 'Quá nhiều lần thử. Vui lòng đợi 15 phút.');
             } else {
-                $newHash = password_hash($newPw, PASSWORD_BCRYPT);
-                db()->prepare('UPDATE ctv_users SET password_hash=? WHERE id=?')->execute([$newHash, (int)$user['id']]);
-                $pwFlash = ['ok', 'Đã đổi mật khẩu thành công.'];
+                $currentPw = (string)($_POST['current_password'] ?? '');
+                $newPw = (string)($_POST['new_password'] ?? '');
+                $confirmPw = (string)($_POST['confirm_password'] ?? '');
+                $st = db()->prepare('SELECT password_hash FROM ctv_users WHERE id=? LIMIT 1');
+                $st->execute([(int)$user['id']]);
+                $hash = (string)$st->fetchColumn();
+                if (!password_verify($currentPw, $hash)) {
+                    ctv_flash_set('error', 'Mật khẩu hiện tại không đúng.');
+                } elseif (strlen($newPw) < 8) {
+                    ctv_flash_set('error', 'Mật khẩu mới tối thiểu 8 ký tự.');
+                } elseif ($newPw !== $confirmPw) {
+                    ctv_flash_set('error', 'Mật khẩu xác nhận không khớp.');
+                } elseif ($currentPw === $newPw) {
+                    ctv_flash_set('error', 'Mật khẩu mới phải khác mật khẩu hiện tại.');
+                } else {
+                    $newHash = password_hash($newPw, PASSWORD_BCRYPT);
+                    db()->prepare('UPDATE ctv_users SET password_hash=? WHERE id=?')->execute([$newHash, (int)$user['id']]);
+                    ctv_flash_set('ok', 'Đã đổi mật khẩu thành công.');
+                }
             }
         }
     }
+    header('Location: /ctv/security.php');
+    exit;
 }
 
 $csrf = CtvAuth::csrfToken();
@@ -136,7 +137,6 @@ ctv_flash_render();
 <div class="card" style="max-width:720px">
   <h2>Đổi mật khẩu</h2>
   <p class="muted" style="margin-bottom:14px">Mật khẩu luôn khả dụng để đăng nhập, kể cả khi bạn có passkey.</p>
-  <?php if ($pwFlash): ?><div class="flash <?= htmlspecialchars($pwFlash[0]) ?>"><?= htmlspecialchars($pwFlash[1]) ?></div><?php endif; ?>
   <form method="post" style="max-width:360px">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
     <input type="hidden" name="action" value="change_password">
@@ -150,7 +150,6 @@ ctv_flash_render();
 <div class="card" style="max-width:720px">
   <h2>Phiên đăng nhập</h2>
   <p class="muted" style="margin-bottom:14px">Các phiên đang hoạt động. Thu hồi phiên từ thiết bị bạn không còn sử dụng.</p>
-  <?php if ($sessFlash): ?><div class="flash <?= htmlspecialchars($sessFlash[0]) ?>"><?= htmlspecialchars($sessFlash[1]) ?></div><?php endif; ?>
   <?php if ($sessions): ?>
   <div class="m-cards">
     <?php foreach ($sessions as $s):
