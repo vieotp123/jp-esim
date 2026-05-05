@@ -232,7 +232,8 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email<?= admin_nav_badge((int)$navCounts['email_err'], 'warn') ?></a>
     <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi<?= admin_nav_badge((int)$navCounts['queue'], 'err') ?></a>
     <a href="/admin/ctv/topup-orders.php"<?= admin_nav_active('/admin/ctv/topup-orders.php') ?>>Nạp data<?= admin_nav_badge((int)$navCounts['failed_topup'], 'err') ?></a>
-    <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>Nạp ví<?= admin_nav_badge((int)$navCounts['topup_req'], 'warn') ?></a>
+    <a href="/admin/ctv/wallet.php"<?= admin_nav_active('/admin/ctv/wallet.php') ?>>Nạp ví</a>
+    <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>YC nạp cũ<?= admin_nav_badge((int)$navCounts['topup_req'], 'warn') ?></a>
     <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Thông báo</a>
     <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Nhật ký</a>
     <a href="/admin/ctv/export.php"<?= admin_nav_active('/admin/ctv/export.php') ?>>Xuất CSV</a>

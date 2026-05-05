@@ -9,7 +9,8 @@ final class CtvWalletService {
     public function debit(int $ctvId, int $amount, string $reason, ?string $refType = null, ?string $refId = null, ?string $note = null, ?string $adminUser = null): int {
         if ($amount <= 0) throw new InvalidArgumentException('Số tiền không hợp lệ');
         $pdo = db();
-        $pdo->beginTransaction();
+        $ownTx = !$pdo->inTransaction();
+        if ($ownTx) $pdo->beginTransaction();
         try {
             $st = $pdo->prepare('SELECT balance FROM ctv_users WHERE id=? FOR UPDATE');
             $st->execute([$ctvId]);
@@ -21,10 +22,10 @@ final class CtvWalletService {
             $pdo->prepare('UPDATE ctv_users SET balance=? WHERE id=?')->execute([$newBal, $ctvId]);
             $pdo->prepare('INSERT INTO ctv_wallet_transactions(ctv_id,amount,balance_after,reason,ref_type,ref_id,note,admin_user) VALUES(?,?,?,?,?,?,?,?)')
                 ->execute([$ctvId, -$amount, $newBal, $reason, $refType, $refId, $note, $adminUser]);
-            $pdo->commit();
+            if ($ownTx) $pdo->commit();
             return $newBal;
         } catch (Throwable $e) {
-            $pdo->rollBack();
+            if ($ownTx && $pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
     }
@@ -32,7 +33,8 @@ final class CtvWalletService {
     public function credit(int $ctvId, int $amount, string $reason, ?string $refType = null, ?string $refId = null, ?string $note = null, ?string $adminUser = null): int {
         if ($amount <= 0) throw new InvalidArgumentException('Số tiền không hợp lệ');
         $pdo = db();
-        $pdo->beginTransaction();
+        $ownTx = !$pdo->inTransaction();
+        if ($ownTx) $pdo->beginTransaction();
         try {
             $st = $pdo->prepare('SELECT balance FROM ctv_users WHERE id=? FOR UPDATE');
             $st->execute([$ctvId]);
@@ -42,10 +44,10 @@ final class CtvWalletService {
             $pdo->prepare('UPDATE ctv_users SET balance=? WHERE id=?')->execute([$newBal, $ctvId]);
             $pdo->prepare('INSERT INTO ctv_wallet_transactions(ctv_id,amount,balance_after,reason,ref_type,ref_id,note,admin_user) VALUES(?,?,?,?,?,?,?,?)')
                 ->execute([$ctvId, $amount, $newBal, $reason, $refType, $refId, $note, $adminUser]);
-            $pdo->commit();
+            if ($ownTx) $pdo->commit();
             return $newBal;
         } catch (Throwable $e) {
-            $pdo->rollBack();
+            if ($ownTx && $pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
     }

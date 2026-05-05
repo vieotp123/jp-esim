@@ -4,7 +4,9 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_layout.php';
 
 $user = CtvAuth::requireUser();
-$user['balance'] = (new CtvWalletService())->balance((int)$user['id']);
+ctv_flash_set('warn', 'Chức năng nạp ví tự động đã được tắt. Vui lòng liên hệ admin để nạp tiền.');
+header('Location: /ctv/dashboard.php');
+exit;
 
 $svc = new CtvTopupRequestService();
 $err = null;
