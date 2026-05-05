@@ -44,7 +44,7 @@ ctv_layout_header('Quên mật khẩu', null);
   <?php if ($ok): ?>
     <div class="flash ok">Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết đặt lại mật khẩu trong vài phút.</div>
     <p class="muted">Kiểm tra hộp thư (bao gồm thư rác). Liên kết có hiệu lực 30 phút.</p>
-    <a class="btn secondary" href="/ctv/login.php">Quay lại đăng nhập</a>
+    <a class="btn secondary" href="/auth?role=partner">Quay lại đăng nhập</a>
   <?php else: ?>
     <p class="muted" style="margin-bottom:14px">Nhập email đã đăng ký. Hệ thống sẽ gửi liên kết đặt lại mật khẩu.</p>
     <?php if ($err): ?><div class="flash error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
@@ -53,7 +53,7 @@ ctv_layout_header('Quên mật khẩu', null);
       <div class="field"><label>Email</label><input type="email" name="email" required autofocus autocomplete="email" placeholder="email@example.com"></div>
       <button class="btn" type="submit">Gửi liên kết đặt lại</button>
     </form>
-    <p style="margin-top:14px"><a href="/ctv/login.php" style="color:var(--c-gold)">Quay lại đăng nhập</a></p>
+    <p style="margin-top:14px"><a href="/auth?role=partner" style="color:var(--c-gold)">Quay lại đăng nhập</a></p>
   <?php endif; ?>
 </div>
 <?php ctv_layout_footer();

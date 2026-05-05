@@ -4,5 +4,5 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_guard.php';
 
 admin_logout();
-header('Location: /admin/ctv/login.php');
+header('Location: /auth');
 exit;

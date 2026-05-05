@@ -26,17 +26,30 @@ function admin_ctv_require(): array {
     admin_session_start();
 
     if (!empty($_SESSION['admin_authenticated']) && !empty($_SESSION['admin_user'])) {
-        admin_require_passkey_if_enabled((string)$_SESSION['admin_user']);
-        return ['user' => (string)$_SESSION['admin_user']];
+        $idleMax = (int)app_config('ADMIN_IDLE_MAX_SECONDS', 3600);
+        $lastActivity = (int)($_SESSION['admin_last_activity'] ?? $_SESSION['admin_login_at'] ?? time());
+        if ($idleMax > 0 && (time() - $lastActivity) > $idleMax) {
+            admin_logout();
+            $script = $_SERVER['SCRIPT_NAME'] ?? '';
+            if ($script !== '/admin/ctv/login.php') {
+                header('Location: /auth?role=admin&idle=1');
+                exit;
+            }
+        } else {
+            $_SESSION['admin_last_activity'] = time();
+            admin_require_passkey_if_enabled((string)$_SESSION['admin_user']);
+            return ['user' => (string)$_SESSION['admin_user']];
+        }
     }
 
     $u = $_SERVER['PHP_AUTH_USER'] ?? '';
     $p = $_SERVER['PHP_AUTH_PW'] ?? '';
-    if ((string)$u !== '' && hash_equals($expectedUser, (string)$u) && hash_equals($expectedPass, (string)$p)) {
+    if ((string)$u !== '' && !admin_passkey_enforced_strict() && hash_equals($expectedUser, (string)$u) && hash_equals($expectedPass, (string)$p)) {
         session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = 1;
         $_SESSION['admin_user'] = $expectedUser;
         $_SESSION['admin_login_at'] = time();
+        $_SESSION['admin_last_activity'] = time();
         admin_require_passkey_if_enabled($expectedUser);
         return ['user' => $expectedUser];
     }
@@ -60,7 +73,7 @@ function admin_ctv_require(): array {
         exit;
     }
 
-    header('Location: /admin/ctv/login.php');
+    header('Location: /auth?role=admin');
     exit;
 }
 function admin_login(string $user): void {
@@ -69,6 +82,7 @@ function admin_login(string $user): void {
     $_SESSION['admin_authenticated'] = 1;
     $_SESSION['admin_user'] = $user;
     $_SESSION['admin_login_at'] = time();
+    $_SESSION['admin_last_activity'] = time();
 }
 function admin_logout(): void {
     admin_session_start();
@@ -80,7 +94,16 @@ function admin_logout(): void {
     session_destroy();
 }
 function admin_passkey_required(): bool {
-    return (string)app_config('ADMIN_REQUIRE_PASSKEY', '0') === '1';
+    return (string)app_config('ADMIN_REQUIRE_PASSKEY', '1') !== '0';
+}
+function admin_passkey_enforced_strict(): bool {
+    if (!admin_passkey_required()) return false;
+    try {
+        $adminId = crc32((string)app_config('ADMIN_USER', 'admin'));
+        return (new PasskeyService())->hasPasskey('admin', $adminId);
+    } catch (Throwable $e) {
+        return false;
+    }
 }
 function admin_passkey_verified(): bool {
     admin_session_start();

@@ -47,7 +47,7 @@ ctv_layout_header('Đăng ký đối tác', null);
     <div class="field"><label>Tên hiển thị (tùy chọn)</label><input type="text" name="display_name" value="<?= htmlspecialchars((string)($_POST['display_name'] ?? '')) ?>"></div>
     <div class="field"><label>Số điện thoại (tùy chọn)</label><input type="text" name="phone" value="<?= htmlspecialchars((string)($_POST['phone'] ?? '')) ?>"></div>
     <button class="btn" type="submit">Đăng ký</button>
-    <p class="muted" style="margin-top:14px;">Đã có tài khoản? <a href="/ctv/login.php">Đăng nhập</a></p>
+    <p class="muted" style="margin-top:14px;">Đã có tài khoản? <a href="/auth?role=partner">Đăng nhập</a></p>
   </form>
 </div>
 <?php ctv_layout_footer();

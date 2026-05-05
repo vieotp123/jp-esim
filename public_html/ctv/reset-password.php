@@ -48,7 +48,7 @@ ctv_layout_header('Đặt lại mật khẩu', null);
   <h2>Đặt lại mật khẩu</h2>
   <?php if ($ok): ?>
     <div class="flash ok">Đã đặt lại mật khẩu thành công. Tất cả phiên cũ đã bị thu hồi.</div>
-    <a class="btn gold" href="/ctv/login.php">Đăng nhập ngay</a>
+    <a class="btn gold" href="/auth?role=partner">Đăng nhập ngay</a>
   <?php elseif (!$validToken): ?>
     <div class="flash error">Liên kết đặt lại không hợp lệ hoặc đã hết hạn (30 phút).</div>
     <a class="btn secondary" href="/ctv/forgot-password.php">Yêu cầu liên kết mới</a>

@@ -21,16 +21,16 @@
 - Test with `php -l` after every PHP edit
 
 ## Safety Rules (CRITICAL)
-1. **DO NOT** edit `db_config.php` — read-only, owned by root:www-data
+1. **DO NOT** edit `db_config.php` casually — owned by root:www-data, requires sudo + backup. Only edit on explicit user request, always backup first (`db_config.php.bak.<reason>.<ts>`).
 2. **DO NOT** commit `.env`, `db_config.php`, private keys, logs, `*.bak.*`, runtime DB
-3. **DO NOT** call real eSIM provider API (ESIM_ORDER_URL/ESIM_TOPUP_URL) — test mode only
+3. **PROD v1 LIVE**: provider API (ESIM_ORDER_URL/ESIM_TOPUP_URL) is now called for real. `PROVIDER_TEST_MODE=0` and `CTV_PROVIDER_TEST_MODE=0`. Test changes against staging or with `TEST-DEMO-*` refs first. Any code that touches provider in a new path needs explicit user sign-off before deploy.
 4. **DO NOT** call real Mailgun sends without DRY_RUN confirmation
-5. **DO NOT** call real topup — `TOPUP_LOCKED=1` must stay
+5. **TOPUP_LOCKED=0** as of 2026-05-05 (production v1 unlock per user request). Topup eSIM and queue retry now hit real provider. Do not flip back without explicit request.
 6. **DO NOT** expose provider domain/name (qrsim.net, simlessly, rsp-eu, carddata, esimsetup.apple.com) in UI/email/chat/API
 7. **DO NOT** expose raw LPA string, qrCodeUrl, shortUrl, providerOrderNo to CTV or retail users
 8. **DO NOT** print/log secrets, API keys, tokens
 9. **DO NOT** push with token embedded in remote URL — use GIT_ASKPASS pattern
-10. `CTV_PROVIDER_TEST_MODE=1` and `PROVIDER_TEST_MODE=1` are intentionally ON — do not change
+10. **Admin login is Passkey-only** (`ADMIN_REQUIRE_PASSKEY=1`). Password login disabled when admin has passkey registered. Bootstrap path (no passkey yet) still allows password to register first key.
 
 ## QR Self-Host Pattern
 - Retail QR: `/r/qr.php?t=<base64(ac:XXXX)>` renders PNG server-side
@@ -72,7 +72,12 @@
   - Mobile responsive CSS for CTV and admin panels (760px/480px breakpoints, table horizontal scroll)
   - SEO: noarchive on all protected pages, cleaned sitemap (removed noindex pages, added lastmod)
   - Smoke test script: scripts/smoke_test.sh (11 checks, no secrets needed)
-- Next: Phase E Phase 2 — passkey-preferred (prompt passkey first, password fallback), webhook replay testing, monitoring/alerting
+- Phase G (production v1 go-live, 2026-05-05):
+  - Unified `/auth` entry: `public_html/auth/index.php` landing (admin/partner cards) + `?role=admin|partner` shortcuts
+  - `/admin` redirect: bare `/admin` and `/admin/` now redirect to `/admin/ctv/login.php` (was 403)
+  - Admin Passkey-only enforced: `ADMIN_REQUIRE_PASSKEY=1` set in db_config.php; `_guard.php` default flipped to '1'; `login.php` hides password form when admin has passkey + enforce on; basic-auth fallback rejected. Bootstrap path (no passkey yet) still allows password.
+  - Topup unlock: `TOPUP_LOCKED=0` (db_config.php + .env). Real provider calls active. Backup at `/home/foamljf4kvet/db_config.php.bak.unlock.20260505_130904`.
+- Next: monitoring/alerting on provider error rate, webhook replay testing, post-go-live audit (~T+24h)
 
 ## Reporting
 After each task: list files changed, tests run, results, commit hash.

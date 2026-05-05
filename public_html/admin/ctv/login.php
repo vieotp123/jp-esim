@@ -10,6 +10,7 @@ if (!empty($_SESSION['admin_authenticated']) && !empty($_SESSION['admin_user']))
 }
 
 $err = null;
+if (isset($_GET['idle'])) { $err = 'Phiên đã hết hạn do không hoạt động. Vui lòng đăng nhập lại.'; }
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 $rl = new RateLimiter();
 
@@ -17,7 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? $_GET['action'] ?? 'login');
 
     if ($action === 'login') {
-        if (!$rl->check('admin_login:' . $ip, 8, 300)) {
+        if (admin_passkey_enforced_strict()) {
+            $err = 'Tài khoản admin yêu cầu đăng nhập bằng Passkey. Vui lòng dùng nút Passkey ở trên.';
+        } elseif (!$rl->check('admin_login:' . $ip, 8, 300)) {
             $err = 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 5 phút.';
         } else {
             $u = trim((string)($_POST['username'] ?? ''));
@@ -83,6 +86,7 @@ try {
     $expectedUser = (string)app_config('ADMIN_USER', 'admin');
     $hasPasskey = (new PasskeyService())->hasPasskey('admin', crc32($expectedUser));
 } catch (Throwable $e) {}
+$passkeyOnly = $hasPasskey && admin_passkey_required();
 
 security_headers(true);
 $assetVer = '20260505a';
@@ -118,7 +122,7 @@ $assetVer = '20260505a';
 <div class="login-card">
   <div class="brand"><span class="brand-mark">JP</span></div>
   <h1>Quản trị jp-esim</h1>
-  <p class="sub">Đăng nhập bằng tài khoản admin hoặc passkey</p>
+  <p class="sub"><?= $passkeyOnly ? 'Đăng nhập bằng Passkey (bắt buộc)' : 'Đăng nhập bằng tài khoản admin hoặc passkey' ?></p>
 
   <?php if ($err): ?><div class="flash err"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
@@ -127,14 +131,15 @@ $assetVer = '20260505a';
     Đăng nhập bằng Passkey
   </button>
   <div id="pkMsg" style="margin-bottom:8px"></div>
-  <div class="divider">hoặc dùng mật khẩu</div>
+  <?php if (!$passkeyOnly): ?><div class="divider">hoặc dùng mật khẩu</div><?php endif; ?>
   <?php endif; ?>
 
+  <?php if (!$passkeyOnly): ?>
   <form method="post" autocomplete="off">
     <input type="hidden" name="action" value="login">
     <div class="field">
       <label>Tài khoản</label>
-      <input type="text" name="username" required autocomplete="username" autofocus>
+      <input type="text" name="username" required autocomplete="username" <?= $hasPasskey ? '' : 'autofocus' ?>>
     </div>
     <div class="field">
       <label>Mật khẩu</label>
@@ -142,6 +147,9 @@ $assetVer = '20260505a';
     </div>
     <button class="btn<?= $hasPasskey ? '' : ' gold' ?>" type="submit">Đăng nhập</button>
   </form>
+  <?php else: ?>
+  <p class="sub" style="margin-top:14px;font-size:12px">Mật khẩu đã bị vô hiệu hoá cho tài khoản admin để tăng cường bảo mật. Liên hệ quản trị nếu mất khoá Passkey.</p>
+  <?php endif; ?>
 </div>
 </div>
 

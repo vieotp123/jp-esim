@@ -42,7 +42,7 @@ $queueTotal = array_sum($queueMap);
 
 $pendingTopupReqs = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_requests WHERE status='pending'")->fetchColumn();
 $failedTopupOrders = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_orders WHERE status=3 AND needs_admin=1")->fetchColumn();
-$pendingEmails = (int)$pdo->query("SELECT COUNT(*) FROM esim_email_queue WHERE status IN (0,1)")->fetchColumn();
+$pendingEmails = (int)$pdo->query("SELECT COUNT(*) FROM ctv_esims e JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id WHERE e.email_sent_at IS NULL AND (e.email_last_error IS NULL OR e.email_last_error='') AND o.email IS NOT NULL AND o.email<>''")->fetchColumn();
 $topupRev30d = (int)$pdo->query("SELECT COALESCE(SUM(total_charge),0) FROM ctv_topup_orders WHERE status=2 AND created_at >= (CURDATE() - INTERVAL 30 DAY)")->fetchColumn();
 
 $recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY id DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();

@@ -429,7 +429,7 @@ tbody tr{transition:background .1s}
         <a href="/ctv/security.php"<?= ctv_nav_active('/ctv/security.php') ?>>Bảo mật</a>
         <a href="/ctv/export.php"<?= ctv_nav_active('/ctv/export.php') ?>>Xuất CSV</a>
       <?php else: ?>
-        <a href="/ctv/login.php"<?= ctv_nav_active('/ctv/login.php') ?>>Đăng nhập</a>
+        <a href="/auth?role=partner">Đăng nhập</a>
         <a href="/ctv/register.php"<?= ctv_nav_active('/ctv/register.php') ?>>Đăng ký</a>
       <?php endif; ?>
     </nav>

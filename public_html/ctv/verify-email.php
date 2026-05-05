@@ -12,7 +12,7 @@ ctv_layout_header('Xác thực email', null);
   <h2>Xác thực email</h2>
   <?php if ($ok): ?>
     <div class="flash ok">Xác thực thành công. Bạn có thể đăng nhập ngay.</div>
-    <a class="btn" href="/ctv/login.php">Đến trang đăng nhập</a>
+    <a class="btn" href="/auth?role=partner">Đến trang đăng nhập</a>
   <?php else: ?>
     <div class="flash error">Liên kết xác thực không hợp lệ hoặc đã được sử dụng.</div>
     <a class="btn secondary" href="/ctv/register.php">Đăng ký lại</a>
