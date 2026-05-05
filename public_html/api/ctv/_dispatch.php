@@ -59,10 +59,18 @@ function ctv_api_authenticate(): array {
 
 function ctv_api_rate_limit(array $ctv, int $apiKeyId, string $endpoint): void {
     $limit = (int)app_config('CTV_API_RATE_LIMIT_PER_MINUTE', 60);
+    $key = 'ctv_api:' . $apiKeyId;
     $rl = new RateLimiter();
-    if (!$rl->check('ctv_api:' . $apiKeyId, $limit, 60)) {
+    if (!$rl->check($key, $limit, 60)) {
+        header('X-RateLimit-Limit: ' . $limit);
+        header('X-RateLimit-Remaining: 0');
+        header('X-RateLimit-Reset: 60');
         ctv_api_response_error('RATE_LIMITED', 'Quá nhiều yêu cầu, vui lòng thử lại sau', 429);
     }
+    $remaining = $rl->remaining($key, $limit, 60);
+    header('X-RateLimit-Limit: ' . $limit);
+    header('X-RateLimit-Remaining: ' . $remaining);
+    header('X-RateLimit-Reset: 60');
 }
 function ctv_api_dispatch(string $endpoint): void {
     $start = microtime(true); $ctv = null; $apiKeyId = null;
