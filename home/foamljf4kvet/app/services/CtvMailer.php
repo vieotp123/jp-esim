@@ -16,6 +16,20 @@ final class CtvMailer {
         return $this->sendBasic($email, $subject, $html, $alt);
     }
 
+    public function sendPasswordResetEmail(string $email, string $token): bool {
+        $base = (string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip'));
+        $url = rtrim($base, '/') . '/ctv/reset-password.php?token=' . rawurlencode($token);
+        $subject = 'Đặt lại mật khẩu CTV - jp-esim.vip';
+        $html = '<p>Xin chào,</p>'
+              . '<p>Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản CTV.</p>'
+              . '<p>Nhấn vào liên kết dưới đây để đặt mật khẩu mới (liên kết có hiệu lực 30 phút):</p>'
+              . '<p><a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '</a></p>'
+              . '<p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>'
+              . '<p>Trân trọng,<br>jp-esim.vip</p>';
+        $alt = "Đặt lại mật khẩu CTV jp-esim.vip\n" . $url . "\nLiên kết có hiệu lực 30 phút.\n";
+        return $this->sendBasic($email, $subject, $html, $alt);
+    }
+
     private function sendBasic(string $to, string $subject, string $html, string $alt): bool {
         if (!function_exists('curl_init')) { app_log('cURL missing, cannot send CTV email', 'ERROR'); return false; }
         $apiKey = (string)app_config('MAILGUN_API_KEY', '');
