@@ -2,7 +2,7 @@
 declare(strict_types=1);
 final class FacebookClient {
     public function verifySignature(string $raw): bool {
-        $secret=(string)app_config('FB_APP_SECRET',''); if($secret==='') return true;
+        $secret=(string)app_config('FB_APP_SECRET',''); if($secret==='') return false;
         $sig=$_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
         if(!str_starts_with($sig,'sha256=')) return false;
         $expected='sha256='.hash_hmac('sha256',$raw,$secret);
