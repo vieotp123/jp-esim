@@ -142,10 +142,10 @@ admin_layout_header('Đơn ' . $orderId, $admin);
     </form>
     <?php endif; ?>
     <?php if ((int)$order['status'] === 2 && count($esims) < (int)$order['quantity']): ?>
-    <form method="post">
+    <form method="post" title="Buộc poll provider ngay, không chờ lịch 2 phút">
       <?php admin_csrf_field(); ?>
       <input type="hidden" name="action" value="sync_esim">
-      <button class="btn secondary" type="submit">Đồng bộ eSIM</button>
+      <button class="btn primary" type="submit">Đồng bộ ngay</button>
     </form>
     <?php endif; ?>
     <?php if ((int)$order['needs_admin']): ?>
@@ -191,5 +191,33 @@ admin_layout_header('Đơn ' . $orderId, $admin);
     </div>
   </div>
   <?php endforeach; endif; ?>
+</div>
+
+<?php
+$plog = db()->prepare('SELECT created_at, endpoint, http_status, success, error_message, duration_ms FROM ctv_provider_logs WHERE ref_id=? ORDER BY id DESC LIMIT 10');
+$plog->execute([$orderId]);
+$plog = $plog->fetchAll();
+?>
+<div class="card">
+  <h2>Hoạt động provider <span class="muted" style="font-weight:400;font-size:13px">(10 lần gần nhất)</span></h2>
+  <?php if (!$plog): ?>
+    <p class="muted">Chưa có log provider cho đơn này.</p>
+  <?php else: ?>
+  <table class="table">
+    <thead><tr><th>Thời gian</th><th>Endpoint</th><th>HTTP</th><th>Kết quả</th><th>Thời gian (ms)</th><th>Lỗi</th></tr></thead>
+    <tbody>
+    <?php foreach ($plog as $r): ?>
+      <tr>
+        <td><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
+        <td><span class="kbd"><?= htmlspecialchars((string)$r['endpoint']) ?></span></td>
+        <td><?= (int)$r['http_status'] ?: '—' ?></td>
+        <td><?= (int)$r['success'] === 1 ? '<span class="tag ok">OK</span>' : '<span class="tag err">FAIL</span>' ?></td>
+        <td><?= (int)$r['duration_ms'] ?></td>
+        <td><?php if (!empty($r['error_message'])): ?><span style="color:var(--a-red)"><?= htmlspecialchars(mb_strimwidth((string)$r['error_message'], 0, 100, '…')) ?></span><?php else: ?>—<?php endif; ?></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php endif; ?>
 </div>
 <?php admin_layout_footer();
