@@ -156,6 +156,8 @@ $counts = db()->query("SELECT
     SUM(status='open' AND kind='amount_mismatch') AS amt_n,
     SUM(status='open' AND kind='provider_error') AS prv_n,
     SUM(status='open' AND kind='email_error') AS eml_n,
+    SUM(status='open' AND kind='topup_order') AS topup_n,
+    SUM(status='open' AND kind='retail_order') AS retail_n,
     COUNT(*) AS total_n
 FROM order_admin_queue")->fetch();
 
@@ -163,6 +165,8 @@ $kindLabel = [
     'amount_mismatch' => ['Sai số tiền', 'warn'],
     'provider_error'  => ['Lỗi xử lý',  'err'],
     'email_error'     => ['Lỗi email',   'info'],
+    'topup_order'     => ['Nạp data',    'warn'],
+    'retail_order'    => ['Đơn lẻ',      'info'],
 ];
 $qsBuild = function(array $extra) use ($status, $kind): string {
     $params = array_filter(array_merge(['status'=>$status, 'kind'=>$kind ?: null], $extra), fn($v)=> $v !== null && $v !== '');
@@ -178,6 +182,8 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
   <div class="card"><b>Sai số tiền</b><h2><?= (int)($counts['amt_n'] ?? 0) ?></h2><div class="sub">webhook không khớp số tiền</div></div>
   <div class="card danger"><b>Lỗi xử lý</b><h2><?= (int)($counts['prv_n'] ?? 0) ?></h2><div class="sub">Lỗi nhà cung cấp eSIM</div></div>
   <div class="card"><b>Lỗi email</b><h2><?= (int)($counts['eml_n'] ?? 0) ?></h2><div class="sub">QR không gửi được</div></div>
+  <div class="card"><b>Nạp data</b><h2><?= (int)($counts['topup_n'] ?? 0) ?></h2><div class="sub">đơn topup chờ xử lý</div></div>
+  <div class="card"><b>Đơn lẻ</b><h2><?= (int)($counts['retail_n'] ?? 0) ?></h2><div class="sub">đơn retail chờ xử lý</div></div>
   <div class="card green"><b>Đã giải quyết</b><h2><?= (int)($counts['resolved_n'] ?? 0) ?></h2><div class="sub">tổng cộng</div></div>
 </div>
 
@@ -195,6 +201,8 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
     <a class="pill <?= $kind==='amount_mismatch'?'active':'' ?>"  href="<?= htmlspecialchars($qsBuild(['kind'=>'amount_mismatch'])) ?>">Sai số tiền</a>
     <a class="pill <?= $kind==='provider_error'?'active':'' ?>"   href="<?= htmlspecialchars($qsBuild(['kind'=>'provider_error'])) ?>">Lỗi xử lý</a>
     <a class="pill <?= $kind==='email_error'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['kind'=>'email_error'])) ?>">Lỗi email</a>
+    <a class="pill <?= $kind==='topup_order'?'active':'' ?>"      href="<?= htmlspecialchars($qsBuild(['kind'=>'topup_order'])) ?>">Nạp data</a>
+    <a class="pill <?= $kind==='retail_order'?'active':'' ?>"     href="<?= htmlspecialchars($qsBuild(['kind'=>'retail_order'])) ?>">Đơn lẻ</a>
   </div>
 
   <?php if (!$rows): ?>

@@ -43,20 +43,46 @@ ctv_layout_header('Đăng nhập đối tác', null);
       Đăng nhập bằng Passkey
     </button>
     <div id="passkeyLoginMsg" style="margin-top:8px"></div>
-    <div style="text-align:center;margin:12px 0;color:var(--c-muted);font-size:13px">— hoặc dùng mật khẩu —</div>
   </div>
-  <form method="post" autocomplete="off">
-    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
-    <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
-    <div class="field"><label>Mật khẩu</label><input type="password" name="password" autocomplete="current-password" required></div>
-    <button class="btn" type="submit">Đăng nhập</button>
-    <p class="muted" style="margin-top:14px;">Chưa có tài khoản? <a href="/ctv/register.php">Đăng ký</a></p>
-  </form>
+  <div id="passwordForm" <?php if (!$err): ?>style="display:none"<?php endif; ?>>
+    <form method="post" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+      <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="<?= htmlspecialchars((string)($_POST['email'] ?? '')) ?>"></div>
+      <div class="field"><label>Mật khẩu</label><input type="password" name="password" autocomplete="current-password" required></div>
+      <button class="btn" type="submit">Đăng nhập</button>
+      <p class="muted" style="margin-top:14px;">Chưa có tài khoản? <a href="/ctv/register.php">Đăng ký</a></p>
+    </form>
+  </div>
+  <div id="passwordToggle" style="display:none;text-align:center;margin-top:12px">
+    <a href="#" id="showPasswordLink" style="color:var(--c-muted);font-size:13px">Dùng mật khẩu thay thế</a>
+  </div>
+  <div id="noPasskeyRegister" style="display:none;text-align:center;margin-top:14px">
+    <p class="muted">Chưa có tài khoản? <a href="/ctv/register.php">Đăng ký</a></p>
+  </div>
 </div>
 <script>
 (function(){
-  if (!Passkey.isSupported()) return;
-  document.getElementById('passkeyLoginWrap').style.display = '';
+  var hasError = <?= $err ? 'true' : 'false' ?>;
+  var pwForm = document.getElementById('passwordForm');
+  var pwToggle = document.getElementById('passwordToggle');
+  var pkWrap = document.getElementById('passkeyLoginWrap');
+  var noPasskeyReg = document.getElementById('noPasskeyRegister');
+
+  if (!Passkey.isSupported() || hasError) {
+    pwForm.style.display = '';
+    return;
+  }
+
+  pkWrap.style.display = '';
+  pwToggle.style.display = '';
+  noPasskeyReg.style.display = '';
+
+  document.getElementById('showPasswordLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    pwForm.style.display = '';
+    pwToggle.style.display = 'none';
+    noPasskeyReg.style.display = 'none';
+  });
 
   window.passkeyLogin = async function() {
     var btn = document.getElementById('passkeyLoginBtn');
@@ -71,8 +97,13 @@ ctv_layout_header('Đăng nhập đối tác', null);
       if (e.name === 'NotAllowedError') text = 'Đã huỷ xác thực passkey';
       msg.innerHTML = '<div class="flash error">' + text + '</div>';
       btn.disabled = false;
+      pwForm.style.display = '';
+      pwToggle.style.display = 'none';
+      noPasskeyReg.style.display = 'none';
     }
   };
+
+  passkeyLogin();
 })();
 </script>
 <?php ctv_layout_footer();
