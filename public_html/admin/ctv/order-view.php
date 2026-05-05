@@ -107,7 +107,6 @@ admin_layout_header('Đơn ' . $orderId, $admin);
       <h3>Thông tin đơn</h3>
       <div class="ov-kv">
         <b>Gói</b><div><?= htmlspecialchars($orderPlanLabel) ?></div>
-        <b>Mã gói</b><div><span class="kbd"><?= htmlspecialchars((string)($order['pack_code'] ?? '')) ?></span></div>
         <b>Số lượng</b><div><?= (int)$order['quantity'] ?><?php $qty=(int)$order['quantity']; $pc=count($esims); if($qty>1): ?> <span class="tag <?= $pc>=$qty?'ok':($pc>0?'warn':'') ?>"><?= $pc ?>/<?= $qty ?> eSIM</span><?php endif; ?></div>
         <b>Tạo lúc</b><div><?= htmlspecialchars((string)$order['created_at']) ?></div>
         <b>Cập nhật</b><div><?= htmlspecialchars((string)$order['updated_at']) ?></div>
