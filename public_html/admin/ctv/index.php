@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $q = trim((string)($_GET['q'] ?? ''));
 $params=[]; $where='WHERE 1';
 if ($q !== '') { $where .= ' AND (email LIKE ? OR id=?)'; $params[]='%'.$q.'%'; $params[]=(int)$q; }
-$st=db()->prepare("SELECT u.id,u.email,u.display_name,u.company_name,u.phone,u.status,u.email_verified,u.balance,u.discount_per_esim,u.tier_id,u.last_login_at,u.last_login_ip,u.created_at, (SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=u.id) AS total_orders, (SELECT COALESCE(SUM(CASE WHEN status=2 THEN total_charge ELSE 0 END),0) FROM ctv_orders WHERE ctv_id=u.id) AS total_spent FROM ctv_users u $where ORDER BY u.id DESC LIMIT 200"); $st->execute($params); $ctvs=$st->fetchAll();
+$st=db()->prepare("SELECT u.id,u.email,u.display_name,u.display_name AS company_name,u.phone,u.status,u.email_verified,u.balance,u.discount_per_esim,u.tier_id,u.last_login_at,u.last_login_ip,u.created_at, (SELECT COUNT(*) FROM ctv_orders WHERE ctv_id=u.id) AS total_orders, (SELECT COALESCE(SUM(CASE WHEN status=2 THEN total_charge ELSE 0 END),0) FROM ctv_orders WHERE ctv_id=u.id) AS total_spent FROM ctv_users u $where ORDER BY u.id DESC LIMIT 200"); $st->execute($params); $ctvs=$st->fetchAll();
 $tiers = db()->query('SELECT id,name,discount_per_esim FROM ctv_tiers ORDER BY id ASC')->fetchAll();
 $sum = db()->query('SELECT COUNT(*) total, SUM(status=1) active, COALESCE(SUM(balance),0) balance FROM ctv_users')->fetch();
 admin_layout_header('Danh sách đối tác', $admin);

@@ -6,6 +6,22 @@ security_headers(true);
 
 $err = null;
 $ok = false;
+$featureReady = false;
+try {
+    $featureReady = (bool)db()->query("SELECT 1 FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='ctv_users' AND column_name='password_reset_token' LIMIT 1")->fetchColumn();
+} catch (Throwable $e) {}
+
+if (!$featureReady) {
+    // Schema migration 006 chưa apply — disable luồng quên mật khẩu cho đến khi DB sẵn sàng.
+    $csrf = CtvAuth::csrfToken();
+    ctv_layout_header('Quên mật khẩu', null);
+    echo '<div class="card" style="max-width:420px;margin:40px auto"><h2>Quên mật khẩu</h2>'
+       . '<div class="flash error">Tính năng đặt lại mật khẩu đang bảo trì. Vui lòng liên hệ hỗ trợ tại <a href="/support.php">/support</a> để được khôi phục tài khoản.</div>'
+       . '<p style="margin-top:14px"><a href="/auth?role=partner" style="color:var(--c-gold)">Quay lại đăng nhập</a></p>'
+       . '</div>';
+    ctv_layout_footer();
+    return;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {

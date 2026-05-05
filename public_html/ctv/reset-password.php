@@ -8,6 +8,19 @@ $token = trim((string)($_GET['token'] ?? $_POST['token'] ?? ''));
 $err = null;
 $ok = false;
 $validToken = false;
+$featureReady = false;
+try {
+    $featureReady = (bool)db()->query("SELECT 1 FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='ctv_users' AND column_name='password_reset_token' LIMIT 1")->fetchColumn();
+} catch (Throwable $e) {}
+
+if (!$featureReady) {
+    ctv_layout_header('Đặt lại mật khẩu', null);
+    echo '<div class="card" style="max-width:420px;margin:40px auto"><h2>Đặt lại mật khẩu</h2>'
+       . '<div class="flash error">Tính năng đặt lại mật khẩu đang bảo trì. Vui lòng liên hệ <a href="/support.php">/support</a>.</div>'
+       . '</div>';
+    ctv_layout_footer();
+    return;
+}
 
 if ($token !== '' && strlen($token) <= 64) {
     $st = db()->prepare('SELECT id, email, password_reset_sent_at FROM ctv_users WHERE password_reset_token=? AND status=1 LIMIT 1');

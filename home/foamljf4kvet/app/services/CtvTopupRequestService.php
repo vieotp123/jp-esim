@@ -38,7 +38,7 @@ class CtvTopupRequestService
 
     public function listPending(int $limit = 100): array
     {
-        $st = $this->pdo->prepare('SELECT r.*, u.email, u.company_name, u.balance FROM ctv_topup_requests r JOIN ctv_users u ON u.id = r.ctv_id WHERE r.status = ? ORDER BY r.id ASC LIMIT ' . max(1, min($limit, 500)));
+        $st = $this->pdo->prepare('SELECT r.*, u.email, u.display_name AS company_name, u.balance FROM ctv_topup_requests r JOIN ctv_users u ON u.id = r.ctv_id WHERE r.status = ? ORDER BY r.id ASC LIMIT ' . max(1, min($limit, 500)));
         $st->execute(['pending']);
         return $st->fetchAll();
     }
@@ -51,7 +51,7 @@ class CtvTopupRequestService
             $where = 'WHERE r.status = ?';
             $params[] = $status;
         }
-        $st = $this->pdo->prepare('SELECT r.*, u.email, u.company_name FROM ctv_topup_requests r JOIN ctv_users u ON u.id = r.ctv_id ' . $where . ' ORDER BY r.id DESC LIMIT ' . max(1, min($limit, 500)) . ' OFFSET ' . max(0, $offset));
+        $st = $this->pdo->prepare('SELECT r.*, u.email, u.display_name AS company_name FROM ctv_topup_requests r JOIN ctv_users u ON u.id = r.ctv_id ' . $where . ' ORDER BY r.id DESC LIMIT ' . max(1, min($limit, 500)) . ' OFFSET ' . max(0, $offset));
         $st->execute($params);
         return $st->fetchAll();
     }

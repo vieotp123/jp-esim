@@ -109,7 +109,7 @@ final class CtvAuth {
     public static function requireUser(): array {
         $u = self::currentUser();
         if (!$u) {
-            header('Location: /ctv/login.php');
+            header('Location: /auth?role=partner');
             exit;
         }
         return $u;

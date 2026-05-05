@@ -24,7 +24,7 @@ $ctvActive = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=1")->
 $ctvPending = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=1 AND email_verified=0")->fetchColumn();
 $ctvDisabled = (int)$pdo->query("SELECT COUNT(*) FROM ctv_users WHERE status=0")->fetchColumn();
 
-$top5 = $pdo->query("SELECT u.id, u.email, u.company_name, SUM(o.total_charge) rev, COUNT(*) cnt FROM ctv_orders o JOIN ctv_users u ON u.id=o.ctv_id WHERE o.status=2 AND o.created_at >= (CURDATE() - INTERVAL 30 DAY) GROUP BY u.id ORDER BY rev DESC LIMIT 5")->fetchAll();
+$top5 = $pdo->query("SELECT u.id, u.email, u.display_name AS company_name, SUM(o.total_charge) rev, COUNT(*) cnt FROM ctv_orders o JOIN ctv_users u ON u.id=o.ctv_id WHERE o.status=2 AND o.created_at >= (CURDATE() - INTERVAL 30 DAY) GROUP BY u.id ORDER BY rev DESC LIMIT 5")->fetchAll();
 
 $orderStats = $pdo->query("SELECT 'retail' src, status, COUNT(*) cnt FROM `order` GROUP BY status UNION ALL SELECT 'ctv' src, status, COUNT(*) cnt FROM ctv_orders GROUP BY status")->fetchAll();
 $orderBreakdown = [];
@@ -45,7 +45,7 @@ $failedTopupOrders = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_orders WHE
 $pendingEmails = (int)$pdo->query("SELECT COUNT(*) FROM ctv_esims e JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id WHERE e.email_sent_at IS NULL AND (e.email_last_error IS NULL OR e.email_last_error='') AND o.email IS NOT NULL AND o.email<>''")->fetchColumn();
 $topupRev30d = (int)$pdo->query("SELECT COALESCE(SUM(total_charge),0) FROM ctv_topup_orders WHERE status=2 AND created_at >= (CURDATE() - INTERVAL 30 DAY)")->fetchColumn();
 
-$recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY id DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();
+$recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY created_at DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();
 
 admin_layout_header('Tổng quan Admin', $admin);
 ?>

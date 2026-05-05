@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$st = db()->prepare('SELECT o.*, u.email AS ctv_email, u.company_name, u.display_name FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id WHERE o.ctv_order_id=? LIMIT 1');
+$st = db()->prepare('SELECT o.*, u.email AS ctv_email, u.display_name AS company_name, u.display_name FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id WHERE o.ctv_order_id=? LIMIT 1');
 $st->execute([$orderId]);
 $order = $st->fetch();
 if (!$order) {
