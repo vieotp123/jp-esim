@@ -35,6 +35,8 @@ $cases = [
     ['/admin/ctv/index.php', ['action'=>'wallet_credit','ctv_id'=>'5','amount'=>'1000','note'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/queue.php', ['action'=>'resolve','id'=>'1','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/queue.php', ['action'=>'ignore','id'=>'1','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/queue.php', ['action'=>'bulk_resolve','ids'=>['1','2'],'csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/queue.php', ['action'=>'bulk_ignore','ids'=>['1'],'csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/orders.php', ['action'=>'sync_esim','order_id'=>'CWPLYSA7','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/orders.php', ['action'=>'mark_resolved','order_id'=>'CWPLYSA7','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/orders.php', ['action'=>'retry','order_id'=>'CWPLYSA7','csrf'=>'wrong'], [200,400]],

@@ -11,9 +11,26 @@ $flash = null;
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string)($_POST['action'] ?? '');
-        $id = max(0, (int)($_POST['id'] ?? 0));
         $note = trim((string)($_POST['note'] ?? ''));
         if (mb_strlen($note) > 1000) $note = mb_substr($note, 0, 1000);
+
+        if ($action === 'bulk_resolve' || $action === 'bulk_ignore') {
+            $ids = $_POST['ids'] ?? [];
+            if (!is_array($ids) || !$ids) throw new RuntimeException('Chưa chọn mục nào');
+            $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($i) => $i > 0)));
+            if (count($ids) > 100) throw new RuntimeException('Tối đa 100 mục mỗi lần');
+            $newStatus = $action === 'bulk_resolve' ? 'resolved' : 'ignored';
+            $resolver = ($note !== '' ? $note : ($action === 'bulk_resolve' ? 'Bulk resolve bởi ' : 'Bulk ignore bởi ') . $admin['user']);
+            $marks = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = db()->prepare("UPDATE order_admin_queue SET status=?, resolved_at=NOW(), resolver_note=? WHERE id IN ($marks) AND status='open'");
+            $stmt->execute(array_merge([$newStatus, $resolver], $ids));
+            $affected = $stmt->rowCount();
+            AuditLog::log($admin['user'], 'queue_' . $action, 'queue', implode(',', array_slice($ids, 0, 10)) . (count($ids) > 10 ? ',...' : ''), ['count' => count($ids), 'affected' => $affected, 'note' => $resolver]);
+            $flash = [$affected > 0 ? 'ok' : 'warn', 'Đã ' . ($action === 'bulk_resolve' ? 'giải quyết' : 'bỏ qua') . ' ' . $affected . '/' . count($ids) . ' mục'];
+            goto post_done;
+        }
+
+        $id = max(0, (int)($_POST['id'] ?? 0));
         if ($id <= 0) throw new RuntimeException('ID không hợp lệ');
         if (!in_array($action, ['resolve','ignore','reopen','retry','cancel_order','mark_refunded'], true)) throw new RuntimeException('Hành động không hỗ trợ');
         $st = db()->prepare('SELECT id, kind, ref_id, status FROM order_admin_queue WHERE id=? LIMIT 1');
@@ -130,6 +147,7 @@ try {
                 }
             }
         }
+        post_done:
     }
 } catch (Throwable $e) {
     $flash = ['err', 'Lỗi: ' . $e->getMessage()];
@@ -239,10 +257,31 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
   </div>
   <?php endforeach; ?>
   </div>
+  <?php if ($status === 'open' && !empty($rows)): ?>
+  <form method="post" id="qBulk" onsubmit="return qBulkConfirm(this)" style="margin-bottom:12px;padding:10px;border:1px dashed var(--a-line-2);border-radius:8px;background:rgba(230,192,104,.04)">
+    <?php admin_csrf_field(); ?>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="qSelectAll" onchange="qToggleAll(this)"> Chọn tất cả mục đang mở
+      </label>
+      <input name="note" placeholder="Ghi chú (tuỳ chọn)" maxlength="500" style="flex:1;min-width:200px;padding:6px 10px;border-radius:6px;border:1px solid var(--a-line-2);background:var(--a-surface);color:var(--a-ink)">
+      <button name="action" value="bulk_resolve" class="btn sm gold">Giải quyết đã chọn</button>
+      <button name="action" value="bulk_ignore" class="btn sm">Bỏ qua đã chọn</button>
+      <span class="muted" style="font-size:12px"><span id="qSelCount">0</span> chọn / tối đa 100</span>
+    </div>
+  </form>
+  <script>
+  function qToggleAll(box){document.querySelectorAll('.q-cb').forEach(cb=>{cb.checked=box.checked});qUpdate()}
+  function qUpdate(){document.getElementById('qSelCount').textContent=document.querySelectorAll('.q-cb:checked').length}
+  function qBulkConfirm(form){const cb=document.querySelectorAll('.q-cb:checked');if(cb.length===0){alert('Chưa chọn mục nào');return false}cb.forEach(c=>{const i=document.createElement('input');i.type='hidden';i.name='ids[]';i.value=c.value;form.appendChild(i)});return confirm('Xác nhận xử lý '+cb.length+' mục?')}
+  document.addEventListener('change',e=>{if(e.target.classList.contains('q-cb'))qUpdate()})
+  </script>
+  <?php endif; ?>
   <div class="table-wrap">
   <table>
     <thead>
       <tr>
+        <?php if ($status === 'open'): ?><th style="width:24px"></th><?php endif; ?>
         <th style="width:60px">#</th>
         <th>Loại</th>
         <th>Mã đơn</th>
@@ -263,6 +302,7 @@ admin_layout_header('Hàng đợi đơn lỗi', $admin);
       $errShort = mb_strimwidth($err, 0, 220, '…');
     ?>
       <tr>
+        <?php if ($status === 'open'): ?><td><?php if ($st === 'open'): ?><input type="checkbox" class="q-cb" value="<?= (int)$r['id'] ?>" form="qBulk"><?php endif; ?></td><?php endif; ?>
         <td><span class="kbd">#<?= (int)$r['id'] ?></span></td>
         <td><span class="tag <?= $kCls ?>"><?= htmlspecialchars($kLabel) ?></span></td>
         <td><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode((string)($r['ref_id'] ?? ''))) ?>" style="text-decoration:none"><?= htmlspecialchars((string)($r['ref_id'] ?? '')) ?></a></td>

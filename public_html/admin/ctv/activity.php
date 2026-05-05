@@ -7,24 +7,27 @@ $pdo = db();
 
 $LIMIT = 60;
 
-// Build a UNION ALL feed across categories. We tag each row's source so the
-// UI can render appropriate icon + link.
-$sql = "
-(SELECT 'ctv_register' AS kind, CAST(id AS CHAR) AS ref, email AS subject, NULL AS amount, created_at AS ts FROM ctv_users ORDER BY id DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT 'ctv_order' AS kind, ctv_order_id AS ref, COALESCE(plan_name, '') AS subject, total_charge AS amount, created_at AS ts FROM ctv_orders ORDER BY id DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT 'retail_order' AS kind, order_id AS ref, COALESCE(plan_name, '') AS subject, total AS amount, created_at AS ts FROM `order` ORDER BY created_at DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT 'topup_order' AS kind, ctv_topup_id AS ref, COALESCE(plan_name, '') AS subject, total_charge AS amount, created_at AS ts FROM ctv_topup_orders ORDER BY id DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT 'topup_request' AS kind, CAST(id AS CHAR) AS ref, status AS subject, amount, created_at AS ts FROM ctv_topup_requests ORDER BY id DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT 'wallet_tx' AS kind, ref_id AS ref, reason AS subject, amount, created_at AS ts FROM ctv_wallet_transactions ORDER BY id DESC LIMIT $LIMIT)
-UNION ALL
-(SELECT CONCAT('audit:', action) AS kind, COALESCE(target_id, '') AS ref, admin_user AS subject, NULL AS amount, created_at AS ts FROM admin_audit_log ORDER BY id DESC LIMIT $LIMIT)
-ORDER BY ts DESC LIMIT $LIMIT
-";
+$kindFilter = (string)($_GET['kind'] ?? '');
+$allowedKinds = ['ctv_register','ctv_order','retail_order','topup_order','topup_request','wallet_tx','audit'];
+if (!in_array($kindFilter, $allowedKinds, true)) $kindFilter = '';
+
+$parts = [];
+if ($kindFilter === '' || $kindFilter === 'ctv_register')
+    $parts[] = "(SELECT 'ctv_register' AS kind, CAST(id AS CHAR) AS ref, email AS subject, NULL AS amount, created_at AS ts FROM ctv_users ORDER BY id DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'ctv_order')
+    $parts[] = "(SELECT 'ctv_order' AS kind, ctv_order_id AS ref, COALESCE(plan_name, '') AS subject, total_charge AS amount, created_at AS ts FROM ctv_orders ORDER BY id DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'retail_order')
+    $parts[] = "(SELECT 'retail_order' AS kind, order_id AS ref, COALESCE(plan_name, '') AS subject, total AS amount, created_at AS ts FROM `order` ORDER BY created_at DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'topup_order')
+    $parts[] = "(SELECT 'topup_order' AS kind, ctv_topup_id AS ref, COALESCE(plan_name, '') AS subject, total_charge AS amount, created_at AS ts FROM ctv_topup_orders ORDER BY id DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'topup_request')
+    $parts[] = "(SELECT 'topup_request' AS kind, CAST(id AS CHAR) AS ref, status AS subject, amount, created_at AS ts FROM ctv_topup_requests ORDER BY id DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'wallet_tx')
+    $parts[] = "(SELECT 'wallet_tx' AS kind, ref_id AS ref, reason AS subject, amount, created_at AS ts FROM ctv_wallet_transactions ORDER BY id DESC LIMIT $LIMIT)";
+if ($kindFilter === '' || $kindFilter === 'audit')
+    $parts[] = "(SELECT CONCAT('audit:', action) AS kind, COALESCE(target_id, '') AS ref, admin_user AS subject, NULL AS amount, created_at AS ts FROM admin_audit_log ORDER BY id DESC LIMIT $LIMIT)";
+
+$sql = implode(" UNION ALL ", $parts) . " ORDER BY ts DESC LIMIT $LIMIT";
 $rows = $pdo->query($sql)->fetchAll();
 
 function activity_icon(string $kind): string {
@@ -82,7 +85,17 @@ admin_layout_header('Hoạt động gần đây', $admin);
 .feed-row .amt,.feed-row .ts{grid-column:2;font-size:11px}
 }
 </style>
-<p class="muted" style="margin-bottom:14px">Tổng hợp <?= count($rows) ?> sự kiện gần nhất từ mọi nguồn (đăng ký, đơn hàng, ví, audit log).</p>
+<div class="filter-row" style="margin-bottom:14px">
+  <a class="pill <?= $kindFilter === '' ? 'active' : '' ?>" href="?">Tất cả</a>
+  <a class="pill <?= $kindFilter === 'ctv_register' ? 'active' : '' ?>" href="?kind=ctv_register">👤 Đăng ký</a>
+  <a class="pill <?= $kindFilter === 'ctv_order' ? 'active' : '' ?>" href="?kind=ctv_order">📦 Đơn đối tác</a>
+  <a class="pill <?= $kindFilter === 'retail_order' ? 'active' : '' ?>" href="?kind=retail_order">🛒 Đơn lẻ</a>
+  <a class="pill <?= $kindFilter === 'topup_order' ? 'active' : '' ?>" href="?kind=topup_order">⚡ Nạp data</a>
+  <a class="pill <?= $kindFilter === 'topup_request' ? 'active' : '' ?>" href="?kind=topup_request">💵 Nạp ví</a>
+  <a class="pill <?= $kindFilter === 'wallet_tx' ? 'active' : '' ?>" href="?kind=wallet_tx">💰 Giao dịch ví</a>
+  <a class="pill <?= $kindFilter === 'audit' ? 'active' : '' ?>" href="?kind=audit">🛡 Audit</a>
+</div>
+<p class="muted" style="margin-bottom:14px">Tổng hợp <?= count($rows) ?> sự kiện gần nhất<?= $kindFilter ? ' (lọc: ' . htmlspecialchars($kindFilter) . ')' : '' ?>. Tự động làm mới mỗi 60s.</p>
 <div class="feed">
 <?php foreach ($rows as $r):
   $kind = (string)$r['kind'];
@@ -105,4 +118,11 @@ admin_layout_header('Hoạt động gần đây', $admin);
   </a>
 <?php endforeach; ?>
 </div>
+<script>
+let refreshTimer = setInterval(() => { if (!document.hidden) location.reload(); }, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  else if (!document.hidden && !refreshTimer) refreshTimer = setInterval(() => { if (!document.hidden) location.reload(); }, 60000);
+});
+</script>
 <?php admin_layout_footer();

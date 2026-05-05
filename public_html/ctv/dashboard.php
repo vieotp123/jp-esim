@@ -118,6 +118,34 @@ ctv_flash_render();
     <a class="btn secondary" href="/ctv/topup-request.php" style="white-space:nowrap">Nạp ví</a>
   </div>
 </div>
+
+<?php if ($totalOrders === 0): ?>
+<div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(230,192,104,.06),rgba(230,192,104,.02));border:1px dashed rgba(230,192,104,.3)">
+  <h2 style="margin-bottom:6px">👋 Chào mừng đến với jp-esim Partner</h2>
+  <p class="muted" style="margin-bottom:14px">Tài khoản của bạn đã sẵn sàng. Hãy hoàn tất 3 bước đầu tiên:</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    <div style="padding:14px;border:1px solid var(--c-line-2);border-radius:10px;background:var(--c-card)">
+      <div style="font-size:12px;color:var(--c-gold);font-weight:700;margin-bottom:4px">BƯỚC 1</div>
+      <div style="font-weight:700;margin-bottom:8px">Nạp ví đối tác</div>
+      <p class="muted" style="font-size:12px;margin-bottom:10px">Chuyển khoản và upload bằng chứng để admin duyệt nạp ví.</p>
+      <a class="btn sm gold" href="/ctv/topup-request.php">Nạp ví ngay →</a>
+    </div>
+    <div style="padding:14px;border:1px solid var(--c-line-2);border-radius:10px;background:var(--c-card)">
+      <div style="font-size:12px;color:var(--c-muted);font-weight:700;margin-bottom:4px">BƯỚC 2</div>
+      <div style="font-weight:700;margin-bottom:8px">Xem bảng giá</div>
+      <p class="muted" style="font-size:12px;margin-bottom:10px">Kiểm tra giá đối tác và hạng chiết khấu của bạn.</p>
+      <a class="btn sm secondary" href="/ctv/pricing.php">Xem bảng giá →</a>
+    </div>
+    <div style="padding:14px;border:1px solid var(--c-line-2);border-radius:10px;background:var(--c-card)">
+      <div style="font-size:12px;color:var(--c-muted);font-weight:700;margin-bottom:4px">BƯỚC 3</div>
+      <div style="font-weight:700;margin-bottom:8px">Tạo eSIM đầu tiên</div>
+      <p class="muted" style="font-size:12px;margin-bottom:10px">Đặt eSIM cho khách hàng — QR sẽ gửi tự động vào email.</p>
+      <a class="btn sm secondary" href="/ctv/create-esim.php">Tạo eSIM →</a>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:14px;font-size:12px">💡 Bạn cũng có thể thiết lập <a href="/ctv/security.php" style="color:var(--c-gold)">Passkey</a> để đăng nhập an toàn không cần mật khẩu, hoặc xem <a href="/ctv/api-keys.php" style="color:var(--c-gold)">API key</a> để tích hợp lập trình.</p>
+</div>
+<?php endif; ?>
 <div class="stats">
   <div class="stat"><div class="stat-label">Tổng đơn</div><div class="stat-val"><?= $totalOrders ?></div></div>
   <div class="stat"><div class="stat-label">Thành công</div><div class="stat-val green"><?= htmlspecialchars((string)$successRate) ?>%</div></div>
@@ -155,12 +183,20 @@ ctv_flash_render();
 <div class="dash-grid">
   <div class="card full">
     <h2>Doanh thu 30 ngày</h2>
+    <?php $hasRevenue = array_sum(array_map(fn($r)=>(int)$r['revenue'], $chart)) > 0; ?>
+    <?php if ($hasRevenue): ?>
     <div class="bars">
       <?php foreach ($chart as $r): $h=max(3,(int)round(((int)$r['revenue']/$maxRevenue)*150)); ?>
         <div class="bar" style="height:<?= $h ?>px" data-tip="<?= htmlspecialchars(date('d/m', strtotime($r['d'])).' · '.format_vnd((int)$r['revenue']).' · '.$r['orders'].' đơn') ?>"></div>
       <?php endforeach; ?>
     </div>
     <p class="muted" style="margin-top:8px">Di chuột hoặc chạm vào cột để xem chi tiết ngày.</p>
+    <?php else: ?>
+    <div class="empty-state" style="padding:30px 20px;text-align:center">
+      <div class="icon" style="font-size:32px;margin-bottom:8px">📈</div>
+      <p class="muted">Chưa có doanh thu trong 30 ngày qua. Đơn thành công sẽ hiển thị ở đây.</p>
+    </div>
+    <?php endif; ?>
   </div>
   <div class="card">
     <h2>Top sản phẩm</h2>
