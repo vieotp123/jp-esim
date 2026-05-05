@@ -13,6 +13,32 @@ if ((int)($user['email_verified'] ?? 0) !== 1) {
 }
 
 $pwFlash = null;
+$sessFlash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'revoke_session') {
+    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+        $sessFlash = ['error', 'Phiên không hợp lệ.'];
+    } else {
+        $sid = (string)($_POST['session_id'] ?? '');
+        if ($sid !== '' && strlen($sid) <= 64) {
+            $currentSid = $_COOKIE['ctv_session'] ?? '';
+            if ($sid === $currentSid) {
+                $sessFlash = ['error', 'Không thể thu hồi phiên hiện tại. Dùng Đăng xuất.'];
+            } else {
+                db()->prepare('DELETE FROM ctv_sessions WHERE id=? AND ctv_id=?')->execute([$sid, (int)$user['id']]);
+                $sessFlash = ['ok', 'Đã thu hồi phiên đăng nhập.'];
+            }
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'revoke_all_sessions') {
+    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+        $sessFlash = ['error', 'Phiên không hợp lệ.'];
+    } else {
+        $currentSid = $_COOKIE['ctv_session'] ?? '';
+        db()->prepare('DELETE FROM ctv_sessions WHERE ctv_id=? AND id<>?')->execute([(int)$user['id'], $currentSid]);
+        $sessFlash = ['ok', 'Đã thu hồi tất cả phiên khác.'];
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
     if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
         $pwFlash = ['error', 'Phiên làm việc hết hạn. Vui lòng tải lại trang.'];
@@ -47,6 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'chang
 
 $csrf = CtvAuth::csrfToken();
 $passkeys = (new PasskeyService())->listCredentials('ctv', (int)$user['id']);
+
+$currentSid = $_COOKIE['ctv_session'] ?? '';
+$sessions = db()->prepare('SELECT id, ip, user_agent, created_at, expires_at FROM ctv_sessions WHERE ctv_id=? AND expires_at > NOW() ORDER BY created_at DESC');
+$sessions->execute([(int)$user['id']]);
+$sessions = $sessions->fetchAll();
 
 ctv_layout_header('Bảo mật', $user);
 ctv_flash_render();
@@ -114,6 +145,52 @@ ctv_flash_render();
     <div class="field"><label>Xác nhận mật khẩu mới</label><input type="password" name="confirm_password" required minlength="8" autocomplete="new-password"></div>
     <button class="btn" type="submit">Đổi mật khẩu</button>
   </form>
+</div>
+
+<div class="card" style="max-width:720px">
+  <h2>Phiên đăng nhập</h2>
+  <p class="muted" style="margin-bottom:14px">Các phiên đang hoạt động. Thu hồi phiên từ thiết bị bạn không còn sử dụng.</p>
+  <?php if ($sessFlash): ?><div class="flash <?= htmlspecialchars($sessFlash[0]) ?>"><?= htmlspecialchars($sessFlash[1]) ?></div><?php endif; ?>
+  <?php if ($sessions): ?>
+  <div class="m-cards">
+    <?php foreach ($sessions as $s):
+      $isCurrent = ($s['id'] === $currentSid);
+      $ua = (string)($s['user_agent'] ?? '');
+      $device = 'Không rõ';
+      if (stripos($ua, 'iPhone') !== false || stripos($ua, 'iPad') !== false) $device = 'iOS';
+      elseif (stripos($ua, 'Android') !== false) $device = 'Android';
+      elseif (stripos($ua, 'Mac') !== false) $device = 'macOS';
+      elseif (stripos($ua, 'Windows') !== false) $device = 'Windows';
+      elseif (stripos($ua, 'Linux') !== false) $device = 'Linux';
+      $browser = 'Trình duyệt';
+      if (stripos($ua, 'Chrome') !== false && stripos($ua, 'Edg') === false) $browser = 'Chrome';
+      elseif (stripos($ua, 'Safari') !== false && stripos($ua, 'Chrome') === false) $browser = 'Safari';
+      elseif (stripos($ua, 'Firefox') !== false) $browser = 'Firefox';
+      elseif (stripos($ua, 'Edg') !== false) $browser = 'Edge';
+    ?>
+    <div class="m-card">
+      <div class="m-head"><span><?= htmlspecialchars($device . ' · ' . $browser) ?><?php if ($isCurrent): ?> <span class="tag ok">Hiện tại</span><?php endif; ?></span></div>
+      <div class="m-row"><span class="m-label">IP</span><span class="m-val muted"><?= htmlspecialchars((string)($s['ip'] ?? '')) ?></span></div>
+      <div class="m-row"><span class="m-label">Đăng nhập</span><span class="m-val muted"><?= htmlspecialchars((string)$s['created_at']) ?></span></div>
+      <div class="m-row"><span class="m-label">Hết hạn</span><span class="m-val muted"><?= htmlspecialchars((string)$s['expires_at']) ?></span></div>
+      <?php if (!$isCurrent): ?>
+      <div class="m-actions">
+        <form method="post"><input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>"><input type="hidden" name="action" value="revoke_session"><input type="hidden" name="session_id" value="<?= htmlspecialchars($s['id']) ?>"><button class="btn sm danger" type="submit" onclick="return confirm('Thu hồi phiên này?')">Thu hồi</button></form>
+      </div>
+      <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php if (count($sessions) > 1): ?>
+  <form method="post" style="margin-top:12px">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <input type="hidden" name="action" value="revoke_all_sessions">
+    <button class="btn danger" type="submit" onclick="return confirm('Thu hồi tất cả phiên khác? Bạn sẽ vẫn đăng nhập trên thiết bị này.')">Thu hồi tất cả phiên khác</button>
+  </form>
+  <?php endif; ?>
+  <?php else: ?>
+  <p class="muted">Không có phiên nào đang hoạt động.</p>
+  <?php endif; ?>
 </div>
 
 <script>
