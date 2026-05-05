@@ -12,6 +12,40 @@ if ((int)($user['email_verified'] ?? 0) !== 1) {
     exit;
 }
 
+$pwFlash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
+    if (!CtvAuth::checkCsrf($_POST['_csrf'] ?? null)) {
+        $pwFlash = ['error', 'Phiên làm việc hết hạn. Vui lòng tải lại trang.'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $rl = new RateLimiter();
+        if (!$rl->check('ctv_pw_change:' . (int)$user['id'], 5, 900)) {
+            $pwFlash = ['error', 'Quá nhiều lần thử. Vui lòng đợi 15 phút.'];
+        } else {
+            $currentPw = (string)($_POST['current_password'] ?? '');
+            $newPw = (string)($_POST['new_password'] ?? '');
+            $confirmPw = (string)($_POST['confirm_password'] ?? '');
+            $st = db()->prepare('SELECT password_hash FROM ctv_users WHERE id=? LIMIT 1');
+            $st->execute([(int)$user['id']]);
+            $hash = (string)$st->fetchColumn();
+            if (!password_verify($currentPw, $hash)) {
+                $pwFlash = ['error', 'Mật khẩu hiện tại không đúng.'];
+            } elseif (strlen($newPw) < 8) {
+                $pwFlash = ['error', 'Mật khẩu mới tối thiểu 8 ký tự.'];
+            } elseif ($newPw !== $confirmPw) {
+                $pwFlash = ['error', 'Mật khẩu xác nhận không khớp.'];
+            } elseif ($currentPw === $newPw) {
+                $pwFlash = ['error', 'Mật khẩu mới phải khác mật khẩu hiện tại.'];
+            } else {
+                $newHash = password_hash($newPw, PASSWORD_BCRYPT);
+                db()->prepare('UPDATE ctv_users SET password_hash=? WHERE id=?')->execute([$newHash, (int)$user['id']]);
+                $pwFlash = ['ok', 'Đã đổi mật khẩu thành công.'];
+            }
+        }
+    }
+}
+
+$csrf = CtvAuth::csrfToken();
 $passkeys = (new PasskeyService())->listCredentials('ctv', (int)$user['id']);
 
 ctv_layout_header('Bảo mật', $user);
@@ -69,11 +103,17 @@ ctv_flash_render();
 </div>
 
 <div class="card" style="max-width:720px">
-  <h2>Mật khẩu</h2>
-  <p class="muted">Mật khẩu luôn khả dụng để đăng nhập, kể cả khi bạn có passkey.</p>
-  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
-    <span class="tag info"><?= htmlspecialchars((string)$user['email']) ?></span>
-  </div>
+  <h2>Đổi mật khẩu</h2>
+  <p class="muted" style="margin-bottom:14px">Mật khẩu luôn khả dụng để đăng nhập, kể cả khi bạn có passkey.</p>
+  <?php if ($pwFlash): ?><div class="flash <?= htmlspecialchars($pwFlash[0]) ?>"><?= htmlspecialchars($pwFlash[1]) ?></div><?php endif; ?>
+  <form method="post" style="max-width:360px">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <input type="hidden" name="action" value="change_password">
+    <div class="field"><label>Mật khẩu hiện tại</label><input type="password" name="current_password" required autocomplete="current-password"></div>
+    <div class="field"><label>Mật khẩu mới (tối thiểu 8 ký tự)</label><input type="password" name="new_password" required minlength="8" autocomplete="new-password"></div>
+    <div class="field"><label>Xác nhận mật khẩu mới</label><input type="password" name="confirm_password" required minlength="8" autocomplete="new-password"></div>
+    <button class="btn" type="submit">Đổi mật khẩu</button>
+  </form>
 </div>
 
 <script>
