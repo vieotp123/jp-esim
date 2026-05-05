@@ -21,6 +21,7 @@ if (!$hasPasskey) {
 
 admin_layout_header('Xác thực Passkey', $admin);
 ?>
+<style>nav#mainNav{display:none!important}</style>
 <script src="/assets/passkey.js?v=20260504"></script>
 <div class="card security-banner" style="max-width:720px;margin:24px auto 16px">
   <h2>Khu vực quản trị yêu cầu passkey</h2>
@@ -33,6 +34,7 @@ admin_layout_header('Xác thực Passkey', $admin);
     Xác thực bằng Passkey
   </button>
   <div id="verifyMsg" style="margin-top:12px"></div>
+  <p class="muted" style="margin-top:18px;font-size:12px">Nếu gặp sự cố, tắt ADMIN_REQUIRE_PASSKEY trong cấu hình máy chủ.</p>
 </div>
 <script>
 (function(){

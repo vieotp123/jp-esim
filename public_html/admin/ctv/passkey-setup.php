@@ -15,6 +15,10 @@ admin_layout_header('Passkey', $admin);
 <div class="card security-banner" style="max-width:720px">
   <h2>Admin dùng passkey-only khi bật bắt buộc</h2>
   <p class="muted">Hãy đăng ký passkey cho thiết bị quản trị tin cậy. Khi ADMIN_REQUIRE_PASSKEY bật, khu vực admin luôn yêu cầu passkey trước khi vào bảng điều khiển.</p>
+  <div style="margin-top:12px">
+    <span class="tag <?= admin_passkey_required() ? 'ok' : '' ?>" style="font-size:12px"><?= admin_passkey_required() ? 'BẮT BUỘC — ADMIN_REQUIRE_PASSKEY=1' : 'TUỲ CHỌN — ADMIN_REQUIRE_PASSKEY=0' ?></span>
+    <?php if (admin_passkey_verified()): ?><span class="tag ok" style="font-size:12px;margin-left:6px">Đã xác thực passkey</span><?php endif; ?>
+  </div>
 </div>
 <div class="card" style="max-width:720px">
   <h2>Passkey / Khoá bảo mật</h2>
@@ -114,7 +118,12 @@ admin_layout_header('Passkey', $admin);
   };
 
   window.revokePasskey = async function(id) {
-    if (!confirm('Xoá passkey này?')) return;
+    var totalRows = document.querySelectorAll('[id^="pk-m-"]').length;
+    var isRequired = <?= admin_passkey_required() ? 'true' : 'false' ?>;
+    var msg = totalRows <= 1 && isRequired
+      ? 'Đây là passkey cuối cùng! Nếu xoá, bạn sẽ phải đăng ký passkey mới trước khi tiếp tục dùng khu vực admin.\n\nXoá passkey này?'
+      : 'Xoá passkey này?';
+    if (!confirm(msg)) return;
     try {
       var resp = await fetch('/admin/ctv/passkey-api.php?action=revoke', {
         method: 'POST',
