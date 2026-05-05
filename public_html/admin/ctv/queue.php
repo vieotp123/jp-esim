@@ -138,7 +138,7 @@ try {
 $status = (string)($_GET['status'] ?? 'open');
 if (!in_array($status, ['open','resolved','ignored','all'], true)) $status = 'open';
 $kind = trim((string)($_GET['kind'] ?? ''));
-$kindAllowed = ['amount_mismatch','provider_error','email_error',''];
+$kindAllowed = ['amount_mismatch','provider_error','email_error','topup_order','retail_order',''];
 if (!in_array($kind, $kindAllowed, true)) $kind = '';
 
 $where = []; $params = [];
