@@ -15,9 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             if ($action === 'sync_esim') {
                 $r = (new CtvFulfillmentService())->syncOrderEsims($orderId);
+                AuditLog::log($admin['user'], 'order_sync_esim', 'ctv_order', $orderId, ['result' => $r['status']]);
                 $flash = [$r['status']==='ready'?'ok':'err', 'Đồng bộ '.$orderId.': '.$r['status'].' - '.($r['message'] ?? '')];
             } elseif ($action === 'mark_resolved') {
                 db()->prepare('UPDATE ctv_orders SET needs_admin=0 WHERE ctv_order_id=?')->execute([$orderId]);
+                AuditLog::log($admin['user'], 'order_mark_resolved', 'ctv_order', $orderId);
                 $flash = ['ok', 'Đã đánh dấu đã xử lý ' . $orderId];
             } elseif ($action === 'retry') {
                 $st = db()->prepare('SELECT * FROM ctv_orders WHERE ctv_order_id=? LIMIT 1');
@@ -34,12 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($resp['success'])) {
                         db()->prepare('UPDATE ctv_orders SET status=2, provider_order_no=?, provider_transaction_id=?, updated_at=NOW() WHERE ctv_order_id=?')
                             ->execute([(string)($resp['obj']['orderNo'] ?? ''), (string)($resp['obj']['transactionId'] ?? $orderId), $orderId]);
+                        AuditLog::log($admin['user'], 'order_retry_success', 'ctv_order', $orderId, ['ctv_id' => $ctvId, 'charge' => $totalCharge]);
                         $flash = ['ok', 'Thử lại thành công ' . $orderId];
                     } else {
                         $err = (string)($resp['errorMsg'] ?? 'Xử lý thất bại');
                         db()->prepare('UPDATE ctv_orders SET status=3, needs_admin=1, error_message=? WHERE ctv_order_id=?')
                             ->execute([mb_substr($err, 0, 500), $orderId]);
                         (new CtvWalletService())->credit($ctvId, $totalCharge, 'order_refund', 'ctv_order', $orderId, 'Hoàn tiền thử lại bởi ' . $admin['user'], $admin['user']);
+                        AuditLog::log($admin['user'], 'order_retry_failed', 'ctv_order', $orderId, ['ctv_id' => $ctvId, 'error' => mb_substr($err, 0, 200)]);
                         $flash = ['err', 'Thử lại vẫn thất bại: ' . $err];
                     }
                 } catch (Throwable $e) {
