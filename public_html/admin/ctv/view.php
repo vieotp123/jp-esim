@@ -109,5 +109,28 @@ admin_layout_header('Đối tác #'. $id, $admin); ?>
 </div>
 <?php endif; ?>
 </div>
-<div class="card"><h3>Nạp data / Nhật ký</h3><p>Nạp data: <?= count($topups) ?> · Nhật ký API: <?= count($api) ?> · Nhật ký hệ thống: <?= count($provider) ?></p><p><a class="btn secondary" href="/admin/ctv/logs.php?kind=wallet&ctv_id=<?= $id ?>">Xem nhật ký ví</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=api&ctv_id=<?= $id ?>">Xem nhật ký API</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=provider&ctv_id=<?= $id ?>">Xem nhật ký hệ thống</a></p></div>
+<div class="card"><h3>Nạp data (<?= count($topups) ?>)</h3>
+<?php if (!$topups): ?>
+  <div class="empty"><div class="icon">📶</div><p>Chưa có đơn nạp data nào.</p></div>
+<?php else: ?>
+<?php $tsMap=[0=>'Chờ',1=>'Đang xử lý',2=>'Thành công',3=>'Thất bại']; $tsCls=[0=>'',1=>'warn',2=>'ok',3=>'err']; ?>
+<div class="m-cards">
+  <?php foreach($topups as $t): $ts=(int)$t['status']; ?>
+  <div class="m-card">
+    <div class="m-head"><span class="kbd"><?= htmlspecialchars((string)$t['ctv_topup_id']) ?></span><span class="tag <?= $tsCls[$ts]??'' ?>"><?= $tsMap[$ts]??'?' ?></span></div>
+    <div class="m-row"><span class="m-label">ICCID</span><span class="m-val kbd" style="font-size:11px"><?= htmlspecialchars((string)$t['iccid']) ?></span></div>
+    <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_ctv_plan_label($t)) ?></span></div>
+    <div class="m-row"><span class="m-label">Phí</span><span class="m-val"><?= htmlspecialchars(format_vnd((int)$t['total_charge'])) ?></span></div>
+    <?php if (!empty($t['error_message'])): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$t['error_message'],0,80,'…')) ?></div><?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+</div>
+<div class="table-wrap">
+<table><thead><tr><th>Mã nạp</th><th>ICCID</th><th>Gói</th><th>Phí</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody>
+<?php foreach($topups as $t): $ts=(int)$t['status']; ?><tr><td><span class="kbd"><?= htmlspecialchars((string)$t['ctv_topup_id']) ?></span></td><td style="font-size:12px"><?= htmlspecialchars((string)$t['iccid']) ?></td><td><?= htmlspecialchars(admin_ctv_plan_label($t)) ?></td><td><?= htmlspecialchars(format_vnd((int)$t['total_charge'])) ?></td><td><span class="tag <?= $tsCls[$ts]??'' ?>"><?= $tsMap[$ts]??'?' ?></span><?php if(!empty($t['error_message'])): ?><br><span class="muted" style="font-size:11px"><?= htmlspecialchars(mb_strimwidth((string)$t['error_message'],0,80,'…')) ?></span><?php endif; ?></td><td class="muted"><?= htmlspecialchars((string)$t['created_at']) ?></td></tr><?php endforeach; ?>
+</tbody></table>
+</div>
+<?php endif; ?>
+</div>
+<div class="card"><h3>Nhật ký</h3><p>Nhật ký API: <?= count($api) ?> · Nhật ký hệ thống: <?= count($provider) ?></p><p><a class="btn secondary" href="/admin/ctv/logs.php?kind=wallet&ctv_id=<?= $id ?>">Xem nhật ký ví</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=api&ctv_id=<?= $id ?>">Xem nhật ký API</a> <a class="btn secondary" href="/admin/ctv/logs.php?kind=provider&ctv_id=<?= $id ?>">Xem nhật ký hệ thống</a></p></div>
 <?php admin_layout_footer();

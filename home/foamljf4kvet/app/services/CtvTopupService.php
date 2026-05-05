@@ -13,6 +13,20 @@ final class CtvTopupService {
         $plans = [];
         $message = '';
 
+        $ownedPlan = '';
+        $st = db()->prepare('SELECT o.plan_name, o.carrier, p.day FROM ctv_esims e JOIN ctv_orders o ON o.ctv_order_id=e.ctv_order_id AND o.ctv_id=e.ctv_id LEFT JOIN plan p ON p.id=o.plan_id WHERE e.iccid=? AND e.ctv_id=? LIMIT 1');
+        $st->execute([$iccid, (int)$ctv['id']]);
+        $owned = $st->fetch();
+        if ($owned) {
+            $parts = [];
+            $c = trim((string)($owned['carrier'] ?? ''));
+            if ($c !== '') $parts[] = $c;
+            $parts[] = $this->planDataLabel((string)($owned['plan_name'] ?? ''));
+            $d = (int)($owned['day'] ?? 0);
+            if ($d > 0) $parts[] = $d . ' ngày';
+            $ownedPlan = implode(' · ', $parts);
+        }
+
         if ($carrier === '') {
             $message = 'eSIM này chưa xác định được nhà mạng hỗ trợ nạp data. Vui lòng liên hệ admin để kiểm tra.';
         } else {
@@ -25,6 +39,7 @@ final class CtvTopupService {
         return [
             'iccid' => (string)($retail['iccid'] ?? $iccid),
             'current' => $current,
+            'ownedPlan' => $ownedPlan,
             'plans' => $plans,
             'compatiblePlanIds' => array_map(static fn(array $p): int => (int)$p['id'], $plans),
             'message' => $message,

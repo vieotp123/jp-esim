@@ -121,10 +121,11 @@ ctv_layout_header('Nạp data eSIM', $user);
     <div class="divider"></div>
     <h3 style="margin-bottom:12px">Thông tin eSIM</h3>
     <div class="kv">
-      <b>ICCID</b><div><span class="kbd"><?= htmlspecialchars((string)$lookup['iccid']) ?></span></div>
+      <b>ICCID</b><div><span class="kbd" data-copy="<?= htmlspecialchars((string)$lookup['iccid']) ?>"><?= htmlspecialchars((string)$lookup['iccid']) ?></span></div>
+      <?php if (!empty($lookup['ownedPlan'])): ?><b>Gói đã mua</b><div style="font-weight:700;color:var(--c-gold)"><?= htmlspecialchars((string)$lookup['ownedPlan']) ?></div><?php endif; ?>
       <b>Nhà mạng</b><div><?= htmlspecialchars((string)($current['carrier'] ?? '—') ?: '—') ?></div>
-      <b>Data còn lại</b><div><?= htmlspecialchars(ctv_topup_data_text($current)) ?></div>
-      <b>Số ngày còn lại</b><div><?= htmlspecialchars(ctv_topup_remaining_days($current['expiredAt'] ?? null)) ?></div>
+      <b>Data còn lại</b><div style="font-weight:700"><?= htmlspecialchars(ctv_topup_data_text($current)) ?></div>
+      <b>Số ngày còn lại</b><div style="font-weight:700"><?= htmlspecialchars(ctv_topup_remaining_days($current['expiredAt'] ?? null)) ?></div>
       <b>Kích hoạt</b><div><?= htmlspecialchars(ctv_topup_datetime($current['activatedAt'] ?? null)) ?></div>
       <b>Hết hạn</b><div><?= htmlspecialchars(ctv_topup_datetime($current['expiredAt'] ?? null)) ?></div>
       <b>Trạng thái</b><div><?= htmlspecialchars((string)($current['status'] ?? '—') ?: '—') ?></div>
