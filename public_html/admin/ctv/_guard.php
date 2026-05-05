@@ -169,6 +169,7 @@ function admin_layout_header(string $title, array $admin): void {
   </div>
   <nav id="mainNav">
     <a href="/admin/ctv/dashboard-admin.php"<?= admin_nav_active('/admin/ctv/dashboard-admin.php') ?>>Tổng quan</a>
+    <a href="/admin/ctv/search.php"<?= admin_nav_active('/admin/ctv/search.php') ?>>Tìm kiếm</a>
     <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>Đối tác</a>
     <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn hàng</a>
     <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email</a>

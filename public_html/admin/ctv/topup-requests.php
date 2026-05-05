@@ -11,18 +11,45 @@ $svc = new CtvTopupRequestService();
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string)($_POST['action'] ?? '');
-        $reqId = (int)($_POST['request_id'] ?? 0);
         $note = trim((string)($_POST['note'] ?? ''));
-        if ($reqId <= 0) throw new RuntimeException('ID không hợp lệ');
+        if ($action === 'bulk_approve' || $action === 'bulk_reject') {
+            $ids = $_POST['ids'] ?? [];
+            if (!is_array($ids) || !$ids) throw new RuntimeException('Chưa chọn yêu cầu nào');
+            $ids = array_values(array_unique(array_map('intval', $ids)));
+            $ids = array_filter($ids, fn($i) => $i > 0);
+            if (count($ids) > 50) throw new RuntimeException('Tối đa 50 yêu cầu mỗi lần');
+            $ok = 0; $errs = [];
+            foreach ($ids as $id) {
+                try {
+                    if ($action === 'bulk_approve') {
+                        $svc->approve($id, $admin['user'], $note ?: 'Bulk approve');
+                        AuditLog::log($admin['user'], 'topup_request_approve', 'topup_request', (string)$id, ['note' => $note, 'bulk' => 1]);
+                    } else {
+                        $svc->reject($id, $admin['user'], $note ?: 'Bulk reject');
+                        AuditLog::log($admin['user'], 'topup_request_reject', 'topup_request', (string)$id, ['note' => $note, 'bulk' => 1]);
+                    }
+                    $ok++;
+                } catch (Throwable $e) {
+                    $errs[] = "#$id: " . $e->getMessage();
+                }
+            }
+            $verb = $action === 'bulk_approve' ? 'duyệt' : 'từ chối';
+            $msg = 'Đã ' . $verb . ' ' . $ok . '/' . count($ids) . ' yêu cầu';
+            if ($errs) $msg .= ' — Lỗi: ' . implode('; ', array_slice($errs, 0, 3));
+            $flash = [$errs ? 'warn' : 'ok', $msg];
+        } else {
+            $reqId = (int)($_POST['request_id'] ?? 0);
+            if ($reqId <= 0) throw new RuntimeException('ID không hợp lệ');
 
-        if ($action === 'approve') {
-            $svc->approve($reqId, $admin['user'], $note ?: null);
-            AuditLog::log($admin['user'], 'topup_request_approve', 'topup_request', (string)$reqId, ['note' => $note]);
-            $flash = ['ok', 'Đã duyệt yêu cầu #' . $reqId . ' và nạp ví'];
-        } elseif ($action === 'reject') {
-            $svc->reject($reqId, $admin['user'], $note ?: null);
-            AuditLog::log($admin['user'], 'topup_request_reject', 'topup_request', (string)$reqId, ['note' => $note]);
-            $flash = ['ok', 'Đã từ chối yêu cầu #' . $reqId];
+            if ($action === 'approve') {
+                $svc->approve($reqId, $admin['user'], $note ?: null);
+                AuditLog::log($admin['user'], 'topup_request_approve', 'topup_request', (string)$reqId, ['note' => $note]);
+                $flash = ['ok', 'Đã duyệt yêu cầu #' . $reqId . ' và nạp ví'];
+            } elseif ($action === 'reject') {
+                $svc->reject($reqId, $admin['user'], $note ?: null);
+                AuditLog::log($admin['user'], 'topup_request_reject', 'topup_request', (string)$reqId, ['note' => $note]);
+                $flash = ['ok', 'Đã từ chối yêu cầu #' . $reqId];
+            }
         }
     }
 } catch (Throwable $e) {
@@ -50,6 +77,39 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   </div>
 
   <?php if (!$rows): ?><div class="empty"><div class="icon">📋</div><p>Chưa có yêu cầu nạp ví nào<?= $filterStatus ? ' ở trạng thái này' : '' ?>.</p></div><?php else: ?>
+  <?php if ($pendingCount > 0): ?>
+  <form method="post" id="bulkForm" onsubmit="return confirmBulk(this)" style="margin-bottom:12px;padding:10px;border:1px dashed var(--a-line-2);border-radius:8px;background:rgba(230,192,104,.04)">
+    <?php admin_csrf_field(); ?>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="selectAllPending" onchange="toggleAll(this)"> Chọn tất cả pending
+      </label>
+      <input name="note" placeholder="Ghi chú bulk (tuỳ chọn)" style="flex:1;min-width:200px;padding:6px 10px;border-radius:6px;border:1px solid var(--a-line-2);background:var(--a-surface);color:var(--a-ink)">
+      <button name="action" value="bulk_approve" class="btn sm gold">Duyệt đã chọn</button>
+      <button name="action" value="bulk_reject" class="btn sm danger">Từ chối đã chọn</button>
+      <span class="muted" style="font-size:12px"><span id="bulkSelectedCount">0</span> chọn / tối đa 50</span>
+    </div>
+  </form>
+  <script>
+  function toggleAll(box) { document.querySelectorAll('.bulk-row-cb').forEach(cb => { cb.checked = box.checked; }); updateBulkCount(); }
+  function updateBulkCount() {
+    const n = document.querySelectorAll('.bulk-row-cb:checked').length;
+    document.getElementById('bulkSelectedCount').textContent = n;
+  }
+  function confirmBulk(form) {
+    const n = document.querySelectorAll('.bulk-row-cb:checked').length;
+    if (n === 0) { alert('Chưa chọn yêu cầu nào'); return false; }
+    const boxes = document.querySelectorAll('.bulk-row-cb:checked');
+    boxes.forEach(b => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = 'ids[]'; inp.value = b.value;
+      form.appendChild(inp);
+    });
+    return confirm('Xác nhận xử lý ' + n + ' yêu cầu?');
+  }
+  document.addEventListener('change', e => { if (e.target.classList.contains('bulk-row-cb')) updateBulkCount(); });
+  </script>
+  <?php endif; ?>
   <div class="m-cards">
   <?php foreach ($rows as $r):
     $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
@@ -74,12 +134,13 @@ admin_layout_header('Yêu cầu nạp ví', $admin);
   <?php endforeach; ?>
   </div>
   <div class="table-wrap">
-  <table><thead><tr><th>#</th><th>Đối tác</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
+  <table><thead><tr><th style="width:24px"></th><th>#</th><th>Đối tác</th><th>Số tiền</th><th>Bằng chứng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead><tbody>
   <?php foreach ($rows as $r):
     $sCls = match ($r['status']) { 'approved' => 'ok', 'rejected' => 'err', default => 'warn' };
     $sLabel = match ($r['status']) { 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', default => 'Chờ duyệt' };
   ?>
   <tr>
+    <td><?php if ($r['status'] === 'pending'): ?><input type="checkbox" class="bulk-row-cb" value="<?= (int)$r['id'] ?>" form="bulkForm"><?php endif; ?></td>
     <td><?= (int)$r['id'] ?></td>
     <td><a href="/admin/ctv/view.php?id=<?= (int)$r['ctv_id'] ?>">#<?= (int)$r['ctv_id'] ?></a> <?= htmlspecialchars((string)($r['email'] ?? '')) ?><?php if (!empty($r['company_name'])): ?><br><span class="muted"><?= htmlspecialchars((string)$r['company_name']) ?></span><?php endif; ?></td>
     <td><b><?= htmlspecialchars(format_vnd((int)$r['amount'])) ?></b></td>

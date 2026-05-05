@@ -41,6 +41,8 @@ $cases = [
     ['/admin/ctv/topup-orders.php', ['action'=>'refund','ctv_topup_id'=>'X','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/topup-requests.php', ['action'=>'approve','id'=>'1','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/topup-requests.php', ['action'=>'reject','id'=>'1','note'=>'test','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/topup-requests.php', ['action'=>'bulk_approve','ids'=>['1','2'],'note'=>'test','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/topup-requests.php', ['action'=>'bulk_reject','ids'=>['1'],'note'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/notifications.php', ['action'=>'send_user','ctv_id'=>'5','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/notifications.php', ['action'=>'broadcast','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
 ];
