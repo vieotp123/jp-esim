@@ -16,6 +16,32 @@ final class CtvMailer {
         return $this->sendBasic($email, $subject, $html, $alt);
     }
 
+    public function sendWelcomeEmail(string $email, ?string $displayName = null): bool {
+        $base = rtrim((string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip')), '/');
+        $name = trim((string)$displayName);
+        $greeting = $name !== '' ? 'Xin chào ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ',' : 'Xin chào,';
+        $subject = 'Chào mừng bạn đến với jp-esim Partner';
+        $dashboard = $base . '/ctv/dashboard.php';
+        $pricing = $base . '/ctv/pricing.php';
+        $topup = $base . '/ctv/topup-request.php';
+        $api = $base . '/ctv/api-keys.php';
+        $html = '<p>' . $greeting . '</p>'
+              . '<p>Tài khoản đối tác của bạn tại <strong>jp-esim.vip</strong> đã được kích hoạt.</p>'
+              . '<p><strong>Bắt đầu trong 3 bước:</strong></p>'
+              . '<ol>'
+              . '<li><a href="' . htmlspecialchars($topup, ENT_QUOTES, "UTF-8") . '">Nạp ví đối tác</a> — chuyển khoản và upload bằng chứng để admin duyệt.</li>'
+              . '<li><a href="' . htmlspecialchars($pricing, ENT_QUOTES, "UTF-8") . '">Xem bảng giá</a> — kiểm tra giá đối tác và hạng chiết khấu.</li>'
+              . '<li><a href="' . htmlspecialchars($dashboard, ENT_QUOTES, "UTF-8") . '">Tạo eSIM đầu tiên</a> — đặt eSIM cho khách, QR sẽ tự động gửi vào email.</li>'
+              . '</ol>'
+              . '<p>Muốn tích hợp lập trình? Tạo <a href="' . htmlspecialchars($api, ENT_QUOTES, "UTF-8") . '">API key</a> tại trang Bảo mật. Lưu ý API key chỉ hiển thị một lần.</p>'
+              . '<p>Cần hỗ trợ? Trả lời email này hoặc vào <a href="' . htmlspecialchars($base . "/#support", ENT_QUOTES, "UTF-8") . '">trang Hỗ trợ</a>.</p>'
+              . '<p>Trân trọng,<br>jp-esim.vip Team</p>';
+        $alt = ($name !== '' ? "Xin chào $name,\n\n" : "Xin chào,\n\n")
+             . "Tài khoản đối tác jp-esim.vip đã kích hoạt.\n\n"
+             . "Bắt đầu:\n  1. Nạp ví: $topup\n  2. Bảng giá: $pricing\n  3. Tạo eSIM: $dashboard\n\nAPI key: $api\n\njp-esim.vip Team\n";
+        return $this->sendBasic($email, $subject, $html, $alt);
+    }
+
     public function sendPasswordResetEmail(string $email, string $token): bool {
         $base = (string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip'));
         $url = rtrim($base, '/') . '/ctv/reset-password.php?token=' . rawurlencode($token);

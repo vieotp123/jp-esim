@@ -36,11 +36,19 @@ final class CtvAuth {
         $token = trim($token);
         if ($token === '') return false;
         $pdo = db();
-        $st = $pdo->prepare('SELECT id FROM ctv_users WHERE email_verify_token=? LIMIT 1');
+        $st = $pdo->prepare('SELECT id, email, display_name, email_verified FROM ctv_users WHERE email_verify_token=? LIMIT 1');
         $st->execute([$token]);
-        $id = (int)$st->fetchColumn();
-        if ($id <= 0) return false;
-        $pdo->prepare('UPDATE ctv_users SET email_verified=1, email_verified_at=NOW(), email_verify_token=NULL WHERE id=?')->execute([$id]);
+        $row = $st->fetch();
+        if (!$row) return false;
+        $id = (int)$row['id'];
+        $alreadyVerified = (int)($row['email_verified'] ?? 0) === 1;
+        if (!$alreadyVerified) {
+            $pdo->prepare('UPDATE ctv_users SET email_verified=1, email_verified_at=NOW(), email_verify_token=NULL WHERE id=?')->execute([$id]);
+            try { (new CtvMailer())->sendWelcomeEmail((string)$row['email'], (string)($row['display_name'] ?? '')); }
+            catch (\Throwable $e) { app_log('CTV welcome email send failed '.$row['email'].' '.$e->getMessage(), 'WARN'); }
+        } else {
+            $pdo->prepare('UPDATE ctv_users SET email_verify_token=NULL WHERE id=?')->execute([$id]);
+        }
         return true;
     }
 
