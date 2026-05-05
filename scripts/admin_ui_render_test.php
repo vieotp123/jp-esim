@@ -50,6 +50,7 @@ $pages = [
     '/admin/ctv/audit.php' => 'Kiểm toán',
     '/admin/ctv/export.php' => 'Xuất CSV',
     '/admin/ctv/passkey-setup.php' => 'Passkey setup',
+    '/admin/ctv/plans.php' => 'Gói cước',
     '/admin/ctv/health.php' => 'Sức khoẻ',
     '/admin/ctv/activity.php' => 'Hoạt động',
     '/admin/ctv/activity.php?kind=ctv_order' => 'Activity ctv_order',

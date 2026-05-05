@@ -48,6 +48,8 @@ $cases = [
     ['/admin/ctv/notifications.php', ['action'=>'send_user','ctv_id'=>'5','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/notifications.php', ['action'=>'broadcast','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/health.php', ['action'=>'test_email','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/plans.php', ['action'=>'toggle_status','plan_id'=>'1','status'=>'0','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/plans.php', ['action'=>'update_price','plan_id'=>'1','price'=>'100000','cost'=>'50000','csrf'=>'wrong'], [200,400]],
 ];
 
 printf("%-32s %-18s %5s %s\n", 'PATH', 'ACTION', 'CODE', 'NOTES');
