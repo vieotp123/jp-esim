@@ -61,6 +61,7 @@ final class CtvAuth {
         $pdo->prepare('UPDATE ctv_users SET last_login_at=NOW(), last_login_ip=? WHERE id=?')
             ->execute([$_SERVER['REMOTE_ADDR'] ?? null, (int)$u['id']]);
         self::setSessionCookie($sid);
+        self::gcSessions($pdo);
         return ['id' => (int)$u['id'], 'email' => $u['email'], 'session' => $sid];
     }
 
@@ -79,6 +80,7 @@ final class CtvAuth {
         $pdo->prepare('UPDATE ctv_users SET last_login_at=NOW(), last_login_ip=? WHERE id=?')
             ->execute([$_SERVER['REMOTE_ADDR'] ?? null, (int)$u['id']]);
         self::setSessionCookie($sid);
+        self::gcSessions($pdo);
         return ['id' => (int)$u['id'], 'email' => $u['email'], 'session' => $sid];
     }
 
@@ -111,6 +113,12 @@ final class CtvAuth {
             exit;
         }
         return $u;
+    }
+
+    private static function gcSessions(\PDO $pdo): void {
+        if (random_int(1, 20) === 1) {
+            try { $pdo->exec('DELETE FROM ctv_sessions WHERE expires_at < NOW()'); } catch (\Throwable $e) {}
+        }
     }
 
     private static function setSessionCookie(string $sid): void {
