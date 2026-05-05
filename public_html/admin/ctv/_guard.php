@@ -24,22 +24,60 @@ function admin_ctv_require(): array {
     $expectedPass = (string)app_config('ADMIN_PASS', '');
     if ($expectedPass === '') { http_response_code(503); header('Content-Type: text/plain; charset=utf-8'); echo 'Khu vực quản trị đã tắt.'; exit; }
     admin_session_start();
-    $u = $_SERVER['PHP_AUTH_USER'] ?? ''; $p = $_SERVER['PHP_AUTH_PW'] ?? '';
-    if (!hash_equals($expectedUser, (string)$u) || !hash_equals($expectedPass, (string)$p)) {
-        if (empty($_SESSION['admin_authenticated']) && !RateLimiter::isAdminIp()) {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-            $rl = new RateLimiter();
-            if (!$rl->check('admin_basic_auth:' . $ip, 12, 300)) {
-                http_response_code(429);
-                echo 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
-                exit;
-            }
-        }
-        header('WWW-Authenticate: Basic realm="jp-esim admin"'); http_response_code(401); echo 'Yêu cầu xác thực.'; exit;
+
+    if (!empty($_SESSION['admin_authenticated']) && !empty($_SESSION['admin_user'])) {
+        admin_require_passkey_if_enabled((string)$_SESSION['admin_user']);
+        return ['user' => (string)$_SESSION['admin_user']];
     }
-    if (empty($_SESSION['admin_authenticated'])) { session_regenerate_id(true); $_SESSION['admin_authenticated'] = 1; }
-    admin_require_passkey_if_enabled($expectedUser);
-    return ['user' => $expectedUser];
+
+    $u = $_SERVER['PHP_AUTH_USER'] ?? '';
+    $p = $_SERVER['PHP_AUTH_PW'] ?? '';
+    if ((string)$u !== '' && hash_equals($expectedUser, (string)$u) && hash_equals($expectedPass, (string)$p)) {
+        session_regenerate_id(true);
+        $_SESSION['admin_authenticated'] = 1;
+        $_SESSION['admin_user'] = $expectedUser;
+        $_SESSION['admin_login_at'] = time();
+        admin_require_passkey_if_enabled($expectedUser);
+        return ['user' => $expectedUser];
+    }
+
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    if ($script === '/admin/ctv/login.php') {
+        return ['user' => ''];
+    }
+
+    if ((string)$u !== '') {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $rl = new RateLimiter();
+        if (!$rl->check('admin_basic_auth:' . $ip, 12, 300)) {
+            http_response_code(429);
+            echo 'Quá nhiều yêu cầu. Vui lòng thử lại sau.';
+            exit;
+        }
+        header('WWW-Authenticate: Basic realm="jp-esim admin"');
+        http_response_code(401);
+        echo 'Yêu cầu xác thực.';
+        exit;
+    }
+
+    header('Location: /admin/ctv/login.php');
+    exit;
+}
+function admin_login(string $user): void {
+    admin_session_start();
+    session_regenerate_id(true);
+    $_SESSION['admin_authenticated'] = 1;
+    $_SESSION['admin_user'] = $user;
+    $_SESSION['admin_login_at'] = time();
+}
+function admin_logout(): void {
+    admin_session_start();
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $p = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 86400, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+    }
+    session_destroy();
 }
 function admin_passkey_required(): bool {
     return (string)app_config('ADMIN_REQUIRE_PASSKEY', '0') === '1';
@@ -58,7 +96,7 @@ function admin_require_passkey_if_enabled(?string $adminUser = null): void {
     if (!admin_passkey_required()) return;
     if (admin_passkey_verified()) return;
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    if (in_array($script, ['/admin/ctv/passkey-api.php', '/admin/ctv/passkey-verify.php'], true)) return;
+    if (in_array($script, ['/admin/ctv/login.php', '/admin/ctv/passkey-api.php', '/admin/ctv/passkey-verify.php'], true)) return;
 
     $adminUser = $adminUser ?? (string)app_config('ADMIN_USER', 'admin');
     try {
@@ -124,6 +162,7 @@ function admin_layout_header(string $title, array $admin): void {
     <span class="vip-tag">ADMIN</span>
     <span class="passkey-tag"><?= htmlspecialchars($passkeyText) ?></span>
     <span><?= htmlspecialchars($admin['user']) ?></span>
+    <a href="/admin/ctv/logout.php" style="color:var(--a-muted);font-size:12px;text-decoration:none" onclick="return confirm('Đăng xuất?')">Đăng xuất</a>
   </span>
 </header>
 <main>

@@ -42,6 +42,8 @@ $queueTotal = array_sum($queueMap);
 
 $pendingTopupReqs = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_requests WHERE status='pending'")->fetchColumn();
 $failedTopupOrders = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_orders WHERE status=3 AND needs_admin=1")->fetchColumn();
+$pendingEmails = (int)$pdo->query("SELECT COUNT(*) FROM esim_email_queue WHERE status IN (0,1)")->fetchColumn();
+$topupRev30d = (int)$pdo->query("SELECT COALESCE(SUM(total_charge),0) FROM ctv_topup_orders WHERE status=2 AND created_at >= (CURDATE() - INTERVAL 30 DAY)")->fetchColumn();
 
 $recent = $pdo->query("(SELECT 'retail' AS src, order_id AS ref, status, total AS amount, created_at FROM `order` ORDER BY id DESC LIMIT 10) UNION ALL (SELECT 'ctv', ctv_order_id, status, total_charge, created_at FROM ctv_orders ORDER BY id DESC LIMIT 10) ORDER BY created_at DESC LIMIT 10")->fetchAll();
 
@@ -55,6 +57,8 @@ admin_layout_header('Tổng quan Admin', $admin);
   <div class="card <?= $queueTotal > 0 ? 'danger' : 'green' ?>"><b>Đơn cần xử lý</b><h2><?= $queueTotal ?></h2><?php if ($queueMap): ?><div class="sub"><?php $kindVi=['amount_mismatch'=>'Sai số tiền','provider_error'=>'Lỗi xử lý','email_error'=>'Lỗi email','topup_order'=>'Nạp data','retail_order'=>'Đơn lẻ']; foreach ($queueMap as $k => $v) echo '<span class="tag err" style="margin:2px">'.htmlspecialchars($kindVi[$k] ?? $k).': '.$v.'</span> '; ?></div><?php endif; ?></div>
   <div class="card <?= $pendingTopupReqs > 0 ? 'danger' : 'green' ?>"><b><a href="/admin/ctv/topup-requests.php?status=pending" style="color:inherit;text-decoration:none">Nạp ví chờ duyệt</a></b><h2><?= $pendingTopupReqs ?></h2></div>
   <div class="card <?= $failedTopupOrders > 0 ? 'danger' : 'green' ?>"><b><a href="/admin/ctv/topup-orders.php?status=3" style="color:inherit;text-decoration:none">Nạp data lỗi</a></b><h2><?= $failedTopupOrders ?></h2><div class="sub">cần admin xử lý</div></div>
+  <div class="card <?= $pendingEmails > 0 ? 'warn' : 'green' ?>"><b><a href="/admin/ctv/email-queue.php" style="color:inherit;text-decoration:none">Email chờ gửi</a></b><h2><?= $pendingEmails ?></h2></div>
+  <div class="card"><b><a href="/admin/ctv/topup-orders.php" style="color:inherit;text-decoration:none">Nạp data 30 ngày</a></b><h2><?= htmlspecialchars(format_vnd($topupRev30d)) ?></h2><div class="sub">CTV topup revenue</div></div>
 </div>
 
 <div class="dash-grid">
