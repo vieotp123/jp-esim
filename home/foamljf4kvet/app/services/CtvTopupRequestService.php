@@ -87,6 +87,12 @@ class CtvTopupRequestService
                 'Số tiền ' . format_vnd((int)$req['amount']) . ' đã được nạp vào ví.',
                 'wallet'
             );
+
+            $emailRow = $this->fetchCtvEmail((int)$req['ctv_id']);
+            if ($emailRow !== null) {
+                try { (new CtvMailer())->sendTopupApprovedEmail($emailRow, (int)$req['amount'], $note); }
+                catch (Throwable $e) { app_log('topup approved email failed ctv=' . (int)$req['ctv_id'] . ' ' . $e->getMessage(), 'WARN'); }
+            }
         } catch (Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
@@ -110,6 +116,24 @@ class CtvTopupRequestService
             'Số tiền ' . format_vnd((int)$req['amount']) . ' không được duyệt.' . ($note ? ' Lý do: ' . $note : ''),
             'wallet'
         );
+
+        $emailRow = $this->fetchCtvEmail((int)$req['ctv_id']);
+        if ($emailRow !== null) {
+            try { (new CtvMailer())->sendTopupRejectedEmail($emailRow, (int)$req['amount'], $note); }
+            catch (Throwable $e) { app_log('topup rejected email failed ctv=' . (int)$req['ctv_id'] . ' ' . $e->getMessage(), 'WARN'); }
+        }
+    }
+
+    private function fetchCtvEmail(int $ctvId): ?string
+    {
+        try {
+            $st = $this->pdo->prepare('SELECT email FROM ctv_users WHERE id = ? LIMIT 1');
+            $st->execute([$ctvId]);
+            $email = trim((string)($st->fetchColumn() ?: ''));
+            return $email !== '' ? $email : null;
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 
     private function handleUpload(array $file, int $ctvId): string

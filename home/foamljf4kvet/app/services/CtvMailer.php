@@ -42,6 +42,42 @@ final class CtvMailer {
         return $this->sendBasic($email, $subject, $html, $alt);
     }
 
+    public function sendTopupApprovedEmail(string $email, int $amount, ?string $note = null): bool {
+        $base = rtrim((string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip')), '/');
+        $dashboard = $base . '/ctv/dashboard.php';
+        $subject = 'Yêu cầu nạp ví đã được duyệt - jp-esim.vip';
+        $amountStr = format_vnd($amount);
+        $html = '<p>Xin chào,</p>'
+              . '<p>Yêu cầu nạp ví của bạn với số tiền <strong>' . htmlspecialchars($amountStr, ENT_QUOTES, 'UTF-8') . '</strong> đã được duyệt và cộng vào ví đối tác.</p>';
+        if ($note !== null && trim($note) !== '') {
+            $html .= '<p><strong>Ghi chú từ admin:</strong> ' . htmlspecialchars($note, ENT_QUOTES, 'UTF-8') . '</p>';
+        }
+        $html .= '<p><a href="' . htmlspecialchars($dashboard, ENT_QUOTES, 'UTF-8') . '">Mở dashboard đối tác</a></p>'
+               . '<p>Trân trọng,<br>jp-esim.vip Team</p>';
+        $alt = "Nạp ví đã duyệt jp-esim.vip\nSố tiền: $amountStr"
+             . ($note !== null && trim($note) !== '' ? "\nGhi chú: $note" : '')
+             . "\n$dashboard\n";
+        return $this->sendBasic($email, $subject, $html, $alt);
+    }
+
+    public function sendTopupRejectedEmail(string $email, int $amount, ?string $note = null): bool {
+        $base = rtrim((string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip')), '/');
+        $topupUrl = $base . '/ctv/topup-request.php';
+        $subject = 'Yêu cầu nạp ví bị từ chối - jp-esim.vip';
+        $amountStr = format_vnd($amount);
+        $html = '<p>Xin chào,</p>'
+              . '<p>Yêu cầu nạp ví của bạn với số tiền <strong>' . htmlspecialchars($amountStr, ENT_QUOTES, 'UTF-8') . '</strong> không được duyệt.</p>';
+        if ($note !== null && trim($note) !== '') {
+            $html .= '<p><strong>Lý do:</strong> ' . htmlspecialchars($note, ENT_QUOTES, 'UTF-8') . '</p>';
+        }
+        $html .= '<p>Bạn có thể tạo yêu cầu mới với bằng chứng chuyển khoản rõ ràng tại <a href="' . htmlspecialchars($topupUrl, ENT_QUOTES, 'UTF-8') . '">trang nạp ví</a>.</p>'
+               . '<p>Trân trọng,<br>jp-esim.vip Team</p>';
+        $alt = "Nạp ví bị từ chối jp-esim.vip\nSố tiền: $amountStr"
+             . ($note !== null && trim($note) !== '' ? "\nLý do: $note" : '')
+             . "\n$topupUrl\n";
+        return $this->sendBasic($email, $subject, $html, $alt);
+    }
+
     public function sendPasswordResetEmail(string $email, string $token): bool {
         $base = (string)app_config('CTV_BASE_URL', app_config('APP_BASE_URL', 'https://jp-esim.vip'));
         $url = rtrim($base, '/') . '/ctv/reset-password.php?token=' . rawurlencode($token);
