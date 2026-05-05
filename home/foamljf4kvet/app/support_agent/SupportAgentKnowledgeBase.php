@@ -26,7 +26,7 @@ final class SupportAgentKnowledgeBase {
             return ['answer' => "Dạ về hoàn tiền/chính sách, em chỉ có thể hỗ trợ theo thông tin công khai trên website và tình trạng đơn cụ thể. Thông thường nếu eSIM chưa được phát hành hoặc có lỗi xử lý từ hệ thống, nhân viên sẽ kiểm tra để đổi eSIM hoặc hoàn tiền phù hợp. Anh/chị gửi mã đơn để được hỗ trợ chính xác hơn.", 'help_links' => [$links[0], $links[2]], 'escalation' => true];
         }
         if ($topic === 'human_support') {
-            return ['answer' => "Dạ em đã ghi nhận yêu cầu cần nhân viên hỗ trợ. Anh/chị vui lòng để lại mã đơn hoặc ICCID đã được che bớt thông tin nhạy cảm, nhân viên sẽ kiểm tra và phản hồi.", 'help_links' => [$links[2]], 'escalation' => true];
+            return ['answer' => (string)SupportAgentConfig::value('escalation_text'), 'help_links' => [$links[2]], 'escalation' => true];
         }
         return ['answer' => "Dạ em có thể hỗ trợ các vấn đề về cài đặt eSIM, quét QR/kích hoạt, tra cứu đơn, nạp thêm data, kiểm tra dung lượng/ngày dùng và chính sách hỗ trợ công khai. Anh/chị mô tả lỗi đang gặp hoặc gửi mã đơn đã che bớt thông tin để em hướng dẫn tiếp ạ.", 'help_links' => $links, 'escalation' => false];
     }

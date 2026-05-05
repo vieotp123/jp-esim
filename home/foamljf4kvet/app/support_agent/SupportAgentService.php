@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/SupportAgentSanitizer.php';
+require_once __DIR__ . '/SupportAgentConfig.php';
 require_once __DIR__ . '/SupportAgentGuard.php';
 require_once __DIR__ . '/SupportAgentKnowledgeBase.php';
 require_once __DIR__ . '/SupportAgentMemoryStore.php';

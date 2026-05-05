@@ -30,7 +30,7 @@ final class SupportAgentEndpoint {
         if (!$this->isAdminIp($server)) {
             $rl = $rateLimiter ?? new RateLimiter();
             $ip = (string)($server['REMOTE_ADDR'] ?? 'unknown');
-            if (!$rl->check('api:support-agent:' . $ip, 12, 60)) {
+            if (!$rl->check('api:support-agent:' . $ip, SupportAgentConfig::value('rate_limit_max'), SupportAgentConfig::value('rate_limit_window_seconds'))) {
                 return $this->error('RATE_LIMITED', 'Quá nhiều yêu cầu. Vui lòng thử lại sau.', 429);
             }
         }

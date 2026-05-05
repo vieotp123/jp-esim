@@ -45,3 +45,5 @@ if (!function_exists('app_log')) {
 require_once APP_ROOT . '/response.php';
 require_once APP_ROOT . '/security.php';
 require_once APP_ROOT . '/services/RateLimiter.php';
+require_once __DIR__ . '/SupportAgentSanitizer.php';
+require_once __DIR__ . '/SupportAgentConfig.php';

@@ -6,28 +6,28 @@ final class SupportAgentAiClient {
         if (in_array(strtolower((string)getenv('SUPPORT_AGENT_TEST_NO_NETWORK')), ['1', 'true', 'yes', 'on'], true)) {
             return false;
         }
-        return in_array(strtolower((string)app_config('SUPPORT_AGENT_ENABLED', '0')), ['1', 'true', 'yes', 'on'], true)
+        return SupportAgentConfig::value('enabled')
             && $this->apiKey() !== ''
             && $this->endpoint() !== ''
             && function_exists('curl_init');
     }
 
     private function provider(): string {
-        return strtolower((string)app_config('SUPPORT_AGENT_PROVIDER', '9router'));
+        return strtolower((string)SupportAgentConfig::value('provider'));
     }
 
     private function apiKey(): string {
-        return (string)(app_config('SUPPORT_AGENT_9ROUTER_API_KEY', '') ?: app_config('SUPPORT_AGENT_API_KEY', ''));
+        return (string)(SupportAgentConfig::value('router_api_key') ?: app_config('SUPPORT_AGENT_API_KEY', ''));
     }
 
     private function endpoint(): string {
-        $endpoint = (string)(app_config('SUPPORT_AGENT_9ROUTER_ENDPOINT', '') ?: app_config('SUPPORT_AGENT_ENDPOINT', ''));
+        $endpoint = (string)(SupportAgentConfig::value('router_endpoint') ?: app_config('SUPPORT_AGENT_ENDPOINT', ''));
         if ($endpoint !== '') return $endpoint;
         return $this->provider() === '9router' ? 'https://api.9router.ai/v1/chat/completions' : '';
     }
 
     private function model(): string {
-        return (string)(app_config('SUPPORT_AGENT_9ROUTER_MODEL', '') ?: app_config('SUPPORT_AGENT_MODEL', 'support-agent'));
+        return (string)(SupportAgentConfig::value('router_model') ?: app_config('SUPPORT_AGENT_MODEL', 'support-agent'));
     }
 
     public function answer(string $message, string $topic, array $memory, array $pageContext): ?string {

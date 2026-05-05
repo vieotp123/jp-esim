@@ -6,10 +6,10 @@ final class SupportAgentMemoryStore {
     private int $ttlSeconds;
     private int $maxMessages;
 
-    public function __construct(?string $dir = null, int $ttlSeconds = 86400, int $maxMessages = 8) {
-        $this->dir = $dir ?: dirname(APP_ROOT) . '/support_agent_state';
-        $this->ttlSeconds = $ttlSeconds;
-        $this->maxMessages = $maxMessages;
+    public function __construct(?string $dir = null, ?int $ttlSeconds = null, ?int $maxMessages = null) {
+        $this->dir = $dir ?: (string)SupportAgentConfig::value('memory_path');
+        $this->ttlSeconds = $ttlSeconds ?? (int)SupportAgentConfig::value('memory_ttl_seconds');
+        $this->maxMessages = $maxMessages ?? (int)SupportAgentConfig::value('memory_message_limit');
         if (!is_dir($this->dir)) @mkdir($this->dir, 0700, true);
     }
 
