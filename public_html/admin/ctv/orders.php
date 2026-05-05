@@ -58,8 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $onlyFailed = !empty($_GET['failed']);
-$where = $onlyFailed ? 'WHERE o.needs_admin=1 OR o.status=3' : 'WHERE 1';
-$rows = db()->query("SELECT o.*, u.email AS ctv_email, (SELECT COUNT(*) FROM ctv_esims e WHERE e.ctv_order_id=o.ctv_order_id) AS esim_count FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id $where ORDER BY o.id DESC LIMIT 200")->fetchAll();
+$q = trim((string)($_GET['q'] ?? ''));
+$where = $onlyFailed ? 'WHERE (o.needs_admin=1 OR o.status=3)' : 'WHERE 1';
+$params = [];
+if ($q !== '') {
+    $where .= ' AND (o.ctv_order_id LIKE ? OR u.email LIKE ? OR o.client_ref LIKE ?)';
+    $params = ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%'];
+}
+$st = db()->prepare("SELECT o.*, u.email AS ctv_email, (SELECT COUNT(*) FROM ctv_esims e WHERE e.ctv_order_id=o.ctv_order_id) AS esim_count FROM ctv_orders o LEFT JOIN ctv_users u ON u.id=o.ctv_id $where ORDER BY o.id DESC LIMIT 200");
+$st->execute($params);
+$rows = $st->fetchAll();
 $counts = db()->query('SELECT SUM(needs_admin=1) needs, SUM(status=3) failed, COUNT(*) total FROM ctv_orders')->fetch();
 
 function admin_orders_plan_data(string $plan): string {
@@ -87,9 +95,15 @@ admin_layout_header('Đơn đối tác', $admin);
 </div>
 <div class="card">
   <h2>Đơn đối tác (<?= count($rows) ?>)</h2>
+  <form method="get" class="toolbar" style="margin-bottom:12px">
+    <?php if ($onlyFailed): ?><input type="hidden" name="failed" value="1"><?php endif; ?>
+    <input name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Tìm mã đơn, email đối tác, client ref..." style="flex:1;min-width:180px">
+    <button class="btn">Tìm</button>
+    <?php if ($q !== ''): ?><a class="btn secondary" href="?<?= $onlyFailed ? 'failed=1' : '' ?>">Xoá tìm</a><?php endif; ?>
+  </form>
   <div class="filter-row">
-    <a href="?" class="pill <?= !$onlyFailed?'active':'' ?>">Tất cả</a>
-    <a href="?failed=1" class="pill <?= $onlyFailed?'active':'' ?>">Cần xử lý</a>
+    <a href="?<?= $q ? 'q='.htmlspecialchars(urlencode($q)) : '' ?>" class="pill <?= !$onlyFailed?'active':'' ?>">Tất cả</a>
+    <a href="?failed=1<?= $q ? '&q='.htmlspecialchars(urlencode($q)) : '' ?>" class="pill <?= $onlyFailed?'active':'' ?>">Cần xử lý</a>
   </div>
   <?php if (!$rows): ?>
     <div class="empty"><div class="icon">📋</div><p>Không có đơn nào<?= $onlyFailed ? ' cần xử lý' : '' ?>.</p></div>
@@ -105,7 +119,7 @@ admin_layout_header('Đơn đối tác', $admin);
     ?>
     <div class="m-card">
       <div class="m-head">
-        <span class="kbd"><?= htmlspecialchars($oid) ?></span>
+        <a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode($oid)) ?>" style="text-decoration:none"><?= htmlspecialchars($oid) ?></a>
         <span class="tag <?= $statusCls[$st] ?? '' ?>"><?= $statusMap[$st] ?? '?' ?></span>
       </div>
       <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
@@ -154,7 +168,7 @@ admin_layout_header('Đơn đối tác', $admin);
       $oid=(string)$r['ctv_order_id'];
     ?>
       <tr>
-        <td><span class="kbd"><?= htmlspecialchars($oid) ?></span></td>
+        <td><a class="kbd" href="/admin/ctv/order-view.php?id=<?= htmlspecialchars(urlencode($oid)) ?>" style="text-decoration:none"><?= htmlspecialchars($oid) ?></a></td>
         <td><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></td>
         <td><?= htmlspecialchars(admin_orders_plan_label($r)) ?> ×<?= (int)$r['quantity'] ?><?php
           $qty=(int)$r['quantity']; $pc=(int)$r['esim_count'];
