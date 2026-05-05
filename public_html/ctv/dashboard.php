@@ -113,7 +113,10 @@ ctv_flash_render();
     <div class="stat-label">Số dư ví</div>
     <div class="stat-val gold" style="font-size:30px"><?= htmlspecialchars(format_vnd((int)$user['balance'])) ?></div>
   </div>
-  <a class="btn gold" href="/ctv/create-esim.php" style="white-space:nowrap">Tạo eSIM mới</a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn gold" href="/ctv/create-esim.php" style="white-space:nowrap">Tạo eSIM mới</a>
+    <a class="btn secondary" href="/ctv/topup-request.php" style="white-space:nowrap">Nạp ví</a>
+  </div>
 </div>
 <div class="stats">
   <div class="stat"><div class="stat-label">Tổng đơn</div><div class="stat-val"><?= $totalOrders ?></div></div>

@@ -34,12 +34,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $requests = $svc->listForCtv((int)$user['id'], 20);
 $csrf = CtvAuth::csrfToken();
 
+$bankCode = (string)app_config('BANK_CODE', '');
+$bankAccount = (string)app_config('BANK_ACCOUNT', '');
+$bankName = (string)app_config('BANK_ACCOUNT_NAME', '');
+$transferNote = 'CTV' . (int)$user['id'] . ' NapVi';
+
 ctv_layout_header('Yêu cầu nạp ví', $user);
 ctv_flash_render();
 ?>
 <div class="card" style="max-width:600px">
   <h2>Yêu cầu nạp ví</h2>
   <p class="muted" style="margin-bottom:14px">Chuyển khoản theo thông tin bên dưới, sau đó gửi yêu cầu kèm ảnh chụp giao dịch. Admin sẽ duyệt và nạp ví trong vòng vài giờ.</p>
+
+  <?php if ($bankAccount !== ''): ?>
+  <div style="background:var(--c-surface);border:1px solid var(--c-line-2);border-radius:var(--c-radius-sm);padding:14px 16px;margin-bottom:16px">
+    <h3 style="margin:0 0 10px;font-size:14px">Thông tin chuyển khoản</h3>
+    <div style="display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px">
+      <span class="muted">Ngân hàng</span><span style="font-weight:700"><?= htmlspecialchars($bankCode) ?></span>
+      <span class="muted">Số tài khoản</span><span style="font-weight:700;font-family:ui-monospace,monospace" class="copy" data-copy="<?= htmlspecialchars($bankAccount) ?>"><?= htmlspecialchars($bankAccount) ?></span>
+      <span class="muted">Chủ tài khoản</span><span style="font-weight:700"><?= htmlspecialchars($bankName) ?></span>
+      <span class="muted">Nội dung CK</span><span style="font-weight:700;color:var(--c-gold);font-family:ui-monospace,monospace" class="copy" data-copy="<?= htmlspecialchars($transferNote) ?>"><?= htmlspecialchars($transferNote) ?></span>
+    </div>
+    <p class="muted" style="margin:10px 0 0;font-size:12px">Vui lòng ghi đúng nội dung chuyển khoản để admin xử lý nhanh hơn.</p>
+  </div>
+  <?php endif; ?>
 
   <?php if ($ok): ?>
     <div class="flash ok">Đã gửi yêu cầu nạp ví thành công. Admin sẽ xử lý sớm nhất.</div>

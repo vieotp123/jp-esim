@@ -521,6 +521,12 @@ if (!function_exists('ctv_layout_footer')) {
   loadCount();
   setInterval(loadCount,60000);
 })();
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-copy]');
+  if(!t)return;
+  var v=t.getAttribute('data-copy');
+  if(v&&navigator.clipboard){navigator.clipboard.writeText(v);var o=t.style.opacity;t.style.opacity='.5';setTimeout(function(){t.style.opacity=o;},300);}
+});
 </script>
         <?php
         echo '</body></html>';
