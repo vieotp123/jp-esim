@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 final class SupportAgentAiClient {
     public function isConfigured(): bool {
+        if (in_array(strtolower((string)getenv('SUPPORT_AGENT_TEST_NO_NETWORK')), ['1', 'true', 'yes', 'on'], true)) {
+            return false;
+        }
         return in_array(strtolower((string)app_config('SUPPORT_AGENT_ENABLED', '0')), ['1', 'true', 'yes', 'on'], true)
             && $this->apiKey() !== ''
             && $this->endpoint() !== ''

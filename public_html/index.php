@@ -4,6 +4,7 @@ require_once '/home/foamljf4kvet/app/bootstrap.php';
 security_headers(true);
 $siteKey = htmlspecialchars((string)app_config('RECAPTCHA_SITE', app_config('RC_SITE','')), ENT_QUOTES, 'UTF-8');
 $assetVer = '20260504c';
+$supportAgentWidgetEnabled = in_array(strtolower((string)app_config('SUPPORT_AGENT_WIDGET_ENABLED', '0')), ['1','true','yes','on'], true);
 ?>
 <!doctype html>
 <html lang="vi">
@@ -133,5 +134,6 @@ $assetVer = '20260504c';
 
 <div id="sheet" class="sheet" aria-hidden="true"><div class="sheet-backdrop"></div><div class="sheet-panel"><div class="grabber"></div><div id="sheetContent"></div></div></div>
 <div id="toast" class="toast"></div>
+<?php if ($supportAgentWidgetEnabled) { require __DIR__ . '/support-agent-widget.php'; } ?>
 </body>
 </html>

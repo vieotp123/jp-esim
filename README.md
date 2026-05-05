@@ -66,6 +66,23 @@ OPENAI_MODEL=gpt-4o-mini
 APP_DEBUG=0
 ```
 
+### Support agent AI endpoint
+
+The customer-facing support agent is disabled by default unless explicitly enabled. Use environment variables or the private config file; do not commit real keys.
+
+```env
+SUPPORT_AGENT_ENABLED=0
+SUPPORT_AGENT_PROVIDER=9router
+SUPPORT_AGENT_9ROUTER_API_KEY=replace-with-private-key
+SUPPORT_AGENT_9ROUTER_ENDPOINT=https://api.9router.ai/v1/chat/completions
+SUPPORT_AGENT_9ROUTER_MODEL=replace-with-approved-model
+SUPPORT_AGENT_WIDGET_ENABLED=0
+```
+
+`/api/support-agent.php` only supports customer eSIM guidance. It rejects cross-origin browser requests, rate limits by IP, caps messages at 1600 characters, stores no-cache responses, and redacts customer identifiers before writing short conversation memory.
+
+To opt into the lightweight floating widget on the homepage, set `SUPPORT_AGENT_WIDGET_ENABLED=1`. For another PHP page, include `public_html/support-agent-widget.php` after the page has loaded the normal app bootstrap/config.
+
 ## Webhook ngân hàng
 
 Gọi:

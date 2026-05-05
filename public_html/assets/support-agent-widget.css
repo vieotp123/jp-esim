@@ -1,0 +1,19 @@
+.sa-widget{position:fixed;right:16px;bottom:18px;z-index:45;font-family:"Be Vietnam Pro",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#121826}
+.sa-widget *{box-sizing:border-box}
+.sa-toggle{width:54px;height:54px;border:0;border-radius:50%;background:#30d158;color:#05210d;box-shadow:0 12px 28px rgba(0,0,0,.24);font-weight:900;font-size:22px;cursor:pointer}
+.sa-panel{position:absolute;right:0;bottom:66px;width:min(360px,calc(100vw - 24px));height:min(520px,calc(100dvh - 110px));display:none;grid-template-rows:auto 1fr auto;background:#fff;border:1px solid rgba(18,24,38,.12);border-radius:18px;box-shadow:0 18px 48px rgba(0,0,0,.24);overflow:hidden}
+.sa-widget.open .sa-panel{display:grid}
+.sa-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 12px;border-bottom:1px solid #edf0f4}
+.sa-title{font-weight:900;font-size:15px}
+.sa-sub{margin-top:2px;color:#667085;font-size:12px}
+.sa-close{width:34px;height:34px;border:0;border-radius:50%;background:#f2f4f7;color:#344054;font-size:20px;line-height:1;cursor:pointer}
+.sa-log{padding:12px;overflow:auto;background:#f8fafc}
+.sa-msg{max-width:88%;margin:7px 0;padding:10px 12px;border-radius:14px;line-height:1.4;font-size:14px;white-space:pre-wrap}
+.sa-msg.bot{background:#fff;border:1px solid #e4e7ec;color:#182230}
+.sa-msg.user{margin-left:auto;background:#30d158;color:#05210d;font-weight:700}
+.sa-form{display:flex;gap:8px;padding:10px;border-top:1px solid #edf0f4;background:#fff}
+.sa-input{flex:1;min-width:0;border:1px solid #d0d5dd;border-radius:14px;padding:12px 12px;font:inherit;font-size:14px;outline:0}
+.sa-input:focus{border-color:#30d158;box-shadow:0 0 0 3px rgba(48,209,88,.16)}
+.sa-send{border:0;border-radius:14px;background:#121826;color:#fff;font-weight:900;padding:0 14px;cursor:pointer}
+.sa-send:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:520px){.sa-widget{right:12px;bottom:12px}.sa-toggle{width:50px;height:50px}.sa-panel{right:-4px;bottom:60px;width:calc(100vw - 16px);height:min(520px,calc(100dvh - 86px));border-radius:16px}}
