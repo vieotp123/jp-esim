@@ -106,8 +106,12 @@
   - Webhooks (`/webhook/bank.php`, `/webhook/facebook.php`) require token + signature; UNIQUE constraint dedupe
   - 4 systemd timers active, last-run all `success`
   - Security headers (HSTS, CSP, X-Frame, COOP/CORP, Permissions-Policy) present on all pages
+- Phase H (production polish, 2026-05-05):
+  - PRG (Post/Redirect/Get) refactor: all admin and CTV mutation pages use session flash + redirect to prevent form resubmission
+  - Bug fix: `CtvFulfillmentService` queue insert used wrong column names (`order_id/reason/detail` → `kind/ref_id/error_summary`)
+  - Migrations 006 (password_reset_token) + 007 (company_name) applied
+  - Backfilled 2 partial-provision orders (CF2HDNSZ, CNG6Q4FT) into admin queue
 - Next (post go-live operability):
-  - Apply migrations 006 + 007 manually (schema migrations require explicit user authorization)
   - Set `ALERT_EMAIL` in db_config.php to enable provider-error email alerts
   - Re-run `db_index_audit.php` once row counts grow 10× to evaluate composite-index needs
   - Review `app.log` daily for first week; adjust logrotate rules if size > 10MB/day
