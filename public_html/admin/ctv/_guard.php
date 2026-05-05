@@ -142,13 +142,42 @@ function admin_nav_active(string $href): string {
     $cur = (string)($_SERVER['SCRIPT_NAME'] ?? '');
     return str_starts_with($cur, $href) ? ' class="active"' : '';
 }
+function admin_nav_counts(): array {
+    admin_session_start();
+    $cached = $_SESSION['admin_nav_counts'] ?? null;
+    $age = time() - (int)($_SESSION['admin_nav_counts_at'] ?? 0);
+    if (is_array($cached) && $age < 60) return $cached;
+    $counts = ['queue' => 0, 'topup_req' => 0, 'failed_topup' => 0, 'email_err' => 0];
+    try {
+        $pdo = db();
+        $counts['queue'] = (int)$pdo->query("SELECT COUNT(*) FROM order_admin_queue WHERE status='open'")->fetchColumn();
+        $counts['topup_req'] = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_requests WHERE status='pending'")->fetchColumn();
+        $counts['failed_topup'] = (int)$pdo->query("SELECT COUNT(*) FROM ctv_topup_orders WHERE status=3 AND needs_admin=1")->fetchColumn();
+        $counts['email_err'] = (int)$pdo->query("SELECT COUNT(*) FROM ctv_esims WHERE email_sent_at IS NULL AND email_last_error IS NOT NULL AND email_last_error<>''")->fetchColumn();
+    } catch (Throwable $e) {}
+    $_SESSION['admin_nav_counts'] = $counts;
+    $_SESSION['admin_nav_counts_at'] = time();
+    return $counts;
+}
+function admin_nav_badge(int $n, string $cls = 'err'): string {
+    if ($n <= 0) return '';
+    $label = $n > 99 ? '99+' : (string)$n;
+    return ' <span class="nav-badge ' . htmlspecialchars($cls) . '">' . htmlspecialchars($label) . '</span>';
+}
 function admin_layout_header(string $title, array $admin): void {
     security_headers(true);
-    $assetVer = '20260504b';
+    $assetVer = '20260505b';
     $passkeyText = admin_passkey_required()
         ? (admin_passkey_verified() ? 'Đã xác thực Passkey' : 'Yêu cầu Passkey')
         : 'Passkey tùy chọn';
+    $navCounts = admin_nav_counts();
     ?>
+<style>
+.nav-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.4;margin-left:3px;vertical-align:middle}
+.nav-badge.err{background:#ef4444;color:#fff}
+.nav-badge.warn{background:#facc15;color:#241804}
+.nav-badge.info{background:rgba(230,192,104,.2);color:var(--a-gold)}
+</style>
 <!doctype html><html lang="vi"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -172,10 +201,10 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/search.php"<?= admin_nav_active('/admin/ctv/search.php') ?>>Tìm kiếm</a>
     <a href="/admin/ctv/index.php"<?= admin_nav_active('/admin/ctv/index.php') ?>>Đối tác</a>
     <a href="/admin/ctv/orders.php"<?= admin_nav_active('/admin/ctv/orders.php') ?>>Đơn hàng</a>
-    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email</a>
-    <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi</a>
-    <a href="/admin/ctv/topup-orders.php"<?= admin_nav_active('/admin/ctv/topup-orders.php') ?>>Nạp data</a>
-    <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>Nạp ví</a>
+    <a href="/admin/ctv/email-queue.php"<?= admin_nav_active('/admin/ctv/email-queue.php') ?>>Email<?= admin_nav_badge((int)$navCounts['email_err'], 'warn') ?></a>
+    <a href="/admin/ctv/queue.php"<?= admin_nav_active('/admin/ctv/queue.php') ?>>Đơn lỗi<?= admin_nav_badge((int)$navCounts['queue'], 'err') ?></a>
+    <a href="/admin/ctv/topup-orders.php"<?= admin_nav_active('/admin/ctv/topup-orders.php') ?>>Nạp data<?= admin_nav_badge((int)$navCounts['failed_topup'], 'err') ?></a>
+    <a href="/admin/ctv/topup-requests.php"<?= admin_nav_active('/admin/ctv/topup-requests.php') ?>>Nạp ví<?= admin_nav_badge((int)$navCounts['topup_req'], 'warn') ?></a>
     <a href="/admin/ctv/notifications.php"<?= admin_nav_active('/admin/ctv/notifications.php') ?>>Thông báo</a>
     <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Nhật ký</a>
     <a href="/admin/ctv/export.php"<?= admin_nav_active('/admin/ctv/export.php') ?>>Xuất CSV</a>
