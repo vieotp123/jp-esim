@@ -105,6 +105,7 @@ ctv_layout_header('Nạp data eSIM', $user);
     <div class="flash <?= $result['status']==='success' ? 'ok' : ($result['status']==='failed' ? 'error' : 'warn') ?>">
       Đơn nạp <strong><?= htmlspecialchars($result['topupId']) ?></strong>: <?= htmlspecialchars($statusVi[$result['status']] ?? $result['status']) ?>
       <?php if (!empty($result['errorMessage'])): ?> · <?= htmlspecialchars($result['errorMessage']) ?><?php endif; ?>
+      · <a href="/ctv/topup-orders.php" style="color:inherit;text-decoration:underline">Xem lịch sử</a>
     </div>
   <?php endif; ?>
 

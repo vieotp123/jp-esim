@@ -422,6 +422,7 @@ tbody tr{transition:background .1s}
         <a href="/ctv/orders.php"<?= ctv_nav_active('/ctv/orders.php') ?>>Đơn hàng</a>
         <a href="/ctv/esims.php"<?= ctv_nav_active('/ctv/esims.php') ?>>eSIM</a>
         <a href="/ctv/topup-esim.php"<?= ctv_nav_active('/ctv/topup-esim.php') ?>>Nạp data</a>
+        <a href="/ctv/topup-orders.php"<?= ctv_nav_active('/ctv/topup-orders.php') ?>>LS nạp data</a>
         <a href="/ctv/pricing.php"<?= ctv_nav_active('/ctv/pricing.php') ?>>Bảng giá</a>
         <a href="/ctv/topup-request.php"<?= ctv_nav_active('/ctv/topup-request.php') ?>>Nạp ví</a>
         <a href="/ctv/api-keys.php"<?= ctv_nav_active('/ctv/api-keys.php') ?>>API</a>
