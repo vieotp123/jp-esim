@@ -36,6 +36,11 @@ function app_log(string $message, string $level = 'INFO'): void {
     @file_put_contents($path, '['.date('Y-m-d H:i:s')."] [$level] $message\n", FILE_APPEND | LOCK_EX);
 }
 
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.use_strict_mode', '1');
+
 spl_autoload_register(function (string $class): void {
     $class = str_replace('\\', '/', $class);
     $paths = [APP_ROOT . '/' . $class . '.php', APP_ROOT . '/services/' . basename($class) . '.php'];
