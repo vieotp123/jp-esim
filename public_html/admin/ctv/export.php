@@ -9,7 +9,7 @@ $from = (string)($_GET['from'] ?? '');
 $to = (string)($_GET['to'] ?? '');
 $ctvId = (int)($_GET['ctv_id'] ?? 0);
 
-if (in_array($kind, ['orders', 'wallet', 'topup_requests'], true)) {
+if (in_array($kind, ['orders', 'wallet', 'topup_requests', 'topup_orders'], true)) {
     $dateWhere = '';
     $params = [];
     if ($ctvId > 0) {
@@ -66,6 +66,20 @@ if (in_array($kind, ['orders', 'wallet', 'topup_requests'], true)) {
                 $r['created_at'], $r['resolved_at'] ?? '',
             ]);
         }
+    } elseif ($kind === 'topup_orders') {
+        fputcsv($out, ['ctv_topup_id', 'ctv_id', 'ctv_email', 'iccid', 'carrier', 'plan_name', 'retail_price', 'discount', 'ctv_price', 'total_charge', 'status', 'needs_admin', 'error_message', 'source', 'created_at', 'updated_at']);
+        $st = db()->prepare('SELECT t.*, u.email AS ctv_email FROM ctv_topup_orders t LEFT JOIN ctv_users u ON u.id=t.ctv_id WHERE 1' . str_replace('ctv_id', 't.ctv_id', str_replace('created_at', 't.created_at', $dateWhere)) . ' ORDER BY t.id DESC LIMIT 50000');
+        $st->execute($params);
+        $statusMap = [0 => 'pending', 1 => 'processing', 2 => 'success', 3 => 'failed'];
+        foreach ($st->fetchAll() as $r) {
+            fputcsv($out, [
+                $r['ctv_topup_id'], $r['ctv_id'], $r['ctv_email'] ?? '',
+                $r['iccid'], $r['carrier'], $r['plan_name'],
+                $r['retail_price'], $r['discount'], $r['ctv_price'], $r['total_charge'],
+                $statusMap[(int)$r['status']] ?? '', (int)$r['needs_admin'],
+                $r['error_message'] ?? '', $r['source'] ?? '', $r['created_at'], $r['updated_at'],
+            ]);
+        }
     }
     fclose($out);
     AuditLog::log($admin['user'], 'admin_export', 'system', $kind, ['from' => $from, 'to' => $to, 'ctv_id' => $ctvId]);
@@ -87,6 +101,7 @@ admin_layout_header('Xuất báo cáo', $admin);
       <button class="btn gold" name="kind" value="orders">Đơn đối tác</button>
       <button class="btn" name="kind" value="wallet">Giao dịch ví</button>
       <button class="btn secondary" name="kind" value="topup_requests">Yêu cầu nạp ví</button>
+      <button class="btn secondary" name="kind" value="topup_orders">Đơn nạp data</button>
     </div>
   </form>
 </div>

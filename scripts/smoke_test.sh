@@ -57,6 +57,7 @@ check "$BASE/ctv/topup-request.php" "302" "CTV Topup Request (redirect)"
 check "$BASE/admin/ctv/dashboard-admin.php" "401" "Admin Dashboard (auth)"
 check "$BASE/admin/ctv/order-view.php" "401" "Admin Order View (auth)"
 check "$BASE/admin/ctv/topup-requests.php" "401" "Admin Topup Requests (auth)"
+check "$BASE/admin/ctv/topup-orders.php" "401" "Admin Topup Orders (auth)"
 check "$BASE/webhook/bank.php" "403" "Webhook (token required)"
 check "$BASE/api/ctv/products.php" "401" "CTV API (key required)"
 
