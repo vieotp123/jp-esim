@@ -140,8 +140,12 @@ final class CtvFulfillmentService {
             $pdo->prepare('UPDATE ctv_orders SET needs_admin=1, updated_at=NOW() WHERE ctv_order_id=?')
                 ->execute([$ctvOrderId]);
             try {
-                $pdo->prepare('INSERT INTO order_admin_queue(kind,ref_id,status,error_summary) VALUES(?,?,?,?)')
-                    ->execute(['partial_provision', $ctvOrderId, 'open', 'Provisioned '.$finalCount.'/'.$requestedQty.' eSIMs']);
+                $exists = $pdo->prepare('SELECT 1 FROM order_admin_queue WHERE kind=? AND ref_id=? AND status=? LIMIT 1');
+                $exists->execute(['partial_provision', $ctvOrderId, 'open']);
+                if (!$exists->fetchColumn()) {
+                    $pdo->prepare('INSERT INTO order_admin_queue(kind,ref_id,status,error_summary) VALUES(?,?,?,?)')
+                        ->execute(['partial_provision', $ctvOrderId, 'open', 'Provisioned '.$finalCount.'/'.$requestedQty.' eSIMs']);
+                }
             } catch (Throwable $qE) {
                 app_log('admin queue insert fail '.$ctvOrderId.' '.$qE->getMessage(), 'ERROR');
             }
