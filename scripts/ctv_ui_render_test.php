@@ -31,6 +31,7 @@ $pages = [
     '/ctv/security.php' => 'Bảo mật',
     '/ctv/pricing.php' => 'Bảng giá',
     '/ctv/export.php' => 'Xuất CSV',
+    '/ctv/activity.php' => 'Hoạt động CTV',
     '/ctv/install.php' => 'Hướng dẫn cài đặt',
     '/ctv/orders.php?status=2' => 'Orders thành công',
     '/ctv/orders.php?status=3' => 'Orders thất bại',

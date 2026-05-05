@@ -47,6 +47,7 @@ $cases = [
     ['/admin/ctv/topup-requests.php', ['action'=>'bulk_reject','ids'=>['1'],'note'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/notifications.php', ['action'=>'send_user','ctv_id'=>'5','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
     ['/admin/ctv/notifications.php', ['action'=>'broadcast','title'=>'test','message'=>'test','csrf'=>'wrong'], [200,400]],
+    ['/admin/ctv/health.php', ['action'=>'test_email','csrf'=>'wrong'], [200,400]],
 ];
 
 printf("%-32s %-18s %5s %s\n", 'PATH', 'ACTION', 'CODE', 'NOTES');

@@ -3,7 +3,51 @@ declare(strict_types=1);
 require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
+admin_require_post();
 $pdo = db();
+
+$testEmailFlash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'test_email') {
+    $alertEmail = trim((string)app_config('ALERT_EMAIL', ''));
+    if ($alertEmail === '' || !filter_var($alertEmail, FILTER_VALIDATE_EMAIL)) {
+        $testEmailFlash = ['err', 'ALERT_EMAIL chưa được cấu hình hoặc không hợp lệ. Cập nhật trong db_config.php.'];
+    } else {
+        $domain = trim((string)app_config('MAILGUN_DOMAIN', ''));
+        $apiKey = trim((string)app_config('MAILGUN_API_KEY', ''));
+        $region = strtolower((string)app_config('MAILGUN_REGION', 'us'));
+        if ($domain === '' || $apiKey === '') {
+            $testEmailFlash = ['err', 'Mailgun chưa được cấu hình.'];
+        } else {
+            $endpoint = $region === 'eu' ? 'https://api.eu.mailgun.net/v3/' : 'https://api.mailgun.net/v3/';
+            $url = $endpoint . rawurlencode($domain) . '/messages';
+            $from = trim((string)app_config('SMTP_FROM', 'noreply@' . $domain));
+            $fromName = trim((string)app_config('SMTP_NAME', 'jp-esim alert test'));
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_USERPWD => 'api:' . $apiKey,
+                CURLOPT_POSTFIELDS => http_build_query([
+                    'from' => $fromName . ' <' . $from . '>',
+                    'to' => $alertEmail,
+                    'subject' => '[jp-esim TEST] Kiểm tra kênh alert email',
+                    'text' => "Đây là email kiểm tra từ admin panel jp-esim.\n\nGửi lúc " . date('c') . " bởi admin=" . $admin['user'] . ".\n\nNếu bạn nhận được email này, kênh Mailgun + ALERT_EMAIL đang hoạt động chính xác.",
+                    'o:tag' => 'jpesim-alert-test',
+                ]),
+            ]);
+            $resp = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($code >= 200 && $code < 300) {
+                AuditLog::log($admin['user'], 'alert_test_email', 'mailgun', $alertEmail);
+                $testEmailFlash = ['ok', 'Đã gửi email test tới ' . htmlspecialchars($alertEmail) . '. Kiểm tra hộp thư trong vài phút.'];
+            } else {
+                $testEmailFlash = ['err', 'Mailgun trả về mã ' . $code . '. Kiểm tra MAILGUN_DOMAIN và MAILGUN_API_KEY.'];
+            }
+        }
+    }
+}
 
 $flags = [
     'TOPUP_LOCKED' => (string)app_config('TOPUP_LOCKED', '0'),
@@ -173,10 +217,19 @@ admin_layout_header('Tình trạng hệ thống', $admin);
 <?php endif; ?>
 
 <div class="h-section">
-  <h3>Endpoints</h3>
+  <h3>Endpoints + kiểm tra kênh alert</h3>
   <div class="card">
     <p class="muted" style="margin-bottom:10px">Tích hợp giám sát ngoài (Uptime Robot, Pingdom, Datadog…) qua URL:</p>
-    <p><a href="/api/health.php" style="color:var(--a-gold)" target="_blank"><code>/api/health.php</code></a> — JSON, 200/503</p>
+    <p style="margin-bottom:14px"><a href="/api/health.php" style="color:var(--a-gold)" target="_blank"><code>/api/health.php</code></a> — JSON, 200/503</p>
+    <?php if ($testEmailFlash): ?>
+    <div class="flash <?= htmlspecialchars($testEmailFlash[0]) ?>" style="margin-bottom:10px"><?= htmlspecialchars($testEmailFlash[1]) ?></div>
+    <?php endif; ?>
+    <form method="post" onsubmit="return confirm('Gửi email test đến ALERT_EMAIL?')">
+      <?php admin_csrf_field(); ?>
+      <input type="hidden" name="action" value="test_email">
+      <button type="submit" class="btn sm">📧 Gửi email test đến ALERT_EMAIL</button>
+      <span class="muted" style="font-size:12px;margin-left:8px">Verify Mailgun + ALERT_EMAIL trước khi cảnh báo thật bắn.</span>
+    </form>
   </div>
 </div>
 
