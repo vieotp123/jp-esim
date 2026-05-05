@@ -1,0 +1,13 @@
+[Unit]
+Description=Run jpesim email retry every 15 minutes
+Requires=jpesim-email-retry.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+AccuracySec=30s
+Unit=jpesim-email-retry.service
+Persistent=false
+
+[Install]
+WantedBy=timers.target

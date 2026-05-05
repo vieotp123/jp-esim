@@ -179,6 +179,7 @@ function admin_layout_header(string $title, array $admin): void {
     <a href="/admin/ctv/logs.php"<?= admin_nav_active('/admin/ctv/logs.php') ?>>Nhật ký</a>
     <a href="/admin/ctv/export.php"<?= admin_nav_active('/admin/ctv/export.php') ?>>Xuất CSV</a>
     <a href="/admin/ctv/audit.php"<?= admin_nav_active('/admin/ctv/audit.php') ?>>Kiểm toán</a>
+    <a href="/admin/ctv/health.php"<?= admin_nav_active('/admin/ctv/health.php') ?>>Sức khoẻ</a>
     <a href="/admin/ctv/passkey-setup.php"<?= admin_nav_active('/admin/ctv/passkey-setup.php') ?>>Passkey</a>
   </nav>
   <span class="right">

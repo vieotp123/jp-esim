@@ -1,0 +1,12 @@
+[Unit]
+Description=Run jpesim DB backup daily at 04:00
+Requires=jpesim-db-backup.service
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=300
+Persistent=true
+Unit=jpesim-db-backup.service
+
+[Install]
+WantedBy=timers.target

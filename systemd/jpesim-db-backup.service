@@ -1,0 +1,16 @@
+[Unit]
+Description=jpesim daily DB backup (mysqldump → gzip → /home/levanrin2404/db_backups/, 7-day retention)
+After=mariadb.service
+Wants=mariadb.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/home/levanrin2404/esimtravel/scripts/db_backup_daily.sh
+StandardOutput=append:/var/log/jpesim/db_backup.log
+StandardError=append:/var/log/jpesim/db_backup.log
+TimeoutStartSec=15min
+Nice=10
+ProtectSystem=full
+ReadWritePaths=/home/levanrin2404/db_backups /var/log/jpesim
+PrivateTmp=true

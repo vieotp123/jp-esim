@@ -1,0 +1,13 @@
+[Unit]
+Description=Run jpesim provider error alert every 10 minutes
+Requires=jpesim-provider-alert.service
+
+[Timer]
+OnBootSec=8min
+OnUnitActiveSec=10min
+AccuracySec=30s
+Unit=jpesim-provider-alert.service
+Persistent=false
+
+[Install]
+WantedBy=timers.target

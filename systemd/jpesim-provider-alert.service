@@ -1,0 +1,18 @@
+[Unit]
+Description=jpesim provider error rate alert (mail to ALERT_EMAIL when threshold breached)
+After=mariadb.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php /home/levanrin2404/esimtravel/scripts/provider_error_alert.php
+StandardOutput=append:/var/log/jpesim/provider_alert.log
+StandardError=append:/var/log/jpesim/provider_alert.log
+TimeoutStartSec=60s
+Nice=10
+ProtectSystem=full
+ReadWritePaths=/var/lib/jpesim /var/log/jpesim
+NoNewPrivileges=true
+PrivateTmp=true

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run jpesim CTV fulfillment poll every 2 minutes
+Requires=jpesim-ctv-fulfillment-poll.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=15s
+Unit=jpesim-ctv-fulfillment-poll.service
+Persistent=false
+
+[Install]
+WantedBy=timers.target

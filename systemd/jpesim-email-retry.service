@@ -1,0 +1,17 @@
+[Unit]
+Description=jpesim email retry (re-send pending QR delivery emails)
+After=mariadb.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php /home/levanrin2404/esimtravel/scripts/email_queue_retry.php --limit=30 --max-attempts=5 --max-age-days=7
+StandardOutput=append:/var/log/jpesim/email_retry.log
+StandardError=append:/var/log/jpesim/email_retry.log
+TimeoutStartSec=120s
+Nice=10
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true

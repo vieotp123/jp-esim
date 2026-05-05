@@ -1,0 +1,17 @@
+[Unit]
+Description=jpesim CTV fulfillment poll (sync QR/ICCID for paid CTV orders)
+After=mariadb.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php /home/levanrin2404/esimtravel/scripts/ctv_fulfillment_poll.php --limit=50 --max-age=1440
+StandardOutput=append:/var/log/jpesim/ctv_fulfillment_poll.log
+StandardError=append:/var/log/jpesim/ctv_fulfillment_poll.log
+TimeoutStartSec=90s
+Nice=10
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
