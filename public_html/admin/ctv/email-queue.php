@@ -3,6 +3,26 @@ declare(strict_types=1);
 require_once '/home/foamljf4kvet/app/bootstrap.php';
 require_once __DIR__ . '/_guard.php';
 $admin = admin_ctv_require();
+admin_require_post();
+
+$flash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = (string)($_POST['action'] ?? '');
+    $orderId = trim((string)($_POST['order_id'] ?? ''));
+    try {
+        if ($action === 'retry' && $orderId !== '') {
+            $result = (new CtvMailService())->sendForOrderIfNeeded($orderId);
+            AuditLog::log($admin['user'], 'email_retry', 'ctv_order', $orderId, $result);
+            if ($result['sent'] > 0) {
+                $flash = ['ok', 'Đã gửi lại ' . $result['sent'] . ' email cho đơn ' . $orderId];
+            } else {
+                $flash = ['warn', 'Không có email nào cần gửi lại cho đơn ' . $orderId . ' (' . ($result['reason'] ?? 'đã gửi hoặc thiếu dữ liệu') . ')'];
+            }
+        }
+    } catch (Throwable $e) {
+        $flash = ['err', 'Lỗi: ' . $e->getMessage()];
+    }
+}
 
 $status = (string)($_GET['status'] ?? 'all');
 $where = 'WHERE 1'; $params = [];
@@ -31,6 +51,7 @@ function admin_email_profile_label(array $r): string {
     return implode(' · ', $parts);
 }
 ?>
+<?php if ($flash): ?><div class="flash <?= htmlspecialchars($flash[0]) ?>"><?= htmlspecialchars($flash[1]) ?></div><?php endif; ?>
 <div class="summary">
   <div class="card"><b>Tổng eSIM</b><h2><?= (int)$sum['total'] ?></h2></div>
   <div class="card green"><b>Đã gửi</b><h2><?= (int)$sum['sent'] ?></h2></div>
@@ -58,12 +79,14 @@ function admin_email_profile_label(array $r): string {
     <div class="m-row"><span class="m-label">Đối tác</span><span class="m-val"><?= htmlspecialchars((string)($r['ctv_email'] ?? '')) ?></span></div>
     <div class="m-row"><span class="m-label">Khách</span><span class="m-val"><?= htmlspecialchars((string)($r['customer_email'] ?? '')) ?></span></div>
     <div class="m-row"><span class="m-label">Gói</span><span class="m-val"><?= htmlspecialchars(admin_email_profile_label($r)) ?></span></div>
-    <?php if($err): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['email_last_error'],0,100,'...')) ?></div><?php endif; ?>
+    <?php if($err): ?><div style="font-size:11px;color:var(--a-muted);margin-top:4px"><?= htmlspecialchars(mb_strimwidth((string)$r['email_last_error'],0,100,'...')) ?></div>
+    <div class="m-actions"><form method="post"><?php admin_csrf_field(); ?><input type="hidden" name="action" value="retry"><input type="hidden" name="order_id" value="<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><button class="btn sm" type="submit">Gửi lại</button></form></div>
+    <?php endif; ?>
   </div>
   <?php endforeach; ?>
   </div>
   <div class="table-wrap">
-  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>Đối tác</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th></tr></thead><tbody>
+  <table><thead><tr><th>eSIM</th><th>Đơn</th><th>Đối tác</th><th>Email khách</th><th>Gói</th><th>Trạng thái</th><th>Lần thử</th><th>Lỗi cuối</th><th></th></tr></thead><tbody>
   <?php foreach ($rows as $r): $sent=!empty($r['email_sent_at']); $err=!$sent && !empty($r['email_last_error']); ?>
   <tr>
     <td><span class="kbd"><?= htmlspecialchars((string)$r['iccid']) ?></span><br><span class="muted"><?= htmlspecialchars((string)$r['created_at']) ?></span></td>
@@ -74,6 +97,7 @@ function admin_email_profile_label(array $r): string {
     <td><?php if($sent): ?><span class="tag ok">Đã gửi</span><br><span class="muted"><?= htmlspecialchars((string)$r['email_sent_at']) ?></span><?php elseif($err): ?><span class="tag err">Lỗi</span><?php else: ?><span class="tag warn">Chờ gửi</span><?php endif; ?></td>
     <td><?= (int)($r['email_attempts'] ?? 0) ?></td>
     <td style="max-width:360px"><?= htmlspecialchars(mb_strimwidth((string)($r['email_last_error'] ?? ''), 0, 220, '...')) ?></td>
+    <td><?php if($err): ?><form method="post" class="inline"><?php admin_csrf_field(); ?><input type="hidden" name="action" value="retry"><input type="hidden" name="order_id" value="<?= htmlspecialchars((string)$r['ctv_order_id']) ?>"><button class="btn sm" type="submit">Gửi lại</button></form><?php endif; ?></td>
   </tr>
   <?php endforeach; ?></tbody></table>
   </div>
