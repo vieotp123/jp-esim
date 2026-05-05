@@ -93,11 +93,16 @@
     - `admin_ui_render_test.php` / `ctv_ui_render_test.php` — fake-session render of every panel page
     - `admin_post_mutation_test.php` — POSTs invalid CSRF to mutation handlers, verifies 400 (no 500)
     - `db_index_audit.php` — EXPLAIN on hot queries, flag full scans
+- Phase G follow-up polish (post-Phase-G commits, same day):
+  - **Welcome email on verify** (`CtvAuth::verifyEmail` → `CtvMailer::sendWelcomeEmail`): 3-step onboarding HTML sent on first email-verify
+  - **Topup approve/reject emails** (`CtvMailer::sendTopupApprovedEmail` / `…Rejected…`): partner gets email + in-app notification when admin processes their topup request
+  - **Order-view provider activity panel** (`/admin/ctv/order-view.php`): last 10 `ctv_provider_logs` rows for the order — helps diagnose stuck orders without leaving the page
+  - **Order-view force-sync button**: relabel "Đồng bộ eSIM" → "Đồng bộ ngay" with primary style + tooltip clarifying it forces a poll without waiting for the 2-min timer
 - Verified end-to-end (after Phase G):
   - 30/30 smoke
-  - 24/24 admin pages render 200 (incl. detail + filtered)
-  - 16/16 CTV pages render 200
-  - 13/13 admin mutation handlers reject invalid CSRF with 400
+  - 39/39 admin pages render 200 (incl. detail + filtered)
+  - 18/18 CTV pages render 200 (`install.php` 400 is expected — needs `id` query param)
+  - 20/20 admin mutation handlers reject invalid CSRF with 400
   - Webhooks (`/webhook/bank.php`, `/webhook/facebook.php`) require token + signature; UNIQUE constraint dedupe
   - 4 systemd timers active, last-run all `success`
   - Security headers (HSTS, CSP, X-Frame, COOP/CORP, Permissions-Policy) present on all pages
